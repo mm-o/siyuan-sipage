@@ -250,7 +250,8 @@ export function flowDesk(cols: number) {
   alignPanels(cols, true)
 
 
-  const cards = desk.cards.filter((c) => !c.cardId.startsWith("@"))
+  /* 大卡先放、小卡后补：小卡才有机会塞进大卡留下的空隙 */
+  const cards = desk.cards.filter((c) => !c.cardId.startsWith("@")).sort((a, b) => b.w * b.h - a.w * a.h)
   if (!cards.length) return
 
   /* 时钟底部再空 2 格，卡片从这里开始排 */

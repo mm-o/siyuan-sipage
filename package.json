@@ -1,6 +1,6 @@
 {
   "name": "desk-cards",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "type": "module",
   "description": "思源桌面卡片：自适应卡片（日历 / 天气 / 时钟 / 一言 …）+ iTab 式整理补位",
   "author": "mm-o",

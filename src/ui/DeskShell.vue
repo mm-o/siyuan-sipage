@@ -144,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { GlassButton } from "@/ui/controls"
+import { GlassButton, toast } from "@/ui/controls"
 import { computed, onBeforeUnmount, onMounted, ref, type Component } from "vue"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
@@ -268,6 +268,7 @@ function deskMenu(e: MouseEvent) {
     click: () => {
       normalizeSizes()
       flowDesk(grid.value.cols)
+      toast(`已整理 ${desk.cards.filter((c) => !c.cardId.startsWith("@")).length} 张卡片`)
     },
   })
   menu.addItem({
