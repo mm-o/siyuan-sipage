@@ -24,7 +24,6 @@ icons.ts（无）           品牌标已并入 index.ts
 │  ├─ Sheet.vue          统一弹层（一套结构 + 从 origin FLIP）
 │  ├─ styles/index.css             共享样式（面板骨架 / 按钮 / 控件外观全在这里）
 │  ├─ controls.ts        基础控件 GlassButton·SeriesNav·Segmented·Chips + 纯 DOM 工具 toast/copyText/docColor/docRows
-│  ├─ sizes.ts           尺寸语义层：sizeTier(w,h) → mini|wide|tall|square
 │  ├─ arrange.ts         拖拽 / 缩放状态机（useDeskGrid）
 │  ├─ primitives/Slider.vue   唯一还需要组件文件的控件（拖拽态 + v-model）
 │  └─ settings/          WallpaperPanel | CardsPanel（含卡片库）
@@ -115,7 +114,6 @@ icons.ts（无）           品牌标已并入 index.ts
 | 概念 | 实现 |
 | --- | --- |
 | 实际尺寸 | `CardInstance` 的 `w/h`（格数），桌面壳按视口算出单格像素 |
-| 形状档 | `ui/sizes.ts` 的 `sizeTier(w,h)` → `mini / wide / tall / square`，CardFrame 输出 `is-<tier>` |
 | 大卡 | `isBig()`：面积 ≥ 8 格，用来放大字号、增加行数 |
 | 段落 | `registry.constrain.step`（快捷方式 2 / 统计 3，其余 1） |
 | 容器断点 | 只用五个刻度：120 / 200 / 260 / 460 / 720（`pnpm check:bp` 守卫） |

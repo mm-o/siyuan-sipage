@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.9.1 — 删掉 ui/sizes.ts；修倒计日右侧空白
+
+**倒计日右侧空白（你截图那处）**
+- 根因：矮卡（高 ≤260px）里列表被 `@container (max-height: 260px)` 收起了，
+  但那条规则只隐藏 `.cd-rows`，没把网格的**两列收成一列** → 右半整片白
+- 修法：同一个断点里把 `.cd-body` 也收成一列（和窄卡那份规则一致）
+- 实测：预览 226×113 → hero 224/226 铺满；桌面 日 274×356 → 列表回来（3 行）
+
+**删掉尺寸模块 `ui/sizes.ts`**
+- `sizeTier()` / `isBig()` 只是「宽高比 + 面积」两行判断，各自内联到唯一使用处：
+  - `ui/CardFrame.vue`：算出 `is-<tier>` 与 `is-big` 类名
+  - `cards/countdown/CountdownCard.vue`：算版式表（几行列表）
+- 不做兼容，直接删文件；全仓零残留引用
+
+| 文件 | 变化 |
+| --- | --- |
+| `ui/sizes.ts` | **删除** |
+| `ui/CardFrame.vue` | 内联 7 行形状判断 |
+| `cards/countdown/CountdownCard.vue` | 内联 5 行版式判断 + 修矮卡网格 |
+
+桌面 17 张卡一键整理后 clipped 0；四道门禁全绿。
+
+
 ## v0.9.0 — 尺寸链路一次彻底梳理（删冗余，只留一条路）
 
 **删掉的**

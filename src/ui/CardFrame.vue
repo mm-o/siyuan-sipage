@@ -36,7 +36,6 @@ import { computed, ref } from "vue"
 import { Maximize2, MoreHorizontal } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
-import { isBig, sizeTier } from "@/ui/sizes"
 
 /** preview=true 时只做静态展示（设置里的卡片预览用），不渲染悬浮控件、不弹菜单 */
 const props = defineProps<{ cardId: string; size: string; w: number; h: number; preview?: boolean }>()
@@ -50,9 +49,19 @@ const emit = defineEmits<{
 }>()
 
 const def = getCard(props.cardId)
-/** 形状档（卡片靠它切版式，任何拖拽尺寸都能命中） */
-const tier = computed(() => sizeTier(props.w, props.h))
-const big = computed(() => isBig(props.w, props.h))
+/**
+ * 形状档：宽高比决定 wide / tall / square，面积 ≤2 格算 mini。
+ * 只此一处，不再单开一个 sizes 模块。
+ */
+const tier = computed(() => {
+  const { w, h } = props
+  if (w * h <= 2) return "mini"
+  const ratio = w / h
+  if (ratio >= 1.6) return "wide"
+  if (ratio <= 0.625) return "tall"
+  return "square"
+})
+const big = computed(() => props.w * props.h >= 8)
 /** 纯色面：信息型卡片（日历）对齐 参考实现 的白卡，不吃外观里的不透明度 */
 const solid = def?.surface === "solid"
 /** 控件开关：注册表没写就当全开 */

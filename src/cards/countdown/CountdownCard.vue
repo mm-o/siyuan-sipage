@@ -53,7 +53,6 @@
  *   2x4  主事件 + 5 行
  */
 import { computed } from "vue"
-import { isBig, sizeTier } from "@/ui/sizes"
 import { countdown } from "@/core/store"
 import { categoryOf, coverStyleOf, sortViews, softOf } from "./countdown"
 
@@ -71,11 +70,12 @@ interface Plan {
  * 之前用 "4x2" 这种键，卡片拖成 8x4 就取不到 → 退回默认。
  */
 const plan = computed<Plan>(() => {
-  const t = sizeTier(props.w ?? 4, props.h ?? 2)
-  const big = isBig(props.w ?? 4, props.h ?? 2)
-  if (t === "mini") return { date: false, rows: 0 }
-  if (t === "wide") return { date: true, rows: big ? 3 : 0 }
-  if (t === "tall") return { date: true, rows: big ? 5 : 2 }
+  const w = props.w ?? 4
+  const h = props.h ?? 2
+  const ratio = w / h
+  const big = w * h >= 8
+  if (w * h <= 2) return { date: false, rows: 0 }
+  if (ratio >= 1.6) return { date: true, rows: big ? 3 : 0 }
   return { date: true, rows: big ? 5 : 2 }
 })
 
@@ -326,8 +326,13 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 }
 
 @container (max-height: 260px) {
-  .is-square:not(.is-big) .cd-rows,
-  .is-wide.is-big .cd-rows {
+  /* 矮卡：列表收起，网格同时收成一列，主事件铺满（不留白右半） */
+  .cd-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .cd-rows {
     display: none;
   }
 }
