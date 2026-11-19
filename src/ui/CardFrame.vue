@@ -38,7 +38,8 @@ import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
 import { isBig, sizeTier } from "@/ui/sizes"
 
-const props = defineProps<{ cardId: string; size: string; w: number; h: number }>()
+/** preview=true 时只做静态展示（设置里的卡片预览用），不渲染悬浮控件、不弹菜单 */
+const props = defineProps<{ cardId: string; size: string; w: number; h: number; preview?: boolean }>()
 
 const emit = defineEmits<{
   expand: [DOMRect]
@@ -56,9 +57,9 @@ const big = computed(() => isBig(props.w, props.h))
 const solid = def?.surface === "solid"
 /** 控件开关：注册表没写就当全开 */
 const can = {
-  expand: def?.controls?.expand !== false,
-  menu: def?.controls?.menu !== false,
-  full: def?.controls?.full !== false,
+  expand: !props.preview && def?.controls?.expand !== false,
+  menu: !props.preview && def?.controls?.menu !== false,
+  full: !props.preview && def?.controls?.full !== false,
 }
 const pressed = ref(false)
 const frameRef = ref<HTMLElement>()
@@ -66,12 +67,13 @@ const frameRef = ref<HTMLElement>()
 const rect = (): DOMRect | undefined => frameRef.value?.getBoundingClientRect()
 
 function onClick() {
-  if (!can.expand) return
+  if (!can.expand || props.preview) return
   emit("expand", rect() as DOMRect)
 }
 
 /** 右键与「⋯」共用一套菜单：打开 / 刷新 / 移除（尺寸改由整理模式拖动） */
 function openMenu(e: MouseEvent) {
+  if (props.preview) return
   const menu = new Menu("desk-card")
   menu.addItem({ icon: "iconOpen", label: "打开", click: () => emit("expand", rect() as DOMRect) })
   menu.addItem({ icon: "iconRefresh", label: "刷新", click: () => emit("refresh") })

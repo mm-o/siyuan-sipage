@@ -60,9 +60,14 @@
         <!-- 卡片库：选中卡片的预览 + 张数 + 添加 -->
         <template v-else-if="current === 'library'">
           <div v-if="picked" class="set-card-preview">
-            <component :is="picked.icon" :size="26" :stroke-width="1.6" />
-            <b>{{ picked.name }}</b>
-            <small>{{ picked.desc }}</small>
+            <!-- 真卡片：同一份组件、同一个外框，只是这里不响应点击 -->
+            <div class="set-card-live">
+              <CardFrame :card-id="picked.id" :size="'4x2'" :w="4" :h="2" preview>
+                <component :is="picked.component" size="4x2" :w="4" :h="2" />
+              </CardFrame>
+            </div>
+            <b class="set-card-name">{{ picked.name }}</b>
+            <small class="set-card-desc">{{ picked.desc }}</small>
             <span class="set-count">桌面已有 {{ countOf(picked.id) }} 张</span>
             <button class="set-add" type="button" @click="add(picked.id)">添加到桌面</button>
             <button v-if="countOf(picked.id)" class="set-remove" type="button" @click="removeOne(picked.id)">
@@ -97,6 +102,7 @@ import { computed, ref, watch } from "vue"
 import { getFrontend } from "siyuan"
 import { Grid2x2, Image as ImageIcon, Info, SlidersHorizontal } from "lucide-vue-next"
 import { Settings as SettingsIcon } from "lucide-vue-next"
+import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
 import WallpaperPanel from "./WallpaperPanel.vue"
 import CardsPanel from "./CardsPanel.vue"
@@ -333,25 +339,30 @@ function resetAll() {
 .set-card-preview {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--desk-sp-1);
-  padding: var(--desk-sp-4) var(--desk-sp-3);
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-md);
-  background: color-mix(in srgb, var(--desk-text) 4%, transparent);
-  text-align: center;
 }
 
-.set-card-preview b {
+/* 真卡片的画布：4:2 的比例，卡片在里面按 cqmin 自适应 */
+.set-card-live {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  overflow: hidden;
+}
+
+.set-card-name {
   margin-top: var(--desk-sp-1);
   font-size: var(--desk-fs-body);
   font-weight: 600;
+  text-align: center;
 }
 
-.set-card-preview small {
+.set-card-desc {
   font-size: var(--desk-fs-caption);
   line-height: 1.5;
   color: var(--desk-text-3);
+  text-align: center;
 }
 
 .set-count {
