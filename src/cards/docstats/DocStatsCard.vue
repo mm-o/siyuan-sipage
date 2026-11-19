@@ -1,6 +1,6 @@
 <template>
   <div class="ds">
-    <svg class="pie desk-seq" viewBox="0 0 200 200" preserveAspectRatio="none" role="img" aria-label="文档统计">
+    <svg class="pie desk-seq" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="文档统计">
       <defs>
         <linearGradient id="ds-a" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="hsl(212 92% 58%)" />
@@ -96,6 +96,10 @@ onMounted(() => {
 }
 
 .pie {
+  aspect-ratio: 1;
+  height: 100%;
+  max-height: 100%;
+  margin: 0 auto;
   display: block;
   width: 100%;
   height: 100%;

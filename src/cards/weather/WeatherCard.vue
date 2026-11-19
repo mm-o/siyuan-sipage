@@ -187,7 +187,7 @@ function weekOf(date: string, i: number) {
   }
 }
 
-@container (min-width: 260px) {
+@container (min-width: 200px) {
   .days {
     display: grid;
   }

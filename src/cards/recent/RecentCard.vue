@@ -31,7 +31,15 @@ const props = defineProps<{ size?: string; w?: number; h?: number }>()
 
 const list = ref<PickDoc[]>([])
 const rowsMax = computed(() => Math.max(1, Math.floor(props.h ?? 2)))
-const rows = docRows(list, computed(() => props.h))
+const rows = docRows(
+  list,
+  computed(() => {
+    const h = props.h ?? 2
+    const w = props.w ?? 4
+    /* 行数 = 高度 + 2（留一行给「更多」），夹在 3~6 行 */
+    return Math.min(6, Math.max(3, Math.floor(h) + 2))
+  }),
+)
 
 /** 有文档 → 打开文档并阻止冒泡；「更多」→ 放行，冒泡到卡片打开详情 */
 function onRow(doc: { id?: string } | undefined, e: MouseEvent) {

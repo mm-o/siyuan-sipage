@@ -1,6 +1,6 @@
 <template>
   <div class="cd-card" :class="`is-${size}`">
-    <div class="cd-body">
+    <div class="cd-body" :class="{ 'no-rows': !rows.length }">
       <template v-if="hero">
         <!-- 主事件：封面 + 标题 + 还剩/已经 + 大数字（对齐 参考实现 的 .dma-hero） -->
         <article class="cd-hero" :style="{ backgroundImage: coverStyleOf(hero.event) }">
@@ -300,6 +300,11 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
   column-gap: clamp(6px, 2.4cqw, 14px);
 }
 
+/* 没有更多事件时，主事件铺满整张卡（不留白右半） */
+.cd-body.no-rows {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* 竖卡：主事件在上、5 行在下 */
 .is-tall .cd-body {
   grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -309,6 +314,12 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 /* 尺寸档只说明「几格」，像素大小由桌面上的卡片数决定：6~7 张卡时单格只有 ~70px，
    2x2 实际 152×152 —— 再塞两行列表会把标题和数字挤重叠，所以小块只留主事件（等于 1x1 的信息量）。 */
 @container (max-width: 260px) {
+  /* 列表在小卡里被收起，网格同时收成一列，主事件铺满 */
+  .cd-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
   .cd-rows {
     display: none;
   }
