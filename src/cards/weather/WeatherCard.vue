@@ -237,8 +237,8 @@ function weekOf(date: string, i: number) {
   }
 }
 
-/* 形态分界点：够高（≥250px）才长逐时那一行，保证上/中/下三块都放得下 */
-@container (min-height: 250px) {
+/* 形态分界点：够高（≥260px）才长逐时那一行，保证上/中/下三块都放得下 */
+@container (min-height: 260px) {
   .hours {
     display: grid;
   }
