@@ -18,7 +18,8 @@
     "dev:card": "vite build --config vite.dev.config.ts",
     "check:dist": "node tools/verify/check-dist.mjs",
     "check:arch": "node tools/verify/check-arch.mjs",
-    "dev:reload": "vite build && node tools/reload.mjs --token bct45z7gltevi22s"
+    "dev:reload": "vite build && node tools/reload.mjs --token bct45z7gltevi22s",
+    "release:ship": "bash release-ship.sh"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.8.1",
