@@ -1,5 +1,5 @@
 <template>
-<aside class="cd-card cd-detail desk-pane is-right">
+<div class="cd-detail-inner">
   <!-- 编辑表单 -->
   <form v-if="editing" class="cd-form" @submit.prevent="save">
     <button class="cd-back" type="button" @click="backToList">
@@ -104,7 +104,7 @@
     <CalendarDays :size="28" :stroke-width="1.6" />
     <p>选择事件查看详情</p>
   </div>
-</aside>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -171,7 +171,7 @@ const togglePinned = (id: string) => emit("pin", id)
 </script>
 
 <style scoped>
-  .cd-detail {
+  .cd-detail-inner {
   flex: 0 0 300px;
   width: 300px;
   display: flex;

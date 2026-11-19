@@ -87,7 +87,8 @@
       </section>
 
       <!-- 右：详情 / 编辑 -->
-      <CountdownDetail
+      <aside class="cd-card cd-detail desk-pane is-right">
+        <CountdownDetail
         :current="current"
         :editing="editing"
         v-model:draft="draft"
@@ -98,8 +99,9 @@
         @cancel="cancelEdit"
         @edit="startEdit"
         @remove="removeSelected"
-        @pin="togglePinned"
-      />
+          @pin="togglePinned"
+        />
+      </aside>
     </div>
   </div>
 </template>

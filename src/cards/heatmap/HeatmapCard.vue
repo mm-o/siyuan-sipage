@@ -100,14 +100,15 @@ interface Plan {
 }
 
 /** 版式：形状档只决定「显示哪些块」，其余字段沿用默认 */
+/** 基准：一年 53 周恒定，档位只决定显示哪些块 */
 const PLAN_BASE: Plan = { weeks: 53, caption: true, months: true, legend: true, figures: true }
 
 const plan = computed<Plan>(() => {
   const tier = sizeTier(props.w ?? 4, props.h ?? 2)
   const base: Plan = { ...PLAN_BASE }
-  if (tier === "wide") return { ...base, weeks: 26, months: false }
+  if (tier === "wide") return { ...base, months: false }
   if (tier === "tall") return { ...base, months: true, figures: true }
-  if (tier === "mini") return { ...base, weeks: 13, months: false, legend: false, figures: false, caption: false }
+  if (tier === "mini") return { ...base, months: false, legend: false, figures: false, caption: false }
   return { ...base, months: true }
 })
 
