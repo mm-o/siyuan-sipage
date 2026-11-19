@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue"
-import { persisted } from "@/core/persist"
+import { persisted } from "@/core/store"
 
 type Phase = "focus" | "rest"
 

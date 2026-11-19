@@ -28,7 +28,7 @@ export function mountProtyle(app: unknown, element: HTMLElement, blockId: string
   }
 }
 
-import { persisted } from "@/core/persist"
+import { persisted } from "@/core/store"
 
 /** 卡片/弹窗共用：只记「显示哪个块」和它的标题 */
 export const blockState = persisted("desk:block", { id: "", title: "" })

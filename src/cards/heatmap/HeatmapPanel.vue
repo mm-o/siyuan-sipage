@@ -110,7 +110,6 @@
  */
 import { computed, ref } from "vue"
 import { buildGrid, buildStats, recentActive, splitGrid, useHeatmap, WEEKS_YEAR } from "./heatmap"
-import { todayKey } from "@/core/dates"
 import "./styles.css"
 
 /** 详情固定看一年（53 周），和卡片上的「近 N 周」无关 */
@@ -143,7 +142,7 @@ const weekdayOf = (date: string) => {
 const rangeText = computed(() => {
   if (!counts.value) return "近 53 周"
   const first = grid.value.weeks[0]?.[0]?.date ?? ""
-  return `${first} → ${todayKey()}`
+  return `${first} → ${new Date().toLocaleDateString("sv-SE")}`
 })
 </script>
 

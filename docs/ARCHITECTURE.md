@@ -8,14 +8,13 @@
 index.ts                 入口（页签 / 顶栏 / 命令 / 内嵌启动 / 品牌标）
 icons.ts（无）           品牌标已并入 index.ts
 
-├─ core/                 与 UI 无关的骨架（只放「多卡共用」的东西）
+├─ core/                 与 UI 无关的骨架（5 个文件）
 │  ├─ registry.ts        CardDef + CardSize + 15 张卡的注册（唯一扩展点）
-│  ├─ store.ts           状态唯一真源：壁纸 / 桌面卡片 / 外观 / 天气地点 / 倒数日 + petal 读写 + 排版
-│  ├─ sizes.ts           尺寸语义层：sizeTier(w,h) → mini|wide|tall|square，isBig(面积≥8)
-│  ├─ cache.ts           本机缓存唯一入口（desk-cache: 命名空间 + TTL，只存派生数据）
-│  ├─ persist.ts         老 localStorage 键 → petal 的一次性迁移
-│  ├─ image.ts           图片与跨域请求唯一入口（forwardProxy，天气/文档统计也用）
-│  ├─ dates.ts           日期换算（日期键 / 天数差 / 下一次）
+│  ├─ store.ts           状态 + 存储 + 缓存 + 排版：
+│  │                     用户状态 → 思源 petal；派生缓存 → localStorage(desk-cache:)；
+│  │                     旧键迁移、flowDesk / alignPanels 也在这里
+│  ├─ image.ts           图片与跨域请求唯一入口（forwardProxy）
+│  ├─ daily.ts           每日内容序列（三张照片卡共用）
 │  └─ quickdocs.ts       快速打开用的文档索引
 │
 ├─ ui/                   设计系统（9 个文件）
@@ -25,6 +24,7 @@ icons.ts（无）           品牌标已并入 index.ts
 │  ├─ Sheet.vue          统一弹层（一套结构 + 从 origin FLIP）
 │  ├─ ui.css             共享样式（面板骨架 / 按钮 / 控件外观全在这里）
 │  ├─ controls.ts        基础控件 GlassButton·SeriesNav·Segmented·Chips + 纯 DOM 工具 toast/copyText/docColor/docRows
+│  ├─ sizes.ts           尺寸语义层：sizeTier(w,h) → mini|wide|tall|square
 │  ├─ arrange.ts         拖拽 / 缩放状态机（useDeskGrid）
 │  ├─ primitives/Slider.vue   唯一还需要组件文件的控件（拖拽态 + v-model）
 │  └─ settings/          WallpaperPanel | CardsPanel（含卡片库）
@@ -46,7 +46,7 @@ icons.ts（无）           品牌标已并入 index.ts
 ## 二、六条硬规则
 
 1. **卡片目录不得 import 另一张卡片**
-   `core/` 只放**多张卡共用**的骨架：日期工具、农历、图片、每日内容序列、状态、注册表。
+   `core/` 只放**多张卡共用**的骨架：状态与存储、图片出口、每日内容序列、文档索引、注册表。
    只有一张卡用的算法（月视图 / 节气 / 节日 / 星座 / 月相 / 干支日）放它自己的目录
    （`cards/calendar/calendar-data.ts`）。`cards/` 只依赖 `core/` 和 `ui/`。
 
@@ -115,7 +115,7 @@ icons.ts（无）           品牌标已并入 index.ts
 | 概念 | 实现 |
 | --- | --- |
 | 实际尺寸 | `CardInstance` 的 `w/h`（格数），桌面壳按视口算出单格像素 |
-| 形状档 | `core/sizes.ts` 的 `sizeTier(w,h)` → `mini / wide / tall / square`，CardFrame 输出 `is-<tier>` |
+| 形状档 | `ui/sizes.ts` 的 `sizeTier(w,h)` → `mini / wide / tall / square`，CardFrame 输出 `is-<tier>` |
 | 大卡 | `isBig()`：面积 ≥ 8 格，用来放大字号、增加行数 |
 | 锁定比例 | `registry.constrain.ratios`（日历/天气锁 2:1，8×4 / 10×5 / 12×6 等比放大不变形） |
 | 容器断点 | 只用五个刻度：120 / 200 / 260 / 460 / 720（`pnpm check:bp` 守卫） |
@@ -170,13 +170,14 @@ const tier = sizeTier(props.w ?? 4, props.h ?? 2)   // 版式分支
 
 功能增量：每日英语 / 每日诗词的详情现在也有「上一条 / 下一条」（英语用本地 24 句句库循环，诗词按 `?date=` 走前一天/后一天）。
 
-## 五、数据保存（`core/persist.ts`）
+## 五、存储层（`core/store.ts`）
 
 状态存**思源的插件存储**，不存 localStorage：
 
 | | 走哪儿 | 说明 |
 | --- | --- | --- |
 | 读 | `plugin.loadData(key)` | `bootStore()` 里 await 一次，**直接赋给 reactive**，不存副本 |
+| 缓存 | `cacheGet/cacheSet`（本文件内） | 只有派生数据（天气、区县索引）落 localStorage，命名空间 `desk-cache:`，读失败当没有 |
 | 写 | `plugin.saveData(key, value)` | 状态一变就写（滑轨这类高频变化合并 100ms，只合并请求、不缓存数据） |
 | 落地 | `<工作空间>/data/storage/petal/desk-cards/{desk,wallpaper,appearance}` | 重启、换设备同步都在；键名会变成文件名，不能带冒号 |
 

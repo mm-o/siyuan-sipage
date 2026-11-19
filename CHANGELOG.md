@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.2 — core 收敛：尺寸归设计层，存储/缓存/日期归位（core 8 → 5 文件）
+
+- `core/sizes.ts` → **`ui/sizes.ts`**：尺寸语义属于设计系统（和断点刻度、`is-<tier>` 同一层）
+- `core/persist.ts` + `core/cache.ts` → 合入 **`core/store.ts`**：存储层只有一个入口
+  （用户状态走 petal、派生缓存走 `desk-cache:`、旧键迁移也在同一段），8 处引用同步
+- `core/dates.ts` 删除：只有倒数日与热力图用，按用途就地化
+  - 倒数日的 6 个换算留在 `countdown.ts`（农历换算本来就是 tyme4ts）
+  - 热力图只要日期键，就地两行（`dayKey`/`parseDay`）
+- `src/core` 从 8 个文件收敛到 **5 个**：registry / store / image / daily / quickdocs
+
 ## v0.6.1 — ui 层合并 + 真实类型检查
 
 - **类型检查换成 `vue-tsc`**：删掉 `src/shims.d.ts`（此前它把 `.vue` 声明成 any，等于没检查）。

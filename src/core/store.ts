@@ -372,7 +372,73 @@ export function selectWeatherPlace(id: string) {
   weather.activeId = id
 }
 
-/* ── 启动 ─────────────────────────────────────────────── */
+/* ═══ 存储层（唯一入口）════════════════════════════════════
+ * 用户状态 → 思源 petal（plugin.loadData/saveData）
+ * 派生缓存 → localStorage（desk-cache: 命名空间，可丢可重建）
+ * 旧键迁移 → 见下方 mergeLegacy
+ */
+
+/* ── 派生缓存（唯一允许落 localStorage 的地方）── */
+const CACHE_NS = "desk-cache:"
+
+export function cacheGet<T>(key: string, ttl = 0): T | null {
+  try {
+    const raw = localStorage.getItem(CACHE_NS + key)
+    if (!raw) return null
+    const box = JSON.parse(raw) as { at: number; v: T }
+    if (ttl && Date.now() - box.at > ttl) return null
+    return box.v
+  } catch {
+    return null
+  }
+}
+
+export function cacheSet(key: string, value: unknown) {
+  try {
+    localStorage.setItem(CACHE_NS + key, JSON.stringify({ at: Date.now(), v: value }))
+  } catch {
+    /* 配额满就算了：缓存只是加速 */
+  }
+}
+
+/* ── 旧键迁移（老的 localStorage 键 → petal，一次性）── */
+/**
+ * 卡片自己的持久化：一个 reactive 对象 + 自动落盘（100ms 合并由 storage 的写入节奏兜住）。
+ * 只给「几张卡各自的偏好/清单」用；桌面布局、外观这些仍然在 `core/store.ts` 里。
+ */
+export function persisted<T extends object>(key: string, defaults: T): T {
+  const read = (): T => {
+    try {
+      const raw = localStorage.getItem(key)
+      if (!raw) return { ...defaults }
+      const data = JSON.parse(raw) as Partial<T>
+      return { ...defaults, ...data }
+    } catch {
+      return { ...defaults }
+    }
+  }
+
+  const state = reactive(read()) as T
+  let timer = 0
+  watch(
+    state,
+    () => {
+      if (timer) return
+      timer = window.setTimeout(() => {
+        timer = 0
+        try {
+          localStorage.setItem(key, JSON.stringify(state))
+        } catch {
+          /* 配额满了就算了，卡片还能用 */
+        }
+      }, 150)
+    },
+    { deep: true },
+  )
+  return state
+}
+
+/* ── 启动 ── */
 export async function bootStore() {
   if (G.__deskBooted) return
   G.__deskBooted = true

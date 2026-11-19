@@ -36,7 +36,7 @@ import { computed, ref } from "vue"
 import { Maximize2, MoreHorizontal } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
-import { isBig, sizeTier } from "@/core/sizes"
+import { isBig, sizeTier } from "@/ui/sizes"
 import "@/styles/index.css"
 
 const props = defineProps<{ cardId: string; size: string; w: number; h: number }>()

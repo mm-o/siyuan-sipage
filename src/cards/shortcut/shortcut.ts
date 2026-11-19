@@ -4,7 +4,7 @@ import {
   Database, Ellipsis, Eye, FileText, Inbox, Layers, LayoutGrid, Link, List, Maximize,
   Menu, Network, PanelLeft, RefreshCw, ScrollText, Search, Settings, Sun, Tag, Terminal, ZoomIn,
 } from "lucide-vue-next"
-import { persisted } from "@/core/persist"
+import { persisted } from "@/core/store"
 
 /**
  * 快捷方式：优先复用思源图标 sprite（`#iconXxx`）与它自己的按钮，

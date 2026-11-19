@@ -9,7 +9,15 @@
  * 只做纯计算与一次查询，不碰 DOM、不落盘。
  */
 import { onMounted, ref } from "vue"
-import { dayKey, parseDay, todayKey } from "@/core/dates"
+
+/* ── 日期键（本地时区，避免 toISOString 把日期挪一天）── */
+const pad = (n: number) => String(n).padStart(2, "0")
+const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+const parseDay = (key: string) => {
+  const [y, m, d] = key.split("-").map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
+
 
 interface HeatDay {
   /** YYYY-MM-DD */
@@ -45,12 +53,11 @@ interface HeatStats {
 /** 一年 53 周（GitHub 同款窗口） */
 export const WEEKS_YEAR = 53
 
-const pad = (n: number) => String(n).padStart(2, "0")
 const keyOfYmd = (ymd: string) => `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`
 const ymdOf = (date: string) => date.replace(/-/g, "")
 
 /** 窗口起点：从「今天所在周的周日」往前推 weeks 周 */
-function windowStart(weeks: number, today = todayKey()) {
+function windowStart(weeks: number, today = new Date().toLocaleDateString("sv-SE")) {
   const end = parseDay(today)
   end.setDate(end.getDate() + (7 - ((end.getDay() + 6) % 7) - 1))
   end.setDate(end.getDate() - (weeks * 7 - 1))
@@ -111,7 +118,7 @@ function levelOf(count: number, cuts: number[]) {
 const MONTH_LABEL = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
 
 /** 拼成「weeks 列 × 7 天（周一开始）」的网格 + 顶部月份标签 */
-export function buildGrid(counts: Map<string, number>, weeks: number, today = todayKey()): HeatGrid {
+export function buildGrid(counts: Map<string, number>, weeks: number, today = new Date().toLocaleDateString("sv-SE")): HeatGrid {
   const start = windowStart(weeks, today)
   const cuts = levelsOf(counts)
   const cursor = parseDay(start)
@@ -140,7 +147,7 @@ export function buildGrid(counts: Map<string, number>, weeks: number, today = to
 }
 
 /** 关键数字：活跃天数 / 当前连续 / 最长连续 / 最活跃的一天 */
-export function buildStats(counts: Map<string, number>, weeks: number, today = todayKey()): HeatStats {
+export function buildStats(counts: Map<string, number>, weeks: number, today = new Date().toLocaleDateString("sv-SE")): HeatStats {
   const start = windowStart(weeks, today)
   const days: HeatDay[] = []
   const cursor = parseDay(start)

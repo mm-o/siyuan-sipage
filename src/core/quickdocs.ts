@@ -10,7 +10,7 @@ function getApp(): any {
 }
 
 import { computed } from "vue"
-import { persisted } from "@/core/persist"
+import { persisted } from "@/core/store"
 
 export interface PickDoc {
   id: string

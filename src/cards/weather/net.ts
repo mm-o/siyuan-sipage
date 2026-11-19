@@ -3,7 +3,7 @@
  *
  * 只有这里发请求；卡片、详情、定位都从 useWeather() 拿数据。
  */
-import { cacheGet, cacheSet } from "@/core/cache"
+import { cacheGet, cacheSet } from "@/core/store"
 import { forwardProxy } from "@/core/image"
 import type { WeatherPlace } from "@/core/store"
 import { cnCode } from "./codes"

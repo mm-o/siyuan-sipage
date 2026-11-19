@@ -1,5 +1,5 @@
 import { computed } from "vue"
-import { persisted } from "@/core/persist"
+import { persisted } from "@/core/store"
 
 interface MemoItem {
   id: string

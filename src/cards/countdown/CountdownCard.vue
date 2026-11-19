@@ -53,7 +53,7 @@
  *   2x4  主事件 + 5 行
  */
 import { computed } from "vue"
-import { isBig, sizeTier } from "@/core/sizes"
+import { isBig, sizeTier } from "@/ui/sizes"
 import { countdown } from "@/core/store"
 import { categoryOf, coverStyleOf, sortViews, softOf } from "./countdown"
 

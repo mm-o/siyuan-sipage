@@ -1,3 +1,4 @@
+import { LunarDay, SolarDay } from "tyme4ts"
 /**
  * 倒数日的数据与算法（卡片与详情共用）
  *
@@ -7,7 +8,6 @@
 import type { Component } from "vue"
 import { Briefcase, Flag, Gift, Heart, House, LayoutGrid, Target } from "lucide-vue-next"
 import { COVERS } from "@/core/image"
-import { dayDiff, lunarParts, nextLunarKey, nextSolarKey, parseDay, todayKey } from "@/core/dates"
 import type { CountdownCategory, CountdownEvent } from "@/core/store"
 
 /** 分类（`all` 只用于筛选，不写进事件） */
@@ -195,4 +195,52 @@ export function blankDraft(category: CountdownCategory = "anniversary"): Omit<Co
 /** 校验：标题必填、日期必须是 YYYY-MM-DD */
 export function draftValid(draft: Omit<CountdownEvent, "id">) {
   return draft.title.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(draft.date)
+}
+
+/* ── 日期换算（原 core/dates.ts：只有倒数日与热力图用，就留在用它的卡里）── */
+const pad = (n: number) => String(n).padStart(2, "0")
+
+/** Date → 本地日期键 YYYY-MM-DD（不用 toISOString，避免时区把日期挪一天） */
+export function dayKey(date: Date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+export const todayKey = () => dayKey(new Date())
+
+/** YYYY-MM-DD → 本地零点 Date */
+export function parseDay(key: string) {
+  const [y, m, d] = key.split("-").map(Number)
+  return new Date(y, (m || 1) - 1, d || 1)
+}
+
+/** 天数差（目标 − 起点，未来为正）：本地零点相减再取整，绕开夏令时 */
+export function dayDiff(target: string, from = todayKey()) {
+  const ms = parseDay(target).getTime() - parseDay(from).getTime()
+  return Math.round(ms / 86_400_000)
+}
+
+/** 公历固定日（如 10-01）：今年没过就今年，过了就明年 */
+export function nextSolarKey(month: number, day: number, from = todayKey()) {
+  const year = parseDay(from).getFullYear()
+  const thisYear = `${year}-${pad(month)}-${pad(day)}`
+  return thisYear >= from ? thisYear : `${year + 1}-${pad(month)}-${pad(day)}`
+}
+
+/** 农历固定日（如 正月初一）：今年没过就今年，过了就明年（多试一年兜住腊月跨年） */
+export function nextLunarKey(month: number, day: number, from = todayKey()) {
+  const year = parseDay(from).getFullYear()
+  let best = ""
+  for (const y of [year, year + 1, year + 2]) {
+    const solar = LunarDay.fromYmd(y, month, day).getSolarDay()
+    const key = `${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`
+    if (key >= from && (!best || key < best)) best = key
+  }
+  return best
+}
+
+/** 公历日期 → 它的农历月/日（「每年按农历重复」用） */
+export function lunarParts(solarKey: string) {
+  const [y, m, d] = solarKey.split("-").map(Number)
+  const lunar = SolarDay.fromYmd(y, m, d).getLunarDay()
+  return { month: lunar.getMonth(), day: lunar.getDay() }
 }

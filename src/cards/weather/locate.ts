@@ -1,7 +1,7 @@
 /**
  * 定位与地点搜索：区县级精确定位 + 国内区县索引 + 国际地理编码
  */
-import { cacheGet, cacheSet } from "@/core/cache"
+import { cacheGet, cacheSet } from "@/core/store"
 import { forwardProxy } from "@/core/image"
 import { placeId, type WeatherPlace } from "@/core/store"
 

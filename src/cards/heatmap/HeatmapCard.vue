@@ -84,7 +84,7 @@
  *   2x4  26 周网格 + 标题 + 月份标签 + 两句统计
  */
 import { computed } from "vue"
-import { sizeTier } from "@/core/sizes"
+import { sizeTier } from "@/ui/sizes"
 import { buildGrid, buildStats, splitGrid, useHeatmap } from "./heatmap"
 import "./styles.css"
 
