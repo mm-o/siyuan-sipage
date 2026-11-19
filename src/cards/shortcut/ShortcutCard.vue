@@ -39,6 +39,7 @@ import { computed, onMounted, ref } from "vue"
 import { Ellipsis } from "lucide-vue-next"
 import { randomCoverUrl } from "@/core/image"
 import { slotGrid } from "@/ui/controls"
+import { getCard } from "@/core/registry"
 import { enabledShortcuts, runShortcut, useSprite, type Shortcut } from "./shortcut"
 
 const props = defineProps<{ size?: string; w?: number; h?: number }>()
@@ -51,7 +52,8 @@ onMounted(() => {
 })
 
 const sprite = useSprite()
-const g = computed(() => slotGrid(props.w, props.h))
+/* 段落取自注册表（快捷方式 = 2）：一个图标占 2×2 格 */
+const g = computed(() => slotGrid(props.w, props.h, getCard("shortcut")?.constrain?.step ?? 2))
 /* 内容占前 count−1 个槽位，末位留给「打开卡片」 */
 const items = computed<Shortcut[]>(() => enabledShortcuts().slice(0, Math.max(0, g.value.count - 1)))
 const blanks = computed(() => Math.max(0, g.value.count - items.value.length - 1))

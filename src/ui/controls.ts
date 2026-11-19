@@ -5,7 +5,6 @@
  * 图标一律 lucide（stroke 1.7），不自绘 SVG。
  */
 import { computed, h, onBeforeUnmount, onMounted, ref, type Component, type Ref } from "vue"
-import { TILE } from "@/core/registry"
 import { ChevronLeft, ChevronRight } from "lucide-vue-next"
 
 /* ── 圆形毛玻璃按钮（全项目唯一的圆形控件，只有 28 一档） ── */
@@ -135,13 +134,13 @@ export function useTheme(): Ref<Theme> {
  *   2×2 → 1 个；4×4 → 4 个；6×6 → 9 个；任意尺寸按 floor(w/2) × floor(h/2)。
  */
 /**
- * 槽位网格：一个槽位占 TILE×TILE 格，与拼图、尺寸约束共用同一个令牌。
- *   3×3 → 1 个；6×2 → 2 个；6×9 → 6 个；12×12 → 16 个（上限 12）
+ * 槽位网格：一个槽位占「这张卡的段落」格数（快捷方式 = 2 → 2×2 格一个图标）。
+ * 段落由注册表的 constrain.step 声明，这里只做除法。
  */
-export function slotGrid(w = TILE, h = TILE) {
-  const cols = Math.max(1, Math.floor(w / TILE))
-  const rows = Math.max(1, Math.floor(h / TILE))
-  return { cols, rows, count: Math.min(12, cols * rows) }
+export function slotGrid(w = 2, h = 2, step = 2) {
+  const cols = Math.max(1, Math.floor(w / step))
+  const rows = Math.max(1, Math.floor(h / step))
+  return { cols, rows, count: Math.min(16, cols * rows) }
 }
 
 /* ── 文档列表配色（移植 Neo 1.8.3 的「彩色」取色法）────────────

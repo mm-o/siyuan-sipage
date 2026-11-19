@@ -165,12 +165,10 @@ const tag = computed(
  */
 const pv = computed(() => {
   const c = picked.value?.constrain
-  const w = c?.step ? c.step * 2 : 6
-  if (c?.ratios?.length) {
-    const ratio = c.ratios[0]
-    return { w, h: Math.max(1, Math.round(w / ratio)) }
-  }
-  if (c?.step) return { w, h: c.step }
+  /* 段落卡：两段（快捷方式 2 → 4×2；统计 3 → 6×3）*/
+  if (c?.step && c.step > 1) return { w: c.step * 2, h: c.step }
+  /* 比例卡：6 宽按比例（2:1 → 6×3）*/
+  if (c?.ratios?.length) return { w: 6, h: Math.max(1, Math.round(6 / c.ratios[0])) }
   return { w: 4, h: 2 }
 })
 

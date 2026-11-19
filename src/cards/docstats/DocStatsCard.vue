@@ -64,6 +64,7 @@
  *   因此永远铺满、没有空格，缝也是天然的拼图缝。
  */
 import { computed, onMounted } from "vue"
+import { getCard } from "@/core/registry"
 import { compact, loadDocStats, stats } from "./docstats"
 
 type P = [number, number]
@@ -120,9 +121,11 @@ const dims = computed(() => {
 const grid = computed(() => {
   const w = props.w ?? 6
   const h = props.h ?? 6
+  /* 段落取自注册表（统计 = 3）：一块拼图占 3×3 格 */
+  const UNIT = getCard("docstats")?.constrain?.step ?? 3
   /* 一块拼图占 3×3 格：3×3 一块、6×6 四块、6×9 六块、9×9 九块 */
-  let cols = Math.min(4, Math.max(1, Math.floor(w / 3)))
-  let rows = Math.min(4, Math.max(1, Math.floor(h / 3)))
+  let cols = Math.min(4, Math.max(1, Math.floor(w / UNIT)))
+  let rows = Math.min(4, Math.max(1, Math.floor(h / UNIT)))
   /* 上限 12 块：再多就太小，在 12 的因数里挑最贴合卡面比例的一组 */
   if (cols * rows > 12) {
     const a = w / h

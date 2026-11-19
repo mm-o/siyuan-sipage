@@ -83,9 +83,6 @@ interface CardDef {
   detailSize?: { width: string; height: string }
 }
 
-/** 段落式尺寸的基准：一块内容占几格（文档统计的拼图、快捷方式的图标都用它） */
-export const TILE = 3
-
 export const CARDS: CardDef[] = [
   {
     id: "clock",
@@ -104,7 +101,7 @@ export const CARDS: CardDef[] = [
     component: CalendarCard,
     icon: CalendarDays,
     detail: CalendarPanel,
-    constrain: { ratios: [2, 1], min: 2, max: 16 },
+    constrain: { ratios: [2, 1], step: 1, min: 2, max: 16 },
     // 参考实现 的日历是白卡（--bg-card: #fff / #222），不是玻璃
     surface: "solid",
   },
@@ -136,7 +133,7 @@ export const CARDS: CardDef[] = [
     component: WeatherCard,
     icon: CloudSun,
     detail: WeatherPanel,
-    constrain: { ratios: [2, 1], min: 2, max: 16 },
+    constrain: { ratios: [2, 1], step: 1, min: 2, max: 16 },
   },
   {
     id: "countdown",
@@ -190,7 +187,7 @@ export const CARDS: CardDef[] = [
     icon: BarChart3,
     detail: DocStatsPanel,
     detailSize: { width: "min(980px, 93vw)", height: "min(560px, 84vh)" },
-    constrain: { step: TILE, min: TILE, max: 12 },
+    constrain: { step: 3, min: 3, max: 12 },
     surface: "solid",
   },
   {
@@ -223,7 +220,7 @@ export const CARDS: CardDef[] = [
     icon: Zap,
     detail: ShortcutPanel,
     controls: { menu: false, full: false },
-    constrain: { step: TILE, min: TILE, max: 12 },
+    constrain: { step: 2, min: 2, max: 16 },
     detailSize: { width: "min(720px, 92vw)", height: "min(520px, 82vh)" },
     surface: "solid",
   },
@@ -238,6 +235,9 @@ export const CARDS: CardDef[] = [
     surface: "solid",
   },
 ]
+
+/** 这张卡的段落（步长）：没声明就是 1，即只受比例/范围约束 */
+export const stepOf = (id: string) => getCard(id)?.constrain?.step ?? 1
 
 export function getCard(id: string): CardDef | undefined {
   return CARDS.find((c) => c.id === id)
