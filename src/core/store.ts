@@ -57,7 +57,7 @@ function save(key: string, value: unknown) {
   )
 }
 
-const G = globalThis as unknown as Record<string, unknown>
+const G = globalThis as unknown as Record<string, any>
 
 /* ── 壁纸 ─────────────────────────────────────────────── */
 interface WallpaperState {

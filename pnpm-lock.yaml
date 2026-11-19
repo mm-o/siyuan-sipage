@@ -42,6 +42,9 @@ importers:
       siyuan:
         specifier: 1.1.0
         version: 1.1.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vite:
         specifier: ^6.4.6
         version: 6.4.6(@types/node@20.19.43)(jiti@1.21.7)(sass@1.108.2)(yaml@2.9.1)

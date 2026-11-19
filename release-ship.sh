@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# 发版：pnpm release:ship "说明"   →  build → commit → tag vX.Y.Z → push → GitHub Release
+# 发版：pnpm release:ship "说明"   → 类型/产物/分层三道门禁 → build → commit → tag → push → Release
 set -euo pipefail
 MSG="${1:-}"
 VER=$(node -p "require('./package.json').version")
 [ -z "$MSG" ] && MSG="v$VER"
+pnpm check:types
+pnpm check:dist
+pnpm check:arch
 pnpm build
 git add -A
 git commit -m "chore(release): v$VER — $MSG" || echo "（无改动）"

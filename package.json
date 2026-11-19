@@ -1,6 +1,6 @@
 {
   "name": "desk-cards",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "type": "module",
   "description": "思源桌面卡片：自适应卡片（日历 / 天气 / 时钟 / 一言 …）+ iTab 式整理补位",
   "author": "mm-o",
@@ -22,7 +22,8 @@
     "check:dist": "node tools/verify/check-dist.mjs",
     "check:arch": "node tools/verify/check-arch.mjs",
     "dev:reload": "vite build && node tools/reload.mjs --token bct45z7gltevi22s",
-    "release:ship": "bash release-ship.sh"
+    "release:ship": "bash release-ship.sh",
+    "check:types": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.8.1",
@@ -38,7 +39,8 @@
     "vite": "^6.4.6",
     "vite-plugin-static-copy": "^0.15.0",
     "vite-plugin-zip-pack": "^1.0.5",
-    "vue": "^3.5.45"
+    "vue": "^3.5.45",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "tyme4ts": "^1.5.6"

@@ -33,7 +33,7 @@ export default class DeskCardsPlugin extends Plugin {
   public isLocal: boolean
   public isElectron: boolean
   public isInWindow: boolean
-  public platform: SyFrontendTypes
+  public platform: ReturnType<typeof getFrontend>
   public readonly version = version
 
   async onload() {

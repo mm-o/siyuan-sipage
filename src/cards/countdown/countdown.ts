@@ -4,7 +4,8 @@
  * 取值对齐 参考实现 的 daysMatter：分类名/颜色、还剩·已经 的文案、日/周/月/年 四种单位、
  * 「不重复 / 每年」两种重复方式。这里只做「事件 → 显示数字」的纯计算，不碰 DOM、不发请求。
  */
-import { Briefcase, Flag, Gift, Heart, House, LayoutGrid, Target, type Component } from "lucide-vue-next"
+import type { Component } from "vue"
+import { Briefcase, Flag, Gift, Heart, House, LayoutGrid, Target } from "lucide-vue-next"
 import { COVERS } from "@/core/image"
 import { dayDiff, lunarParts, nextLunarKey, nextSolarKey, parseDay, todayKey } from "@/core/dates"
 import type { CountdownCategory, CountdownEvent } from "@/core/store"

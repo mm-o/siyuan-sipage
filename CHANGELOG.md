@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.4 — 恢复类型契约 + 类型检查进门禁（重构第 1 步）
+
+- 补回被误删的 `CardSize` 类型（11 个文件在 import 一个不存在的类型，vite 不报错所以一直静默）
+- 新增 `src/shims.d.ts`（`.vue` / `.css` 模块声明），`tsconfig` 改用 Bundler 解析、去掉 node 类型依赖
+- `package.json` 加回 `typescript` 与 `check:types` 脚本
+- `release-ship.sh` 前置三道门禁：`check:types` → `check:dist` → `check:arch`，任一失败不发版
+- 顺手修掉 7 处存量类型错误（embed 重复 import、countdown 的 Component 类型、store 单例 any 收口、platform 类型）
+
 ## v0.5.3 — 版号归零 + 许可与元数据修正
 
 - 版本号改为语义化的 `0.5.3`（此前沿用了内部迭代号 5.x）

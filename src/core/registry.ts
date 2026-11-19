@@ -37,9 +37,11 @@ import WeatherCard from "@/cards/weather/WeatherCard.vue"
 import WeatherPanel from "@/cards/weather/WeatherPanel.vue"
 import YiyanCard from "@/cards/yiyan/YiyanCard.vue"
 
-/** 卡片尺寸档位：与 参考实现 的尺寸列表一致，并补充 4x2 */
+/** 尺寸标识：桌面壳按实际格数算出来（如 "4x2"、"12x6"），卡片据此切版式 */
+export type CardSize = `${number}x${number}`
+
 interface CardDef {
-  /** 唯一 id，同时用于文档内嵌属性 data-desk-card */
+/** 唯一 id，同时用于文档内嵌属性 data-desk-card */
   id: string
   name: string
   /** 一句话说明，卡片库里显示 */

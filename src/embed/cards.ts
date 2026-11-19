@@ -78,7 +78,6 @@ export function stopCardObserver() {
 
 /** 生成文档内嵌用的片段（插入文档时用） */
 
-import { createApp, h, type App } from "vue"
 import { getCard } from "@/core/registry"
 
 interface Mounted {
