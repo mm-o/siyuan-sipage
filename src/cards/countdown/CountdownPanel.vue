@@ -670,50 +670,19 @@ function backToList() {
 /* 底部动作条（.dma-detail 的 p-3 border-t） */
 
 
-.cd-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--desk-sp-1);
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-md);
-  background: transparent;
-  color: var(--desk-text);
-  font: inherit;
-  font-size: var(--desk-fs-body);
-  cursor: pointer;
-}
 
-.cd-btn:hover {
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-}
 
-.cd-btn--grow {
-  flex: 1 1 auto;
-}
 
-.cd-btn--primary {
-  border-color: color-mix(in srgb, var(--desk-accent) 45%, transparent);
-  background: color-mix(in srgb, var(--desk-accent) 8%, transparent);
-  color: var(--desk-accent);
-}
 
-.cd-btn--primary:hover {
-  background: color-mix(in srgb, var(--desk-accent) 14%, transparent);
-}
 
-.cd-btn--primary:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
 
-.cd-btn--danger {
-  border-color: color-mix(in srgb, var(--desk-danger) 40%, transparent);
-  background: color-mix(in srgb, var(--desk-danger) 8%, transparent);
-  color: var(--desk-danger);
-}
+
+
+
+
+
+
+
 
 
 

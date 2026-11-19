@@ -1,126 +1,56 @@
 <template>
-  <div class="hm-card" :class="`is-${size}`">
-    <div class="hm-body desk-seq">
+  <div class="hm-card">
+    <div class="hm-body">
       <template v-if="counts">
-        <header v-if="plan.caption" class="hm-head">
-          <span class="hm-title">写作热力图</span>
-          <span class="hm-range">近 {{ weeks }} 周</span>
-        </header>
-
         <div class="hm-chart">
-          <div class="hg" :class="{ 'is-split': rows.length > 1 }">
-            <div v-for="(row, ri) in rows" :key="ri" class="hg-row">
-              <div v-if="plan.months" class="hg-months" :style="{ '--weeks': row.weeks.length }">
-                <span
-                  v-for="month in row.months"
-                  :key="month.label + month.col"
-                  class="hg-month"
-                  :style="{ '--col': month.col, '--weeks': row.weeks.length }"
-                >{{ month.label }}</span>
-              </div>
-              <div class="hg-weeks" :style="{ '--weeks': row.weeks.length }">
-                <div v-for="(week, wi) in row.weeks" :key="wi" class="hg-week">
-                  <span
-                    v-for="day in week"
-                    :key="day.date"
-                    class="hg-cell"
-                    :class="`is-${day.level}`"
-                    :title="`${day.date} · ${day.count} 块`"
-                  />
-                </div>
-              </div>
-            </div>
+          <div class="hg">
+            <template v-for="(week, wi) in grid.weeks" :key="wi">
+              <span
+                v-for="day in week"
+                :key="day.date"
+                class="hg-cell"
+                :class="`is-${day.level}`"
+                :title="`${day.date} · ${day.count} 块`"
+              />
+            </template>
           </div>
         </div>
-
-        <ul v-if="plan.figures" class="hm-figures">
-          <li class="hm-figure">
-            <b>{{ stats.longest }}</b>
-            <span>最长连续</span>
-          </li>
-          <li class="hm-figure">
-            <b>{{ stats.busiest?.count ?? 0 }}</b>
-            <span>单日最多</span>
-          </li>
-          <li class="hm-figure">
-            <b>{{ stats.total }}</b>
-            <span>块合计</span>
-          </li>
-        </ul>
-
-        <footer class="hm-foot">
-          <span class="hm-stat"><b>{{ stats.active }}</b> 天有写</span>
-          <span class="hm-stat"><b>{{ stats.current }}</b> 天连续</span>
-          <span v-if="plan.legend" class="hm-legend">
-            <em>少</em><i class="hg-cell is-0" /><i class="hg-cell is-1" /><i class="hg-cell is-2" /><i class="hg-cell is-3" /><i class="hg-cell is-4" /><em>多</em>
-          </span>
-        </footer>
       </template>
-
       <div v-else class="hm-state">
-        <span class="hm-state-text">{{ error ? "读取写作记录失败" : "读取中" }}</span>
-        <button v-if="error" class="hm-retry" type="button" @click.stop="reload">重试</button>
+        <span>{{ error || "加载中…" }}</span>
       </div>
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 /**
- * 写作热力图卡片
+ * 写作热力图卡片（只画格子）
  *
- * 只画内容：一格 = 一天，深浅 = 当天新增/修改的块数（取 SiYuan 内核 SQL，和 siyuan-dashboard 同一条路）。
- * 取数、分档、统计都在 `./heatmap.ts`，外框/尺寸/菜单/详情由框架给。
- *
- * 按 Apple 的绘图规范（charting-data / charts / typography）：
- *   - 一张图只说一件事（哪天写了多少），细节（具体日期与块数）放到 hover 的 tooltip 与详情里；
- *   - 颜色只用主色的 5 档（0 档用文字色 8% 的底），不靠颜色单独传达信息 —— 底部同时给「N 天有写」的数字；
- *   - 深浅分档按四分位，不是线性映射，避免个别高产日把整张图压暗。
- *
- *   1x1  12 周网格
- *   2x1  26 周网格 + 一句统计
- *   2x2  26 周网格 + 标题 + 两句统计
- *   4x2  53 周网格（一年）+ 月份标签 + 图例
- *   2x4  26 周网格 + 标题 + 月份标签 + 两句统计
+ * 一格 = 一天，深浅 = 当天新增/修改的块数（内核 SQL，和 siyuan-dashboard 同一条路）。
+ * 卡片不写任何文字：只有网格，所以任何尺寸都不会出现"文字挤压/月份标签错位"；
+ * 周数按卡片宽度自适应（格子保持接近正方形），只显示**最近一部分**。
+ * 取数与分档在 `./heatmap.ts`；日期细节放 hover 的 title。
  */
 import { computed } from "vue"
-import { sizeTier } from "@/ui/sizes"
-import { buildGrid, buildStats, splitGrid, useHeatmap } from "./heatmap"
+import { buildGrid, useHeatmap } from "./heatmap"
 import "./styles.css"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number }>(), { size: "2x2", w: 4, h: 2 })
 
-interface Plan {
-  weeks: number
-  caption: boolean
-  months: boolean
-  legend: boolean
-  /** 网格下面那排数字（有写 / 连续之外的三项） */
-  figures: boolean
-}
-
-/** 版式：形状档只决定「显示哪些块」，其余字段沿用默认 */
-/** 基准：一年 53 周恒定，档位只决定显示哪些块 */
-const PLAN_BASE: Plan = { weeks: 53, caption: true, months: true, legend: true, figures: true }
-
-const plan = computed<Plan>(() => {
-  const tier = sizeTier(props.w ?? 4, props.h ?? 2)
-  const base: Plan = { ...PLAN_BASE }
-  if (tier === "wide") return { ...base, months: false }
-  if (tier === "tall") return { ...base, months: true, figures: true }
-  if (tier === "mini") return { ...base, months: false, legend: false, figures: false, caption: false }
-  return { ...base, months: true }
+/**
+ * 周数：让格子接近正方形 —— 7 行铺满高度，列数 = 7 × 宽/高。
+ * 卡片越宽给的周数越多；夹在 6~26 周（太少没趋势，太多格子就细了）。
+ */
+const weeks = computed(() => {
+  const w = props.w ?? 4
+  const h = props.h ?? 2
+  return Math.max(6, Math.min(26, Math.round((7 * w) / h)))
 })
 
-const weeks = computed(() => plan.value.weeks)
-
-const { counts, error, reload } = useHeatmap(weeks.value)
-
+const { counts, error } = useHeatmap(weeks.value)
 const grid = computed(() => buildGrid(counts.value ?? new Map(), weeks.value))
-/** 超过 26 周就拆两段，别拉成一条长带 */
-const rows = computed(() => splitGrid(grid.value, weeks.value > 30 ? Math.ceil(weeks.value / 2) : weeks.value))
-const stats = computed(() => buildStats(counts.value ?? new Map(), weeks.value))
 </script>
+
 
 <style scoped>
 /* 卡面：玻璃（信息可视化，跟随外观不透明度），格子用主色 5 档 */

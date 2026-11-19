@@ -1,4 +1,5 @@
 import { reactive, watch } from "vue"
+import { LunarDay } from "tyme4ts"
 
 /* ════════════════════════════════════════════════════════════
  * 桌面状态与几何
@@ -313,8 +314,11 @@ interface CountdownState {
 export const countdown: CountdownState = (G.__deskCountdown ||= reactive<CountdownState>({ events: [], seeded: false }))
 
 /** 新增事件：id 由 store 生成，调用方只给内容 */
+let countdownSeq = 0
+
 export function addCountdownEvent(event: Omit<CountdownEvent, "id">) {
-  const created = { ...event, id: `cd-${Date.now().toString(36)}` } as CountdownEvent
+  /* 同一毫秒批量创建（例如首次种示例）也不能撞 id，所以带自增序号 */
+  const created = { ...event, id: `cd-${Date.now().toString(36)}-${(countdownSeq++).toString(36)}` } as CountdownEvent
   countdown.events.push(created)
   return created.id
 }
@@ -328,6 +332,43 @@ export function updateCountdownEvent(id: string, patch: Partial<CountdownEvent>)
 export function removeCountdownEvent(id: string) {
   const i = countdown.events.findIndex((e) => e.id === id)
   if (i >= 0) countdown.events.splice(i, 1)
+}
+
+/**
+ * 内置示例倒数日：首次启动种 4 条，让空白面板有东西可看。
+ * 公历用「今年没过就今年」，农历用 tyme4ts 的 LunarDay 推下一次。
+ */
+function seedCountdown() {
+  if (countdown.seeded || countdown.events.length) return
+  const pad = (n: number) => String(n).padStart(2, "0")
+  const key = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const today = key(new Date())
+
+  /** 公历固定日：今年过了就明年 */
+  const nextSolar = (month: number, day: number) => {
+    const y = new Date().getFullYear()
+    const thisYear = `${y}-${pad(month)}-${pad(day)}`
+    return thisYear >= today ? thisYear : `${y + 1}-${pad(month)}-${pad(day)}`
+  }
+
+  /** 农历固定日：往后找最近的匹配（多试两年兜住腊月跨年） */
+  const nextLunar = (month: number, day: number) => {
+    const y = new Date().getFullYear()
+    const hits: string[] = []
+    for (const yy of [y, y + 1, y + 2]) {
+      const solar = LunarDay.fromYmd(yy, month, day).getSolarDay()
+      hits.push(`${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`)
+    }
+    return hits.filter((k) => k >= today).sort()[0] ?? hits[0]
+  }
+
+  const samples: Omit<CountdownEvent, "id">[] = [
+    { title: "元旦", date: nextSolar(1, 1), category: "holiday", repeat: "year", lunar: false, pinned: false },
+    { title: "春节", date: nextLunar(1, 1), category: "holiday", repeat: "year", lunar: true, pinned: false },
+    { title: "中秋节", date: nextLunar(8, 15), category: "holiday", repeat: "year", lunar: true, pinned: false },
+    { title: "相识纪念日", date: key(new Date(Date.now() + 100 * 86_400_000)), category: "anniversary", repeat: "none", lunar: false, pinned: false },
+  ]
+  for (const item of samples) addCountdownEvent(item)
 }
 
 /* ── 天气 ─────────────────────────────────────────────── */
@@ -467,6 +508,7 @@ export async function bootStore() {
   weather.locations = Array.isArray(wx.locations) ? wx.locations : []
   weather.activeId = wx.activeId || weather.locations[0]?.id || ""
   countdown.events = Array.isArray(cd.events) ? cd.events : []
+  seedCountdown()
   countdown.seeded = true
   seedDefaultDesk()
   ready = true
