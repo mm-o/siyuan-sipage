@@ -61,6 +61,29 @@
       <span class="desk-hint">双击滑轨恢复默认</span>
       <button class="desk-btn" @click="resetAll">恢复默认</button>
     </div>
+    <h4 class="desk-section-title">卡片库</h4>
+    <p class="desk-hint">同一张卡可以添加多次；尺寸与位置在桌面「整理模式」里调整。</p>
+
+  <div v-for="def in CARDS" :key="def.id" class="row">
+    <div class="row-main">
+      <strong>{{ def.name }}</strong>
+      <small>{{ def.desc }}</small>
+    </div>
+
+    <span v-if="countOf(def.id)" class="count">×{{ countOf(def.id) }}</span>
+
+    <button
+      v-if="countOf(def.id)"
+      class="desk-btn"
+      aria-label="移除一个"
+      @click="removeOne(def.id)"
+    >
+      −
+    </button>
+
+    <button class="desk-btn" @click="add(def.id)">添加</button>
+  </div>
+  
   </div>
 </template>
 
@@ -79,7 +102,7 @@
  */
 import { computed } from "vue"
 import Slider from "@/ui/primitives/Slider.vue"
-import { appearance as a, DEFAULT_APPEARANCE as D, resetAppearance } from "@/core/store"
+import { appearance as a, DEFAULT_APPEARANCE as D, resetAppearance, addToDesk, countOnDesk, removeFromDesk } from "@/core/store"
 import { wallpaper } from "@/core/store"
 import "@/ui/ui.css"
 
@@ -103,6 +126,26 @@ function resetAll() {
   resetAppearance()
   wallpaper.blur = 0
   wallpaper.mask = 0.18
+}
+
+/* ── 卡片库（原 CardsLibraryPanel）───────────────────── */
+import { CARDS } from "@/core/registry"
+import "@/ui/ui.css"
+
+const countOf = (id: string) => countOnDesk(id)
+
+function add(id: string) {
+  /* 所有卡片统一从 2×2 起步，尺寸在整理模式里拖 */
+  addToDesk(id)
+}
+
+function removeOne(id: string) {
+  for (let i = desk.cards.length - 1; i >= 0; i -= 1) {
+    if (desk.cards[i].cardId === id) {
+      removeFromDesk(desk.cards[i].uid)
+      return
+    }
+  }
 }
 </script>
 
@@ -174,4 +217,25 @@ function resetAll() {
   height: 24px;
   padding: 0 10px;
 }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--desk-sp-3);
+    min-height: 42px;
+    padding: var(--desk-sp-1) 0;
+    border-bottom: 1px solid var(--desk-stroke);
+  }
+  
+  .row-main {
+    display: flex;
+    flex-direction: column;
+    margin-right: auto;
+    min-width: 0;
+  }
+  
+  .count {
+    font-size: var(--desk-fs-caption);
+    color: var(--desk-text-3);
+    font-variant-numeric: tabular-nums;
+  }
 </style>

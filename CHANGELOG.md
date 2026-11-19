@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.6 — 文件合并（每层少 4 个碎文件）
+
+- `core/icons.ts`(21) → 并入 `index.ts`
+- `embed/insert.ts`(60) → 并入 `embed/cards.ts`
+- `ui/settings/AboutPanel.vue`(50) → 并入 `SettingsSheet.vue`（静态页不必单开文件）
+- `ui/settings/CardsLibraryPanel.vue`(77) → 并入 `CardsPanel.vue`（「组件设置」页底部接「卡片库」）
+- 设置导航从 4 页收敛为 3 页：壁纸 / 组件设置 / 关于
+
 ## v0.5.4 — 恢复类型契约 + 类型检查进门禁（重构第 1 步）
 
 - 补回被误删的 `CardSize` 类型（11 个文件在 import 一个不存在的类型，vite 不报错所以一直静默）
