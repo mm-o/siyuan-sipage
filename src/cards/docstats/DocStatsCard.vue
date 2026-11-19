@@ -68,7 +68,7 @@ import { compact, loadDocStats, stats } from "./docstats"
 
 type P = [number, number]
 
-const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number }>(), { size: "4x4", w: 4, h: 4 })
+const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number }>(), { size: "6x6", w: 6, h: 6 })
 
 const K = 10
 const F = (p: P) => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`
@@ -118,17 +118,18 @@ const dims = computed(() => {
 
 /* ── 块数与排布：每块占 2×2 格，卡大就多几块 ── */
 const grid = computed(() => {
-  const w = props.w ?? 4
-  const h = props.h ?? 4
-  let cols = Math.min(6, Math.max(1, Math.floor(w / 2)))
-  let rows = Math.min(3, Math.max(1, Math.floor(h / 2)))
-  /* 超过 12 块就太碎了：在 12 的因数里挑最贴合卡面比例的一组 */
+  const w = props.w ?? 6
+  const h = props.h ?? 6
+  /* 一块拼图占 3×3 格：3×3 一块、6×6 四块、6×9 六块、9×9 九块 */
+  let cols = Math.min(4, Math.max(1, Math.floor(w / 3)))
+  let rows = Math.min(4, Math.max(1, Math.floor(h / 3)))
+  /* 上限 12 块：再多就太小，在 12 的因数里挑最贴合卡面比例的一组 */
   if (cols * rows > 12) {
     const a = w / h
     const pairs: [number, number][] = [
-      [6, 2],
       [4, 3],
       [3, 4],
+      [6, 2],
       [2, 6],
       [12, 1],
       [1, 12],
@@ -149,9 +150,11 @@ const grid = computed(() => {
 
 const count = computed(() => grid.value.cols * grid.value.rows)
 
+/* viewBox 用卡面比例：单块时铺满整卡，多块时按格均分（格本身来自 w/3、h/3，天然接近正方形） */
 const box = computed(() => {
-  const { cols, rows } = grid.value
-  return { w: 200, h: Math.round((200 * rows) / cols) }
+  const w = props.w ?? 6
+  const h = props.h ?? 6
+  return w >= h ? { w: 200, h: Math.max(20, Math.round((200 * h) / w)) } : { w: Math.max(20, Math.round((200 * w) / h)), h: 200 }
 })
 
 const pieces = computed(() => {
