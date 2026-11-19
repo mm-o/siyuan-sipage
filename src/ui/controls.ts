@@ -133,16 +133,6 @@ export function useTheme(): Ref<Theme> {
  * 每「2 格 × 2 格」= 1 个元素（快捷方式 / 最近文档 / 快捷打开共用）。
  *   2×2 → 1 个；4×4 → 4 个；6×6 → 9 个；任意尺寸按 floor(w/2) × floor(h/2)。
  */
-/**
- * 槽位网格：一个槽位占「这张卡的段落」格数（快捷方式 = 2 → 2×2 格一个图标）。
- * 段落由注册表的 constrain.step 声明，这里只做除法。
- */
-export function slotGrid(w = 2, h = 2, step = 2) {
-  const cols = Math.max(1, Math.floor(w / step))
-  const rows = Math.max(1, Math.floor(h / step))
-  return { cols, rows, count: Math.min(16, cols * rows) }
-}
-
 /* ── 文档列表配色（移植 Neo 1.8.3 的「彩色」取色法）────────────
    源码：Neo/styles/element/heading.scss
      --_element-heading-colored-base: oklch(from var(--b3-theme-base) clamp(0.55, l, 0.68) max(c, 0.2) h);

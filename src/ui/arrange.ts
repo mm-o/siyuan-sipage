@@ -20,7 +20,6 @@ interface Drag {
 /**
  * 尺寸约束的唯一实现：谁改尺寸都过这一关（拖动 / 整理 / 补位）
  *
- *   square → 取较长边做正方形
  *   step   → 段落式：落到 step 的倍数上（5×5 直接跳成 6×6）
  *   min/max→ 边长夹取
  */
@@ -28,11 +27,6 @@ export function fitDims(lim: CardConstrain | undefined, w: number, h: number, fr
   const min = lim?.min ?? 1
   const max = lim?.max ?? 16
   const clamp = (n: number) => Math.min(max, Math.max(min, Math.round(n)))
-
-  if (lim?.square) {
-    const n = clamp(Math.abs(w - from.w) >= Math.abs(h - from.h) ? w : h)
-    return { w: n, h: n }
-  }
 
   const snap = (n: number) => (lim?.step ? Math.round(n / lim.step) * lim.step : n)
   const keep = (n: number, was: number) => (lim?.step ? clamp(Math.max(lim.step, snap(n))) : clamp(n))

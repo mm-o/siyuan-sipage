@@ -81,10 +81,6 @@
    * 容器断点刻度（@container 不能用 var，这里只作唯一说明源；新代码请只用这五个值）
    *   short 120 / narrow 200 / mid 260 / wide 460 / panel 720
    */
-  --desk-bp-short: 120px;
-  --desk-bp-narrow: 200px;
-  --desk-bp-mid: 260px;
-  --desk-bp-wide: 460px;
   --desk-bp-panel: 720px;   /* 详情右栏宽度（双栏统一） */
 
   /*

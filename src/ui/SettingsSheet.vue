@@ -160,7 +160,6 @@ const tag = computed(
 /**
  * 预览尺寸：用注册表的约束推出来，不另写一套。
  *   step  → 两段（6×3），拼图正好两块
- *   ratios→ 按比例给 6 宽（2:1 → 6×3）
  *   其它  → 4×2
  */
 const pv = computed(() => {

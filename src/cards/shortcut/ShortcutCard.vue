@@ -31,14 +31,13 @@
 /**
  * 快捷方式卡
  *
- * 段落式尺寸：每 TILE×TILE 格一个图标（slotGrid 与拼图、尺寸约束共用 TILE），
- * 因此 3×3 一个、6×3 两个、6×9 六个，尺寸永远落在 3 的倍数上。
+ * 段落式尺寸：一个图标占「注册表里的段落」格（快捷方式 = 2 → 2×2 格一个），
+ * 因此 4×2 两个、6×6 九个；尺寸由 fitDims 落在段落的倍数上。
  * 纯图标，名称走思源 tooltip（ariaLabel，方向向上）—— 不占版面，图标吃满槽位。
  */
 import { computed, onMounted, ref } from "vue"
 import { Ellipsis } from "lucide-vue-next"
 import { randomCoverUrl } from "@/core/image"
-import { slotGrid } from "@/ui/controls"
 import { getCard } from "@/core/registry"
 import { enabledShortcuts, runShortcut, useSprite, type Shortcut } from "./shortcut"
 
@@ -52,8 +51,13 @@ onMounted(() => {
 })
 
 const sprite = useSprite()
-/* 段落取自注册表（快捷方式 = 2）：一个图标占 2×2 格 */
-const g = computed(() => slotGrid(props.w, props.h, getCard("shortcut")?.constrain?.step ?? 2))
+const g = computed(() => {
+  /* 段落取自注册表（快捷方式 = 2）：一个图标占 2×2 格 */
+  const step = getCard("shortcut")?.constrain?.step ?? 2
+  const cols = Math.max(1, Math.floor((props.w ?? 2) / step))
+  const rows = Math.max(1, Math.floor((props.h ?? 2) / step))
+  return { cols, rows, count: cols * rows }
+})
 /* 内容占前 count−1 个槽位，末位留给「打开卡片」 */
 const items = computed<Shortcut[]>(() => enabledShortcuts().slice(0, Math.max(0, g.value.count - 1)))
 const blanks = computed(() => Math.max(0, g.value.count - items.value.length - 1))

@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.9.0 — 尺寸链路一次彻底梳理（删冗余，只留一条路）
+
+**删掉的**
+- `constrain.ratios`（上一版已无卡片使用）与 `square` 分支：`fitDims` 只剩 step + min/max
+- `slotGrid()`：只是 `floor(w/step) × floor(h/step)`，收回快捷方式卡里 3 行，`ui/controls.ts` 不再有尺寸逻辑
+- `stepOf()`：无人使用的导出
+- 4 个死令牌 `--desk-bp-short / narrow / mid / wide`（只有定义、零引用；`--desk-bp-panel` 仍在用，保留）
+- `canResize()` 里的 square 分支与重复的 `getCard` 取值
+
+**留下的唯一链路**
+
+```
+registry.constrain { step, min, max }
+   ↓ fitDims()        拖动 / 一键整理 / 补位
+   ↓ 卡片按 step 排版   快捷方式 2 格一图标、统计 3 格一拼图
+   ↓ @container 断点   形态（五档刻度 120 / 200 / 260 / 460 / 720）
+```
+
+**数字**
+
+| 文件 | 行数 |
+| --- | --- |
+| `ui/arrange.ts` | 155 → **135** |
+| `ui/controls.ts` | 219 → **213** |
+| `cards/shortcut/ShortcutCard.vue` | 91 → **83** |
+| `styles/index.css` | 1245 → **1241**（删 4 行死令牌） |
+
+实测：桌面 17 张卡一键整理后全部无裁切（clipped 0），四道门禁全绿。
+
+
 ## v0.8.4 — 天气窄卡修好（温度被挤成省略号）
 
 你截图那个尺寸（窄高）的问题：左右两栏争宽 → 右栏的「最低 -3° 最高 2°」是 nowrap，

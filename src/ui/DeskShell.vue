@@ -301,13 +301,11 @@ let io: IntersectionObserver
 let raf = 0
 
 /**
- * 这一侧还能不能继续拉伸？
- *   带 constrain 的卡片按 min/max 判断；其它卡片按 1..16 判断。
- *   外扩方向（右/下）看有没有到上限，内收方向（左/上）看有没有到下限。
+ * 这一侧到没到边界？只用于手柄变淡与提示文案（夹取在 arrange.ts 里做）。
  */
 function canResize(inst: { cardId: string; w: number; h: number }, edge: string) {
   const lim = getCard(inst.cardId)?.constrain
-  const span = lim?.square ? inst.w : edge === "n" || edge === "s" ? inst.h : inst.w
+  const span = edge === "n" || edge === "s" ? inst.h : inst.w
   const outward = edge === "e" || edge === "s"
   return outward ? span < (lim?.max ?? 16) : span > (lim?.min ?? 1)
 }

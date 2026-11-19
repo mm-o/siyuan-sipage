@@ -41,7 +41,7 @@ import YiyanCard from "@/cards/yiyan/YiyanCard.vue"
 export type CardSize = `${number}x${number}`
 
 /** 尺寸约束（注册表里每张卡可选声明一次；拖动、整理、补位都过同一套实现） */
-export type CardConstrain = { square?: boolean; step?: number; min?: number; max?: number }
+export type CardConstrain = { step?: number; min?: number; max?: number }
 
 interface CardDef {
 /** 唯一 id，同时用于文档内嵌属性 data-desk-card */
@@ -68,7 +68,6 @@ interface CardDef {
   controls?: { expand?: boolean; menu?: boolean; full?: boolean }
   /**
    * 尺寸约束（可选，唯一入口）：拖到哪里都先过这一套
-   *   square 保持正方形
    *   step   段落式步长：尺寸只落在 step 的倍数上（如拼图 3 的倍数，5×5 直接跳成 6×6）
    *   min/max 边长范围（格）
    */
@@ -234,9 +233,6 @@ export const CARDS: CardDef[] = [
     surface: "solid",
   },
 ]
-
-/** 这张卡的段落（步长）：没声明就是 1，即只受比例/范围约束 */
-export const stepOf = (id: string) => getCard(id)?.constrain?.step ?? 1
 
 export function getCard(id: string): CardDef | undefined {
   return CARDS.find((c) => c.id === id)

@@ -117,7 +117,7 @@ icons.ts（无）           品牌标已并入 index.ts
 | 实际尺寸 | `CardInstance` 的 `w/h`（格数），桌面壳按视口算出单格像素 |
 | 形状档 | `ui/sizes.ts` 的 `sizeTier(w,h)` → `mini / wide / tall / square`，CardFrame 输出 `is-<tier>` |
 | 大卡 | `isBig()`：面积 ≥ 8 格，用来放大字号、增加行数 |
-| 锁定比例 | `registry.constrain.ratios`（日历/天气锁 2:1，8×4 / 10×5 / 12×6 等比放大不变形） |
+| 段落 | `registry.constrain.step`（快捷方式 2 / 统计 3，其余 1） |
 | 容器断点 | 只用五个刻度：120 / 200 / 260 / 460 / 720（`pnpm check:bp` 守卫） |
 
 ```ts
@@ -205,7 +205,7 @@ pnpm release:ship "说明"   # 四道门禁 → 构建 → 提交 → tag → pu
 人工过一遍：
 
 - [ ] 卡片拖到任意尺寸：版式跟随形状档变化，文字不裁、不折行错位
-- [ ] 日历 / 天气拖大后保持 2:1，等比放大不变形
+- [ ] 任意卡片拖到任意尺寸都不溢出；形态随容器断点切换
 - [ ] 整理模式：壁纸压暗、圆角格网、时钟下方空两格、卡片间 1 格、向右下可继续滚动
 - [ ] 天气详情：区县定位准确、逐时 24h、7 日、左右两栏同底
 - [ ] 重启（整页重载）后卡片与尺寸都在；petal 有 desk/wallpaper/appearance；localStorage 只有 `desk-cache:` 前缀
