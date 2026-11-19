@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.6.1 — ui 层合并 + 真实类型检查
+
+- **类型检查换成 `vue-tsc`**：删掉 `src/shims.d.ts`（此前它把 `.vue` 声明成 any，等于没检查）。
+  换完立刻暴露 22 个真实类型错误，已全部修掉（设置页 About 段缺变量、`addCountdownEvent` 签名、
+  `WeatherPlace.admin1` 不存在、`DeskShell` 的 `io/measureTimer` 未声明、QuickPick/Recent 可空 doc 等）
+- **`ui/primitives` 六件 → `ui/controls.ts` 一处**：GlassButton / SeriesNav / Segmented / Chips 用 `h()` 重写，
+  `view.ts`（toast / copyText / docColor / docRows）一并并入；样式统一搬进 `ui.css`
+  → `src/ui` 从 14 个文件降到 **9 个**（只剩 `Slider.vue` 需要拖拽状态）
+- `core/sizes.ts` 21 → 16 行（删掉无人引用的 `SizeTier` 导出与防御分支）
+- `tools/` 清理：删掉 6 个临时产物与 1 个未使用脚本，只留 `reload.mjs` + `verify/`
+
 ## v0.6.0 — 清理死令牌 + 详情右栏抽组件（第 7 步，重构收尾）
 
 - 删掉 10 个零引用的设计令牌（`--desk-stroke-strong` `--desk-r-icon` `--desk-hit-min`

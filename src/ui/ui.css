@@ -667,3 +667,150 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+
+/* ═══ 基础控件（原 ui/primitives/*.vue，样式集中在这里） ═══ */
+/* ── GlassButton ── */
+
+.gb {
+  width: var(--desk-hit, 28px);
+  height: var(--desk-hit, 28px);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  /* 行高归零：inline svg 的基线会让图标偏上/偏下 1px */
+  line-height: 0;
+  font-size: 0;
+  border-radius: 50%;
+  /* 毛玻璃：半透明深色 + 清透模糊 + 内侧高光 */
+  border: 1px solid rgb(255 255 255 / 24%);
+  background: rgb(20 22 28 / 34%);
+  backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  -webkit-backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 18%),
+    0 2px 8px rgb(0 0 0 / 22%);
+  color: rgb(255 255 255 / 92%);
+  cursor: pointer;
+  transition:
+    background var(--desk-dur-fast) var(--desk-ease),
+    transform var(--desk-dur-fast) var(--desk-ease),
+    color var(--desk-dur-fast) var(--desk-ease);
+}
+
+.gb:hover {
+  background: rgb(20 22 28 / 58%);
+  transform: translateY(-1px);
+}
+
+.gb:active {
+  transform: scale(0.94);
+}
+
+.gb.is-on {
+  color: #ff6b8a;
+  border-color: rgb(255 107 138 / 45%);
+  background: rgb(255 107 138 / 16%);
+}
+
+.gb:focus-visible {
+  outline: 2px solid var(--desk-accent);
+  outline-offset: 2px;
+}
+
+/* ── Segmented ── */
+
+.seg {
+  display: flex;
+  gap: var(--desk-sp-0);
+  padding: var(--desk-sp-0);
+  border-radius: var(--desk-r-control);
+  background: color-mix(in srgb, var(--desk-text) 8%, transparent);
+}
+
+.seg-item {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  border: 0;
+  border-radius: calc(var(--desk-r-control) - 2px);
+  background: transparent;
+  color: var(--desk-text-2);
+  font: inherit;
+  font-size: var(--desk-fs-caption);
+  cursor: pointer;
+  transition:
+    background var(--desk-dur) var(--desk-ease),
+    color var(--desk-dur) var(--desk-ease);
+}
+
+.seg-item:hover {
+  color: var(--desk-text);
+}
+
+.seg-item.active {
+  background: var(--desk-glass-fill-strong);
+  color: var(--desk-text);
+  font-weight: var(--desk-fw-medium);
+  box-shadow: var(--desk-shadow-1);
+}
+
+/* ── Chips ── */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--desk-sp-1h);
+}
+
+.chip {
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--desk-r-sm);
+  border: 1px solid color-mix(in srgb, var(--desk-text) 14%, transparent);
+  background: transparent;
+  color: var(--desk-text-2);
+  font: inherit;
+  font-size: var(--desk-fs-caption);
+  cursor: pointer;
+  transition:
+    background var(--desk-dur-fast) var(--desk-ease),
+    color var(--desk-dur-fast) var(--desk-ease),
+    border-color var(--desk-dur-fast) var(--desk-ease);
+}
+
+.chip:hover {
+  color: var(--desk-text);
+  border-color: color-mix(in srgb, var(--desk-accent) 50%, transparent);
+}
+
+.chip.active {
+  color: #fff;
+  background: var(--desk-accent);
+  border-color: var(--desk-accent);
+  font-weight: var(--desk-fw-medium);
+}
+
+/* ── 照片底：未选中 = 白字 + 深色药丸（HIG：玻璃上的文字必须有底色兜底） ── */
+.chip.on-photo {
+  height: var(--desk-hit, 24px);
+  border-color: rgb(255 255 255 / 30%);
+  background: rgb(16 18 24 / 52%);
+  color: #fff;
+  backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  -webkit-backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
+
+.chip.on-photo:hover {
+  color: #fff;
+  border-color: rgb(255 255 255 / 55%);
+  background: rgb(16 18 24 / 68%);
+}
+
+.chip.on-photo.active {
+  color: #14161a;
+  background: #fff;
+  border-color: transparent;
+  text-shadow: none;
+}

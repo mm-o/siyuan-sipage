@@ -56,6 +56,9 @@
  * 新增一个设置分区 = 在 SECTIONS 加一行 + 写一个面板组件，其余不动。
  */
 import { computed, ref, watch } from "vue"
+import { getFrontend } from "siyuan"
+import { resetDesk } from "@/core/store"
+import pkg from "../../package.json"
 import { Image as ImageIcon, Info, LayoutGrid, SlidersHorizontal } from "lucide-vue-next"
 import { Settings as SettingsIcon } from "lucide-vue-next"
 import Sheet from "./Sheet.vue"
@@ -79,6 +82,11 @@ watch(() => props.open, (v) => (open.value = v))
 watch(open, (v) => emit("update:open", v))
 
 const current = ref(props.tab || "wallpaper")
+
+/** 关于页：静态信息，跟着导航走 */
+const active = computed(() => current.value)
+const version = pkg.version
+const frontend = getFrontend()
 
 // 外部打开时指定分区（点「设置」→壁纸 / 点「添加卡片」→卡片库）
 watch(

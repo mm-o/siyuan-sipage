@@ -8,7 +8,7 @@
         :class="{ 'is-more': !doc }"
         type="button"
         :style="{ '--bg': docColor(i).bg, '--line': docColor(i).line, '--ink': docColor(i).ink }"
-        @click="onRow(doc, $event)"
+        @click="doc && onRow(doc, $event)"
       >
         <component :is="doc ? FileText : Ellipsis" :size="16" :stroke-width="1.8" />
         <span class="doc-title">{{ doc ? doc.title : "更多" }}</span>
@@ -25,7 +25,7 @@
 import { computed, onMounted, ref } from "vue"
 import { Ellipsis, FileText } from "lucide-vue-next"
 import { openDoc, recentDocs, type PickDoc } from "@/core/quickdocs"
-import { docColor, docRows } from "@/ui/view"
+import { docColor, docRows } from "@/ui/controls"
 
 const props = defineProps<{ size?: string; w?: number; h?: number }>()
 
@@ -34,7 +34,7 @@ const rowsMax = computed(() => Math.max(1, Math.floor(props.h ?? 2)))
 const rows = docRows(list, computed(() => props.h))
 
 /** 有文档 → 打开文档并阻止冒泡；「更多」→ 放行，冒泡到卡片打开详情 */
-function onRow(doc: PickDoc | undefined, e: MouseEvent) {
+function onRow(doc: { id?: string } | undefined, e: MouseEvent) {
   if (!doc?.id) return
   e.stopPropagation()
   void openDoc(doc.id)

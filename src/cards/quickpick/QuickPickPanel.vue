@@ -51,9 +51,9 @@
 </template>
 
 <script setup lang="ts">
+import { GlassButton } from "@/ui/controls"
 import { ref } from "vue"
 import { Check, FileText, GripVertical, Plus, Search, Trash2 } from "lucide-vue-next"
-import GlassButton from "@/ui/primitives/GlassButton.vue"
 import { docs, quickpick, recentDocs, reorderQuick, removeDoc, searchDocs, setSlot, tint, type PickDoc } from "@/core/quickdocs"
 
 const keyword = ref("")

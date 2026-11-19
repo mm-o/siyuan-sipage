@@ -102,7 +102,7 @@
  */
 import { computed } from "vue"
 import Slider from "@/ui/primitives/Slider.vue"
-import { appearance as a, DEFAULT_APPEARANCE as D, resetAppearance, addToDesk, countOnDesk, removeFromDesk } from "@/core/store"
+import {appearance as a, DEFAULT_APPEARANCE as D, resetAppearance, addToDesk, countOnDesk, removeFromDesk, desk } from "@/core/store"
 import { wallpaper } from "@/core/store"
 import "@/ui/ui.css"
 

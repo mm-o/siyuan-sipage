@@ -32,9 +32,9 @@
 </template>
 
 <script setup lang="ts">
+import { GlassButton } from "@/ui/controls"
 import { computed, onMounted, ref } from "vue"
 import { RotateCcw } from "lucide-vue-next"
-import GlassButton from "@/ui/primitives/GlassButton.vue"
 import { openDoc, recentDocs, sql, type PickDoc } from "@/core/quickdocs"
 
 /** 笔记本名：官方接口，模块级缓存，整页只请求一次 */

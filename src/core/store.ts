@@ -312,13 +312,17 @@ interface CountdownState {
 
 export const countdown: CountdownState = (G.__deskCountdown ||= reactive<CountdownState>({ events: [], seeded: false }))
 
-export function addCountdownEvent(event: CountdownEvent) {
-  countdown.events.push(event)
+/** 新增事件：id 由 store 生成，调用方只给内容 */
+export function addCountdownEvent(event: Omit<CountdownEvent, "id">) {
+  const created = { ...event, id: `cd-${Date.now().toString(36)}` } as CountdownEvent
+  countdown.events.push(created)
+  return created.id
 }
 
-export function updateCountdownEvent(event: CountdownEvent) {
-  const i = countdown.events.findIndex((e) => e.id === event.id)
-  if (i >= 0) countdown.events[i] = event
+/** 局部更新：只改传进来的字段 */
+export function updateCountdownEvent(id: string, patch: Partial<CountdownEvent>) {
+  const hit = countdown.events.find((e) => e.id === id)
+  if (hit) Object.assign(hit, patch)
 }
 
 export function removeCountdownEvent(id: string) {

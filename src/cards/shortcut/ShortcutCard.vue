@@ -37,7 +37,7 @@
 import { computed, onMounted, ref } from "vue"
 import { Ellipsis } from "lucide-vue-next"
 import { randomCoverUrl } from "@/core/image"
-import { slotGrid } from "@/ui/view"
+import { slotGrid } from "@/ui/controls"
 import { enabledShortcuts, runShortcut, useSprite, type Shortcut } from "./shortcut"
 
 const props = defineProps<{ size?: string; w?: number; h?: number }>()

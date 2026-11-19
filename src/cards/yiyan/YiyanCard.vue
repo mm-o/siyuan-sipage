@@ -41,13 +41,12 @@
  * 所以「上一条 / 下一条」就是再取一条；序列与背景由 core/daily 统一管理，
  * 卡片与详情永远是同一句、同一张图。
  */
+import { GlassButton, SeriesNav } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { Check, Copy, Heart, Image as ImageIcon } from "lucide-vue-next"
-import GlassButton from "@/ui/primitives/GlassButton.vue"
-import SeriesNav from "@/ui/primitives/SeriesNav.vue"
 import { DAILY_API, dailySeries } from "@/core/daily"
-import { photoBg } from "@/ui/view"
-import { copyText } from "@/ui/view"
+import { photoBg } from "@/ui/controls"
+import { copyText } from "@/ui/controls"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
 

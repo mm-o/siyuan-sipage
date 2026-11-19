@@ -18,14 +18,16 @@ icons.ts（无）           品牌标已并入 index.ts
 │  ├─ dates.ts           日期换算（日期键 / 天数差 / 下一次）
 │  └─ quickdocs.ts       快速打开用的文档索引
 │
-├─ ui/                   设计系统
+├─ ui/                   设计系统（9 个文件）
 │  ├─ DeskShell.vue      桌面壳（壁纸 + 时钟 + 画布 + 整理模式 + 弹层）
 │  ├─ SettingsSheet.vue  设置外壳（左导航 + 三页：壁纸 / 组件设置 / 关于）
 │  ├─ CardFrame.vue      卡片外框（材质 / hover / 菜单 / 形状档类 is-<tier>）
 │  ├─ Sheet.vue          统一弹层（一套结构 + 从 origin FLIP）
-│  ├─ ui.css / view.ts   共享样式与纯 DOM 小工具（toast / copyText）
-│  ├─ settings/          WallpaperPanel(346) | CardsPanel(含卡片库) 
-│  └─ primitives/        GlassButton | Chips | Segmented | Slider | Swatch | SeriesNav
+│  ├─ ui.css             共享样式（面板骨架 / 按钮 / 控件外观全在这里）
+│  ├─ controls.ts        基础控件 GlassButton·SeriesNav·Segmented·Chips + 纯 DOM 工具 toast/copyText/docColor/docRows
+│  ├─ arrange.ts         拖拽 / 缩放状态机（useDeskGrid）
+│  ├─ primitives/Slider.vue   唯一还需要组件文件的控件（拖拽态 + v-model）
+│  └─ settings/          WallpaperPanel | CardsPanel（含卡片库）
 │
 ├─ cards/                每张卡片 = 一个自包含目录
 │  ├─ calendar/          CalendarCard.vue + CalendarPanel.vue + styles.css
@@ -84,7 +86,7 @@ icons.ts（无）           品牌标已并入 index.ts
 它的子组件（`FlipDigit` / `CalendarPanel`）和 `styles.css` 留在同一个目录里。
 **共享组件不是把三张卡合成一个**，而是把「长相与行为完全相同的一小块控件」抽出去。
 
-判断能不能抽成 `ui/primitives/`，过这四问：
+判断能不能抽成共享控件（放进 `ui/controls.ts`），过这四问：
 
 | 问题 | 可以抽 | 不能抽 |
 | --- | --- | --- |
@@ -101,8 +103,8 @@ icons.ts（无）           品牌标已并入 index.ts
 | `SeriesNav` | 复合控件（‹ › + `step(dir)` 契约） | 内容、排版、`load(offset)`、背景规则 |
 | `Chips` / `Segmented` / `Slider` / `Swatch` | 纯控件 | 全部内容 |
 
-对应的三条「不许」：不许把整张卡的模板搬进 primitives；不许 primitives import `core/`；
-不许在 primitives 里写某张卡的文案分支（需要不同文案时，说明它不该共用）。
+对应的三条「不许」：不许把整张卡的模板搬进 controls；不许 controls import `core/`；
+不许在 controls 里写某张卡的文案分支（需要不同文案时，说明它不该共用）。
 
 这条规则由 `pnpm check:arch` 机器校验（见第五节），不靠自觉。
 

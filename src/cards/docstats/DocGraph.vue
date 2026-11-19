@@ -25,8 +25,8 @@ interface Node {
   box: string
   x: number
   y: number
-  vx: number
-  vy: number
+  vx?: number
+  vy?: number
   hue: number
   z: number
 }

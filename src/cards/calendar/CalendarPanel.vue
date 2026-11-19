@@ -122,11 +122,11 @@
 </template>
 
 <script setup lang="ts">
+import { Segmented } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-vue-next"
-import Segmented from "@/ui/primitives/Segmented.vue"
-import { toast } from "@/ui/view"
-import { useTheme } from "@/ui/view"
+import { toast } from "@/ui/controls"
+import { useTheme } from "@/ui/controls"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
 import "./styles.css"
 

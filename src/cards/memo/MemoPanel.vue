@@ -40,9 +40,9 @@
 </template>
 
 <script setup lang="ts">
+import { GlassButton } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { Check, Plus, Trash2, X } from "lucide-vue-next"
-import GlassButton from "@/ui/primitives/GlassButton.vue"
 import { add, clearDone, memo, remove, toggle, update, visible } from "./memo"
 
 const activeId = ref(visible.value[0]?.id || "")

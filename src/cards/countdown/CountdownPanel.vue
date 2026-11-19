@@ -208,9 +208,9 @@
  * 编辑不弹二级弹层：详情栏整块切成表单（标题 / 日期 / 分类胶囊 / 重复 / 置顶），保存后回到详情。
  * 数据全在 `core/store.ts` 的 `countdown` 里，这里只做筛选、排序、单位换算（`./countdown.ts`）。
  */
+import { Segmented } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { CalendarDays, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-vue-next"
-import Segmented from "@/ui/primitives/Segmented.vue"
 import {
   addCountdownEvent,
   countdown,

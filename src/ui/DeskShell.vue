@@ -144,6 +144,7 @@
 </template>
 
 <script setup lang="ts">
+import { GlassButton } from "@/ui/controls"
 import { computed, onBeforeUnmount, onMounted, ref, type Component } from "vue"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
@@ -151,7 +152,6 @@ import { getCard, type CardSize } from "@/core/registry"
 import { PANEL_CLOCK, desk, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
 import { useDeskGrid, normalizeRatios } from "./arrange"
 import CardFrame from "./CardFrame.vue"
-import GlassButton from "./primitives/GlassButton.vue"
 import Sheet from "./Sheet.vue"
 import SettingsSheet from "./SettingsSheet.vue"
 import "@/styles/index.css"
@@ -238,10 +238,11 @@ function expand(inst: { cardId: string; w: number; h: number }, origin?: DOMRect
 }
 
 function fullFromDetail() {
-  const { cardId, size } = expanded.value
-  if (!cardId || !size) return
+  const { cardId } = expanded.value
+  const inst = desk.cards.find((c) => c.cardId === cardId)
+  if (!cardId || !inst) return
   expanded.value.open = false
-  openFull({ cardId, size })
+  openFull({ cardId, w: inst.w, h: inst.h })
 }
 
 /* 设置 */
@@ -293,6 +294,10 @@ function onKey(e: KeyboardEvent) {
 
 /* 视口测量：量滚动层可用宽（已扣滚动条），去抖后写入 */
 let observer: ResizeObserver | null = null
+/** 尺寸测量去抖（滚动/缩放时只算一次） */
+let measureTimer = 0
+/** 卡片可见性观察（入场动效重播） */
+let io: IntersectionObserver
 let raf = 0
 
 /**
@@ -335,7 +340,7 @@ onMounted(() => {
   measure()
   /* 窗口拖拽时 ResizeObserver 会连续回调：合并到每帧一次，避免重复重排 */
   /* 桌面进入视口时重播入场动效（切回标签页也能看到） */
-  const io = new IntersectionObserver((entries) => {
+  io = new IntersectionObserver((entries) => {
     if (entries.some((e) => e.isIntersecting)) replayEnter()
   })
   if (rootRef.value) io.observe(rootRef.value)

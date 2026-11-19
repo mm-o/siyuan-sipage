@@ -157,7 +157,7 @@ async function locate() {
 }
 
 const isFirst = (loc: WeatherPlace) => props.places[0]?.id === loc.id
-const regionOf = (loc: WeatherPlace) => [loc.admin, loc.country].filter(Boolean).join(" · ")
+const regionOf = (loc: WeatherPlace) => [loc.admin].filter(Boolean).join(" · ")
 const locations = computed(() => props.places)
 </script>
 

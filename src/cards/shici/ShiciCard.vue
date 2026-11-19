@@ -55,14 +55,12 @@
  * 所以「上一首 / 下一首」= 前一天 / 后一天的诗，缓存后不重复请求。
  * 序列与背景由 core/daily 统一管理：卡片与详情永远同一首诗、同一张图。
  */
+import { GlassButton, SeriesNav, Chips } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { Check, Copy, Image as ImageIcon } from "lucide-vue-next"
-import Chips from "@/ui/primitives/Chips.vue"
-import GlassButton from "@/ui/primitives/GlassButton.vue"
-import SeriesNav from "@/ui/primitives/SeriesNav.vue"
 import { DAILY_API, dailySeries } from "@/core/daily"
-import { photoBg } from "@/ui/view"
-import { copyText } from "@/ui/view"
+import { photoBg } from "@/ui/controls"
+import { copyText } from "@/ui/controls"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
 

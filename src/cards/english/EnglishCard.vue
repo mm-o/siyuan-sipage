@@ -50,13 +50,12 @@
  * 其余在本地 24 句里循环 —— 离线也有内容可翻。
  * 朗读：接口给了 tts 就播音频，本地句库用系统语音合成。
  */
+import { GlassButton, SeriesNav } from "@/ui/controls"
 import { computed, onBeforeUnmount, ref } from "vue"
 import { BookOpen, Check, Copy, Image as ImageIcon, Pause, Play } from "lucide-vue-next"
-import GlassButton from "@/ui/primitives/GlassButton.vue"
-import SeriesNav from "@/ui/primitives/SeriesNav.vue"
 import { DAILY_API, dailySeries } from "@/core/daily"
-import { photoBg } from "@/ui/view"
-import { copyText } from "@/ui/view"
+import { photoBg } from "@/ui/controls"
+import { copyText } from "@/ui/controls"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), {
   size: "2x2",

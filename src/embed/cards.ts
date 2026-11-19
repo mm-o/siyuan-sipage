@@ -1,6 +1,6 @@
 import { Menu } from "siyuan"
 import { CARDS } from "@/core/registry"
-import { toast } from "@/ui/view"
+import { toast } from "@/ui/controls"
 import { createApp, h, type App } from "vue"
 /**
  * 文档内嵌：让卡片能插进文档，而且是「活的」

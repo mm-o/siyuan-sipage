@@ -99,12 +99,16 @@ interface Plan {
   figures: boolean
 }
 
+/** 版式：形状档只决定「显示哪些块」，其余字段沿用默认 */
+const PLAN_BASE: Plan = { weeks: 53, caption: true, months: true, legend: true, figures: true }
+
 const plan = computed<Plan>(() => {
   const tier = sizeTier(props.w ?? 4, props.h ?? 2)
-  if (tier === "wide") return { months: false, foot: true }
-  if (tier === "tall") return { months: true, foot: true }
-  if (tier === "mini") return { months: false, foot: false }
-  return { months: true, foot: false }
+  const base: Plan = { ...PLAN_BASE }
+  if (tier === "wide") return { ...base, weeks: 26, months: false }
+  if (tier === "tall") return { ...base, months: true, figures: true }
+  if (tier === "mini") return { ...base, weeks: 13, months: false, legend: false, figures: false, caption: false }
+  return { ...base, months: true }
 })
 
 const weeks = computed(() => plan.value.weeks)

@@ -31,12 +31,12 @@
  *   - 菜单直接用思源原生 Menu：样式、图标、键盘、点外关闭全部跟思源一致，
  *     也不会有「图标被思源全局 svg{fill:currentColor} 填实」的问题（自绘菜单会被 Teleport 到 body 之外）。
  */
+import { GlassButton } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { Maximize2, MoreHorizontal } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
 import { isBig, sizeTier } from "@/core/sizes"
-import GlassButton from "./primitives/GlassButton.vue"
 import "@/styles/index.css"
 
 const props = defineProps<{ cardId: string; size: string; w: number; h: number }>()

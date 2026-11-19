@@ -53,9 +53,9 @@
  * 一套展开方式：传入 origin（触发元素的矩形）后，面板从触发点放大到居中，
  * 关闭时缩回原处。实现用 Web Animations API，避免和 Vue 过渡打架。
  */
+import { GlassButton } from "@/ui/controls"
 import { computed, nextTick, onBeforeUnmount, ref, watch, type Component } from "vue"
 import { Pin, PinOff, X } from "lucide-vue-next"
-import GlassButton from "./primitives/GlassButton.vue"
 import "@/styles/index.css"
 
 const props = withDefaults(

@@ -90,6 +90,7 @@
  * 职责：选「用哪张壁纸」。模糊/遮罩不在这里（属于全局显示设置，在组件设置里）。
  * 来源只用可靠通道：思源 manifest / 必应官方接口 / 本地随机。
  */
+import { Chips } from "@/ui/controls"
 import { computed, onMounted, ref } from "vue"
 import type { Component } from "vue"
 import { Circle, Image as ImageIcon, Link } from "lucide-vue-next"
@@ -107,7 +108,6 @@ import {
   type CoverItem,
   type WallSource,
 } from "@/core/image"
-import Chips from "@/ui/primitives/Chips.vue"
 import "@/ui/ui.css"
 
 const SOURCES: { value: WallSource; label: string; desc: string; icon: Component }[] = [

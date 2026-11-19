@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { GlassButton } from "@/ui/controls"
 import { onBeforeUnmount, ref, watch } from "vue"
 import { Check, Search } from "lucide-vue-next"
-import GlassButton from "@/ui/primitives/GlassButton.vue"
 import { blockState, blockTitle, setId } from "./block"
 import { searchDocs, type PickDoc } from "@/core/quickdocs"
 import { mountProtyle } from "./block"

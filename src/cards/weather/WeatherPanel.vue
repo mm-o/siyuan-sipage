@@ -5,7 +5,7 @@
       <section class="wx-main desk-pane is-left" :style="{ backgroundImage: sky }">
         <header class="wx-head">
           <p class="wx-main-place">
-            <span v-if="place?.admin1" class="wx-main-region">{{ place.admin1 }} · </span>{{ place?.name }}
+            <span v-if="place?.admin" class="wx-main-region">{{ place.admin }} · </span>{{ place?.name }}
             <span class="wx-head-cond">{{ data ? cond.label : "" }}</span>
             <span class="wx-head-time">{{ data ? `发布于:${data.now.time.replace("T", " ")}` : "" }}</span>
           </p>

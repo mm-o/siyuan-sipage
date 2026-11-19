@@ -1,10 +1,95 @@
 /**
- * 视图层公共小工具（卡片与弹层共用）
+ * 基础控件（原 ui/primitives/*.vue 六件合成这一处）
  *
- * 只做「纯样式 / 纯 DOM / 主题探测」，不碰数据、不发请求，因此属于 ui/。
+ * 统一约定：只吃 props / 只发事件、无自带样式（外观全部来自 ui.css 与令牌）、
+ * 图标一律 lucide（stroke 1.7），不自绘 SVG。
  */
-import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue"
+import { computed, h, onBeforeUnmount, onMounted, ref, type Component, type Ref } from "vue"
+import { ChevronLeft, ChevronRight } from "lucide-vue-next"
 
+/* ── 圆形毛玻璃按钮（全项目唯一的圆形控件，只有 28 一档） ── */
+export const GlassButton = (props: { icon?: Component; label: string; active?: boolean }) =>
+  h(
+    "button",
+    {
+      class: ["gb", "ariaLabel", { "is-on": props.active }],
+      type: "button",
+      "data-position": "north",
+      "data-tooltip-encoding": "none",
+      "aria-label": props.label,
+    },
+    props.icon ? [h(props.icon, { size: 14, "stroke-width": 1.7 })] : [],
+  )
+GlassButton.props = ["icon", "label", "active"]
+
+/* ── 序列翻页组（上一条 / 下一条） ── */
+export const SeriesNav = (props: { series: { step: (dir: "prev" | "next") => Promise<void> } }) =>
+  h("div", { class: "desk-fab" }, [
+    h(GlassButton, { icon: ChevronLeft, label: "上一条", onClick: () => void props.series.step("prev") }),
+    h(GlassButton, { icon: ChevronRight, label: "下一条", onClick: () => void props.series.step("next") }),
+  ])
+SeriesNav.props = ["series"]
+
+/* ── 分段控件（等宽单选，≤4 项用它） ── */
+export interface SegOption {
+  label: string
+  value: string
+}
+
+type Emit = { "onUpdate:modelValue"?: (v: any) => void; onChange?: (v: any) => void }
+const emit = (props: Emit) => props["onUpdate:modelValue"] ?? props.onChange ?? (() => {})
+
+export const Segmented = (props: { modelValue: string; options: SegOption[] } & Emit) =>
+  h(
+    "div",
+    { class: "seg", role: "tablist" },
+    props.options.map((opt) =>
+      h(
+        "button",
+        {
+          key: opt.value,
+          class: ["seg-item", { active: props.modelValue === opt.value }],
+          role: "tab",
+          "aria-selected": props.modelValue === opt.value,
+          type: "button",
+          onClick: () => emit(props)(opt.value),
+        },
+        opt.label,
+      ),
+    ),
+  )
+Segmented.props = ["modelValue", "options", "onUpdate:modelValue", "onChange"]
+
+/* ── 标签选择（多项、可换行） ── */
+export interface ChipOption {
+  label: string
+  value: string | number
+}
+
+export const Chips = (props: {
+  modelValue: string | number
+  options: ChipOption[]
+  tone?: "plain" | "on-photo"
+} & Emit) =>
+  h(
+    "div",
+    { class: "chips" },
+    props.options.map((opt) =>
+      h(
+        "button",
+        {
+          key: String(opt.value),
+          class: ["chip", { active: props.modelValue === opt.value, "on-photo": (props.tone ?? "plain") === "on-photo" }],
+          type: "button",
+          onClick: () => emit(props)(opt.value),
+        },
+        opt.label,
+      ),
+    ),
+  )
+Chips.props = ["modelValue", "options", "tone", "onUpdate:modelValue", "onChange"]
+
+/* ═══ 纯 DOM 工具（原 ui/view.ts：提示条 / 复制 / 文档配色与排行） ═══ */
 /* ── 照片型卡片背景 ───────────────────────────────────── */
 /** 封面为空时退回内置题头图 */
 export function photoBg(cover: string) {
