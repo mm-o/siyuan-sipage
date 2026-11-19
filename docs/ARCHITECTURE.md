@@ -5,43 +5,40 @@
 ## 一、三层 + 两个延伸
 
 ```
-index.ts                 入口（只做注册：页签 / 顶栏 / 命令 / 内嵌启动）
-icons.ts                 品牌标（线性四个圆角方块，顶栏/页签/桌面壳共用）
+index.ts                 入口（页签 / 顶栏 / 命令 / 内嵌启动 / 品牌标）
+icons.ts（无）           品牌标已并入 index.ts
 
-├─ core/                 与 UI 无关的骨架（5 个文件，只放「多卡共用」的东西）
-│  ├─ registry.ts        卡片注册表 —— 唯一扩展点
-│  ├─ store.ts           状态唯一真源：壁纸 / 桌面卡片 / 外观 / 天气地点 / 倒数日 + 存储读写 + 网格排版（layoutDesk）
-│  ├─ image.ts           图片与跨域请求唯一入口：题头图清单 + 壁纸来源 + 内核代理（forwardProxy，天气也用）
-│  ├─ daily.ts           每日内容序列（三张照片卡共用）
-│  └─ dates.ts           日期换算（日期键 / 天数差 / 公历·农历的「下一次」）——倒数日与它的默认节日共用
-│                        （黄历不在这里：农历/节气/干支/月相/宜忌都由卡片直接问 tyme4ts）
+├─ core/                 与 UI 无关的骨架（只放「多卡共用」的东西）
+│  ├─ registry.ts        CardDef + CardSize + 15 张卡的注册（唯一扩展点）
+│  ├─ store.ts           状态唯一真源：壁纸 / 桌面卡片 / 外观 / 天气地点 / 倒数日 + petal 读写 + 排版
+│  ├─ sizes.ts           尺寸语义层：sizeTier(w,h) → mini|wide|tall|square，isBig(面积≥8)
+│  ├─ cache.ts           本机缓存唯一入口（desk-cache: 命名空间 + TTL，只存派生数据）
+│  ├─ persist.ts         老 localStorage 键 → petal 的一次性迁移
+│  ├─ image.ts           图片与跨域请求唯一入口（forwardProxy，天气/文档统计也用）
+│  ├─ dates.ts           日期换算（日期键 / 天数差 / 下一次）
+│  └─ quickdocs.ts       快速打开用的文档索引
 │
 ├─ ui/                   设计系统
-│  ├─ DeskShell.vue      桌面壳（壁纸 + 时钟 + 网格 + 弹层）
-│  ├─ SettingsSheet.vue  设置外壳（导航 + 面板切换）
-│  ├─ CardFrame.vue      卡片外框（材质 / hover / 更多菜单 / 打开）
+│  ├─ DeskShell.vue      桌面壳（壁纸 + 时钟 + 画布 + 整理模式 + 弹层）
+│  ├─ SettingsSheet.vue  设置外壳（左导航 + 三页：壁纸 / 组件设置 / 关于）
+│  ├─ CardFrame.vue      卡片外框（材质 / hover / 菜单 / 形状档类 is-<tier>）
 │  ├─ Sheet.vue          统一弹层（一套结构 + 从 origin FLIP）
-│  ├─ style.ts           photoBg + useTheme（纯样式映射 / 纯 DOM 探测）
-│  ├─ dom.ts             toast + copyText（两个纯 DOM 小工具）
-│  ├─ ui.css             共享样式（面板骨架 / 预览条 / 按钮 / 瓦片 / 照片卡 / 详情结构）
-│  ├─ motion.css         动效（只有弹层淡入淡出，令牌在 styles/index.css）
-│  ├─ settings/          壁纸 | 组件设置 | 卡片库 | 关于（每个面板一个文件）
-│  └─ primitives/        GlassButton（28）| Chips | Segmented | Slider | Swatch | SeriesNav
+│  ├─ ui.css / view.ts   共享样式与纯 DOM 小工具（toast / copyText）
+│  ├─ settings/          WallpaperPanel(346) | CardsPanel(含卡片库) 
+│  └─ primitives/        GlassButton | Chips | Segmented | Slider | Swatch | SeriesNav
 │
-├─ cards/                每张卡片 = 一个自包含目录（卡片专属的算法也留在这里）
-│  ├─ clock/             ClockCard.vue + FlipDigit.vue
-│  ├─ calendar/          CalendarCard.vue + CalendarMini.vue + CalendarPanel.vue + calendar.css（月视图/节日直接调库，无中间层）
-│  ├─ weather/           WeatherCard.vue + WeatherPanel.vue + weather.ts（接口/天气码表/10 分钟缓存/useWeather）
-│  ├─ countdown/         CountdownCard.vue + CountdownPanel.vue + countdown.ts（分类/单位换算/排序/封面）
-│  ├─ heatmap/           HeatmapCard.vue + HeatmapPanel.vue + heatmap.ts + heatmap.css（内核 SQL / 分档 / 统计）
-│  ├─ yiyan/ english/ shici/
+├─ cards/                每张卡片 = 一个自包含目录
+│  ├─ calendar/          CalendarCard.vue + CalendarPanel.vue + styles.css
+│  ├─ weather/           WeatherCard / WeatherPanel +
+│  │                      types.ts(形状) codes.ts(码表/渐变) net.ts(缓存+两后端)
+│  │                      locate.ts(区县定位+索引) hooks.ts(useWeather) weather.ts(汇总出口)
+│  ├─ clock/ countdown/ heatmap/ docstats/ memo/ pomodoro/ quickpick/ recent/
+│  ├─ block/ shortcut/ yiyan/ english/ shici/
 │
 ├─ embed/
-│  ├─ cards.ts           文档内嵌（data-desk-card + MutationObserver）
-│  ├─ mount.ts           统一挂载器（挂载 / 错误捕获 / destroy）
-│  └─ insert.ts          插入命令（选卡 → 写入 htmlblock）
+│  └─ cards.ts           文档内嵌（data-desk-card + MutationObserver）+ 插入卡片命令
 │
-└─ styles/               index.css（令牌 + 插件根）/ desk.css（桌面壳）
+└─ styles/               index.css（令牌 + 断点刻度 + 插件根）
 ```
 
 ## 二、六条硬规则
@@ -78,13 +75,13 @@ icons.ts                 品牌标（线性四个圆角方块，顶栏/页签/�
    | 材质（玻璃/纯色） | `registry.surface` → `CardFrame.is-solid` | 什么都不做 |
    | 菜单 | `siyuan` 的 `Menu` | 什么都不做 |
    | 弹层 / 展开 | `Sheet` + `origin` FLIP | 提供详情组件或 `mode="detail"` |
-   | 网格排版 | `core/store.ts` 的 `layoutDesk()` | 什么都不做 |
+   | 网格排版 | `core/store.ts` 的 `flowDesk()` | 什么都不做 |
    | 图标居中 | `styles/index.css` 的 `button > svg { display: block }` + `line-height: 0` | 什么都不做 |
 
 ## 二之二、组件边界（什么可以抽成共享组件）
 
 「一个卡片一个 Vue」指的是**卡片主组件**：每张卡在 `cards/<id>/` 里有且只有一个 `*Card.vue`，
-它的子组件（`FlipDigit` / `CalendarMini` / `CalendarPanel`）和 `calendar.css` 留在同一个目录里。
+它的子组件（`FlipDigit` / `CalendarPanel`）和 `styles.css` 留在同一个目录里。
 **共享组件不是把三张卡合成一个**，而是把「长相与行为完全相同的一小块控件」抽出去。
 
 判断能不能抽成 `ui/primitives/`，过这四问：
@@ -109,6 +106,29 @@ icons.ts                 品牌标（线性四个圆角方块，顶栏/页签/�
 
 这条规则由 `pnpm check:arch` 机器校验（见第五节），不靠自觉。
 
+## 二之三、尺寸模型（v0.5 起）
+
+卡片**没有尺寸档位表**，桌面按格数自由缩放；版式只认「形状」不认精确格数：
+
+| 概念 | 实现 |
+| --- | --- |
+| 实际尺寸 | `CardInstance` 的 `w/h`（格数），桌面壳按视口算出单格像素 |
+| 形状档 | `core/sizes.ts` 的 `sizeTier(w,h)` → `mini / wide / tall / square`，CardFrame 输出 `is-<tier>` |
+| 大卡 | `isBig()`：面积 ≥ 8 格，用来放大字号、增加行数 |
+| 锁定比例 | `registry.constrain.ratios`（日历/天气锁 2:1，8×4 / 10×5 / 12×6 等比放大不变形） |
+| 容器断点 | 只用五个刻度：120 / 200 / 260 / 460 / 720（`pnpm check:bp` 守卫） |
+
+```ts
+// 卡片里的写法
+const tier = sizeTier(props.w ?? 4, props.h ?? 2)   // 版式分支
+// 样式里只用语义类
+.is-wide .quote { -webkit-line-clamp: 2 }
+.is-big .desk-photo-text { font-size: var(--desk-fs-card-text-wide) }
+```
+
+**不要**再按精确格数写选择器（`.is-4x2` 这类）：卡片一旦被拖成 8×4 就永不命中，
+这正是 v0.5 之前「拖大之后样式没跟上」的根因。
+
 ## 三、扩展成本
 
 | 需求 | 改动 | 文件数 |
@@ -129,7 +149,7 @@ icons.ts                 品牌标（线性四个圆角方块，顶栏/页签/�
 | 死代码 | 农历/节气/日历/封面里 12 个未使用的导出、`randomCover`、`clearLunarCache` 等 | **全部删除**；仅内部使用的符号不再 `export` |
 | 重复常量 | 单格 88 / 间距 12 在 `layout.ts` 与 `store.ts` 各写一份 | **只在 `layout.ts` 声明**，store 引用 |
 | 重复组件 | 壁纸面板手写 `.desk-chip`，与 `Chips` 组件两套 | **统一走 `Chips`**，删掉 40 行 CSS |
-| 提示条 | 插入文档、新建日程各写一份 toast | **`ui/toast.ts` 一处** |
+| 提示条 | 插入文档、新建日程各写一份 toast | **`ui/view.ts` 的 `toast()` 一处** |
 | 验证脚本 | 28 个（v3…v18 的历史快照脚本） | **10 个**，一文件一职责 |
 
 量化：`src/` 从 **6817 行 → 5575 行**；产物 CSS 从 **67.7 kB → 41.6 kB**（gzip 12.0 → 7.6 kB），JS 基本不变（162 → 161 kB）。
@@ -139,8 +159,8 @@ icons.ts                 品牌标（线性四个圆角方块，顶栏/页签/�
 | 项 | 之前 | 现在 |
 | --- | --- | --- |
 | 三张卡的取数/翻页/背景 | 每张卡各写一份 cache + cursor + step + 背景随机（一言 20 行、英语/诗词没有翻页） | **`core/daily.ts` 的 `dailySeries()` 一处**：三张卡只提供 `load(offset)`，翻页/缓存/共享状态/背景全由它管 |
-| 复制到剪贴板 | 三张卡各写一份 clipboard + execCommand 兜底（每份 ~12 行） | **`ui/dom.ts` 的 `copyText()`** |
-| 提示条 | `ui/toast.ts` 单独一个文件 | 与 `copyText` 合并成 **`ui/dom.ts`**（两个纯 DOM 工具） |
+| 复制到剪贴板 | 三张卡各写一份 clipboard + execCommand 兜底（每份 ~12 行） | **`ui/view.ts` 的 `copyText()`** |
+| 提示条 | 早期曾单独一个文件 | 已与 `copyText` 合并进 **`ui/view.ts`**（两个纯 DOM 工具） |
 | 背景样式 | 三张卡各写 `url(cover \|\| 兜底)` | **`photoBg(cover, picture?)`** 一处 |
 | 设置面板骨架 | 四个面板各写 `.panel { flex column; gap }` | **`ui.css` 的 `.desk-panel`** |
 | 预览条 | 壁纸 / 组件设置各写一份 `.preview`（132px + 描边 + 圆角） | **`.desk-preview` + `.desk-preview-tag`** |
@@ -168,44 +188,22 @@ icons.ts                 品牌标（线性四个圆角方块，顶栏/页签/�
 
 验证：`node tools/verify/shot-persist-live.mjs`（加卡 → 读 petal 文件 → 整页重载 → 复原）。
 
-## 六、验证清单（每次改完手动过一遍）
+## 六、验证清单
 
 ```bash
-pnpm dev:card                         # 验证页构建（dev-dist）
-node tools/verify/shot-sizes.mjs       # 三张内容卡 1x1 / 2x1 / 4x2 版式 + 悬浮控件
-node tools/verify/shot-consistency.mjs # 卡片 vs 详情同源（sameBg / sameText）+ 翻页牌几何
-node tools/verify/shot-icons.mjs       # 4 倍放大看图标是否线性（fill:none）
-node tools/verify/shot-chips.mjs       # 诗词详情标签（未选中态对比度）
-node tools/verify/shot-calendar.mjs light|dark   # 日历卡四种尺寸（1x1/2x2/2x4/4x2）+ 日历详情
-node tools/verify/shot-calendar-live.mjs         # 真机：加日历 → 四种尺寸逐档截图 → 开详情 → 移除复原
-node tools/verify/shot-settings.mjs    # 设置四分区（统一弹层 + 从按钮 FLIP）
-node tools/verify/shot-settings-live.mjs  # 真机：设置与详情同一套弹层结构 + FLIP 关键帧
-node tools/verify/shot-persist-live.mjs   # 真机：加卡 → petal 文件 → 整页重载 → 复原
-node tools/verify/shot-layout.mjs         # 网格填满（左右留白 0）+ 图标居中 + 通用全屏
-node tools/verify/shot-weather.mjs        # 天气卡五尺寸不溢出 + 详情两段宽度 + 地点搜索/切换
-node tools/verify/shot-countdown.mjs      # 倒数日五尺寸 + 三栏详情（200/自适应/300）+ 新建/筛选/单位/置顶/删除
-node tools/verify/shot-heatmap.mjs        # 写作热力图五尺寸 + 两栏详情（一年 53 周）+ hover 读数 + 失败态
-node tools/verify/shot-layout-live.mjs    # 真机版式：左右留白 / 图标中心差 / 全屏进出
-node tools/verify/shot-chrome.mjs      # 悬浮按钮 / 右键菜单（交给思源的条目）/ 弹层关闭
-node tools/verify/shot-menu-live.mjs   # 真机：右键菜单是思源 .b3-menu、图标线性、子菜单带勾
-node tools/verify/shot-flip-frames.mjs # 翻页牌折叠过程
-node tools/verify/shot-live.mjs        # 真机：图标线性 + 卡片↔详情同源 + 诗词标签
-node tools/verify/shot-tooltip.mjs     # 真机：提示走思源 ariaLabel（#tooltip）
-pnpm check:dist                        # 发布前：产物只允许 siyuan 一个外部依赖
-pnpm check:arch                        # 分层守卫：core/ui/cards 依赖方向 + 每卡一个 Card.vue
+pnpm check:types     # tsc：类型契约（CardSize、props 形状）
+pnpm check:dist      # 产物只允许依赖 siyuan
+pnpm check:arch      # 分层：core→ui→cards，每卡一个 Card.vue，跨卡依赖为 0
+pnpm check:bp        # 断点只用 120/200/260/460/720
+pnpm build           # 构建插件
+pnpm release:ship "说明"   # 四道门禁 → 构建 → 提交 → tag → push → Release
 ```
 
-- [ ] 三张内容卡在 1x1 / 2x1 / 4x2 下文字不被裁、垂直居中、卡片上没有日期
-- [ ] 打开详情不换句不换图（`sameBg = true`，文字一致）
-- [ ] 卡片点开走 detail / mode，操作按钮只在详情出现
-- [ ] 详情间距只来自 `--desk-detail-inset/pad/gap`（12 / 20 / 12）
-- [ ] 日历卡四种尺寸都不裁切：1x1 今日 / 2x2 月历 / 2x4 竖版 / 4x2 横版（`shot-calendar` 的 `clipped` 为空）
-- [ ] 日历详情单块玻璃面，左右两栏 1px 分隔，底部「新建日程」
-- [ ] 所有圆形按钮 = `GlassButton`（28 一档），图标全部来自 lucide，`fill: none`
-- [ ] 翻页牌四角圆角、上下两半各 50%、数字层中心与牌中心重合
-- [ ] 时钟 6 张翻页牌 + 全屏可进出
-- [ ] 设置：单条滚动条、底部「恢复默认」统一
-- [ ] 设置与详情是同一个 `Sheet`：无标题栏、悬浮关闭键、inset 12 / 栏内 20，且从触发元素 FLIP 展开
-- [ ] 重启（整页重载）后卡片与尺寸都在；`localStorage` 里没有插件键；petal 目录里有 `desk` / `wallpaper` / `appearance`
-- [ ] 跨卡片 import 数为 0（`pnpm check:arch` 自证）
-- [ ] 每张卡恰有一个 `*Card.vue`；共享控件只在 `ui/primitives/` 且不 import `core/`
+人工过一遍：
+
+- [ ] 卡片拖到任意尺寸：版式跟随形状档变化，文字不裁、不折行错位
+- [ ] 日历 / 天气拖大后保持 2:1，等比放大不变形
+- [ ] 整理模式：壁纸压暗、圆角格网、时钟下方空两格、卡片间 1 格、向右下可继续滚动
+- [ ] 天气详情：区县定位准确、逐时 24h、7 日、左右两栏同底
+- [ ] 重启（整页重载）后卡片与尺寸都在；petal 有 desk/wallpaper/appearance；localStorage 只有 `desk-cache:` 前缀
+- [ ] 跨卡片 import 为 0（`pnpm check:arch` 自证）

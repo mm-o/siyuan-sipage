@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.9 — 文档与代码对齐（第 6 步）
+
+- `ARCHITECTURE.md`：目录树按现状重写（含 weather 五模块、sizes/cache、settings 三页、embed 两文件）；
+  新增「尺寸模型」章节（自由缩放 + 形状档 + 2:1 锁定 + 五档断点）；`layoutDesk` → `flowDesk`；
+  验证清单换成现存脚本（check:types/dist/arch/bp + release:ship）
+- `DESIGN.md`：「尺寸版式」由 `1x1/2x1/4x2` 表格改为形状档表；「天气卡」改为五模块 + 两条数据通路 +
+  一条定位路径 + 容器查询表；清掉 7 个已不存在文件的引用
+
 ## v0.5.8 — 天气模块分层 + 缓存收口（第 4、5 步）
 
 - `weather.ts`(601) 按职责拆成五个模块，对外仍只有一个汇总出口（import 路径不变）：
