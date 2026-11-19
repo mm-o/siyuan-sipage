@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>参考实现 卡片 · 框架验证</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      /* 模拟思源主题变量（真插件里由思源提供） */
+      body {
+        --b3-theme-background: #f7f7f8;
+        --b3-theme-on-background: #1d1f24;
+        --b3-theme-surface: #ffffff;
+        --b3-theme-primary: #0a84ff;
+        background: #f7f7f8;
+      }
+      body.body--dark {
+        --b3-theme-background: #16181d;
+        --b3-theme-on-background: #f2f4f8;
+        --b3-theme-surface: #1c1f26;
+        background: #16181d;
+      }
+      #app { position: absolute; inset: 0; }
+      /* 文档内嵌演示区 */
+      .doc-demo { position: fixed; left: 24px; bottom: 24px; width: 320px; z-index: 20;
+        background: var(--b3-theme-surface); color: var(--b3-theme-on-background);
+        border-radius: 10px; padding: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / 25%); font-size: 12px; }
+      .doc-demo h4 { margin: 0 0 6px; font-size: 12px; opacity: .6; }
+      .desk-embed-card { border-radius: 12px; overflow: hidden; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div class="doc-demo">
+      <h4>文档内嵌（活的卡片）</h4>
+      <div data-desk-card="yiyan" data-size="2x2" style="height:260px"></div>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+    <script>
+      // ?theme=dark 模拟思源深色主题
+      if (new URLSearchParams(location.search).get('theme') === 'dark') {
+        document.body.classList.add('body--dark')
+      }
+    </script>
+  </body>
+</html>

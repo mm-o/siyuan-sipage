@@ -1,0 +1,216 @@
+/**
+ * 图片（唯一入口）：思源头图清单 + 壁纸来源 + 直连/内核代理兜底
+ *
+ * 原来拆成三个文件（covers / wallpapers / imageProxy），实际都是同一件事的不同侧面：
+ * 「一张图从哪儿来、拿不到怎么办」。合成一个文件后只有一条代理出口，不会各写一份。
+ *
+ * 三条约定：
+ *   1. 所有跨域请求都走 `/api/network/forwardProxy`（思源内核代取）：渲染进程直连会被
+ *      CORS / 防盗链拦掉，这是必应每日之前不显示的根因。
+ *   2. 本地资源（`/appearance/**`、`data:`）直接返回，不绕代理。
+ *   3. 清单/接口都有缓存，重复调用不产生额外请求；拿不到就退回内置兜底，保证离线可用。
+ */
+
+/* ── 内核转发（唯一出口）────────────────────────────────── */
+
+/**
+ * 通过思源内核取数据；`encoding: "text"` 取文本，`"base64"` 取 data URL。
+ * 图片和天气接口共用这一个出口：渲染进程直连会被 CORS 挡掉，凡是跨域都在这里过一遍。
+ */
+export async function forwardProxy(
+  url: string,
+  encoding: "text" | "base64",
+  timeout = 12_000,
+  headers: [string, string][] = [],
+): Promise<string> {
+  const res = await fetch("/api/network/forwardProxy", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url,
+      method: "GET",
+      timeout,
+      contentType: "",
+      headers,
+      payload: "",
+      payloadEncoding: "text",
+      responseEncoding: encoding,
+    }),
+  })
+  const json = await res.json()
+  if (json?.code !== 0 || !json?.data?.body) throw new Error(json?.msg || "proxy failed")
+  if (encoding === "text") return String(json.data.body)
+  const mime = String(json.data.contentType || "image/jpeg").split(";")[0]
+  return `data:${mime};base64,${json.data.body}`
+}
+
+/** 直连试探：能 decode 就算成功 */
+function tryDirect(url: string, timeout = 8000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    let done = false
+    const finish = (ok: boolean) => {
+      if (done) return
+      done = true
+      img.onload = img.onerror = null
+      resolve(ok)
+    }
+    const timer = setTimeout(() => finish(false), timeout)
+    img.onload = () => {
+      clearTimeout(timer)
+      finish(img.naturalWidth > 0)
+    }
+    img.onerror = () => {
+      clearTimeout(timer)
+      finish(false)
+    }
+    img.src = url
+  })
+}
+
+/** 得到一个可用的图片地址：直连可用就直连，否则走内核代理（返回 data URL） */
+/* ── 思源头图（题头图）清单 ──────────────────────────────── */
+
+export interface CoverItem {
+  file: string
+  category: string
+  photographer?: string
+  photographer_url?: string
+  pexels_url?: string
+}
+
+export interface CoverGroup {
+  key: string
+  label: string
+  items: CoverItem[]
+}
+
+/** 思源的分类 key → 中文名（取自 SiYuan 的 i18n 词条） */
+const CATEGORY_LABEL: Record<string, string> = {
+  coverNature: "自然",
+  coverCityNight: "城市夜景",
+  coverMistyMorning: "晨雾",
+  coverCountryside: "田园",
+  coverDesert: "沙漠",
+  coverAurora: "极光",
+  coverTeaCeremony: "茶道",
+  coverInkWashLandscape: "水墨山水",
+  coverWildlife: "野生动物",
+  coverStillWater: "静水",
+  coverChineseGarden: "中式园林",
+  coverClassicalArchitecture: "古典建筑",
+  coverReadingNook: "阅读角",
+  coverZenMinimal: "禅意极简",
+  coverAutumnLeaves: "秋叶",
+  coverNeonNights: "霓虹夜色",
+  coverLightGeometry: "光影几何",
+  coverRoadAhead: "前路",
+}
+
+/** 内置兜底（manifest 拿不到时用，保证离线也能用） */
+export const COVERS = [
+  "/appearance/covers/cover_001.webp",
+  "/appearance/covers/cover_002.webp",
+  "/appearance/covers/cover_003.webp",
+  "/appearance/covers/cover_004.webp",
+  "/appearance/covers/cover_005.webp",
+  "/appearance/covers/cover_006.webp",
+]
+
+export const coverUrl = (file: string) => `/appearance/covers/${file}`
+
+let groupCache: CoverGroup[] | null = null
+let groupLoading: Promise<CoverGroup[]> | null = null
+
+/** 读取并按分类分组（带缓存，重复调用无网络开销） */
+export async function loadCoverGroups(): Promise<CoverGroup[]> {
+  if (groupCache) return groupCache
+  if (groupLoading) return groupLoading
+
+  groupLoading = (async () => {
+    try {
+      const res = await fetch("/appearance/covers/manifest.json", { cache: "no-cache" })
+      if (!res.ok) throw new Error(String(res.status))
+      const list = (await res.json()) as CoverItem[]
+      if (!Array.isArray(list) || !list.length) throw new Error("empty")
+
+      const map = new Map<string, CoverItem[]>()
+      for (const item of list) {
+        const key = item.category || "coverNature"
+        if (!map.has(key)) map.set(key, [])
+        map.get(key)!.push(item)
+      }
+
+      groupCache = [...map.entries()].map(([key, items]) => ({
+        key,
+        label: CATEGORY_LABEL[key] || key.replace(/^cover/, ""),
+        items,
+      }))
+      return groupCache
+    } catch {
+      groupCache = [{ key: "fallback", label: "内置", items: COVERS.map((f) => ({ file: f.split("/").pop()!, category: "fallback" })) }]
+      return groupCache
+    } finally {
+      groupLoading = null
+    }
+  })()
+
+  return groupLoading
+}
+
+/* ── 壁纸来源 ────────────────────────────────────────────── */
+
+export type WallSource = "cover" | "bing" | "picsum" | "random" | "solid" | "url"
+
+export const SOURCE_LABEL: Record<WallSource, string> = {
+  cover: "思源头图",
+  bing: "必应每日",
+  picsum: "Picsum 随机",
+  random: "本地随机",
+  solid: "纯色",
+  url: "图片链接",
+}
+
+const BING_API = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8&mkt=zh-CN"
+/** 官方接口挂掉时的备用图（思桌用的就是它） */
+const BING_FALLBACK = "https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN"
+const BING_TTL = 6 * 3600 * 1000
+
+let bingCache: { at: number; list: BingImage[] } | null = null
+
+export interface BingImage {
+  url: string
+  date: string
+  title: string
+}
+
+export async function loadBingImages(): Promise<BingImage[]> {
+  if (bingCache && Date.now() - bingCache.at < BING_TTL) return bingCache.list
+  try {
+    // 必须走内核转发：cn.bing.com 不返回 Access-Control-Allow-Origin
+    const json = JSON.parse(await forwardProxy(BING_API, "text"))
+    const list: BingImage[] = (json?.images || []).map((it: any) => ({
+      url: `https://cn.bing.com${it.url}`,
+      date: String(it.startdate || ""),
+      title: String(it.copyright || it.title || ""),
+    }))
+    if (!list.length) throw new Error("empty")
+    bingCache = { at: Date.now(), list }
+    return list
+  } catch {
+    // 官方接口不可用：退回备用单图（图片本身可直接 <img> 加载）
+    return bingCache?.list?.length ? bingCache.list : [{ url: BING_FALLBACK, date: "", title: "必应每日" }]
+  }
+}
+
+/** Picsum（seed 形式，换一张就是换 seed） */
+export function picsumWallpaper(seed = Math.random().toString(36).slice(2, 10)) {
+  return `https://picsum.photos/seed/${seed}/1920/1080`
+}
+
+/** 从思源题头图里随机一张 */
+export async function randomCoverUrl(): Promise<string> {
+  const all = (await loadCoverGroups()).flatMap((g) => g.items)
+  if (!all.length) return COVERS[0]
+  return coverUrl(all[Math.floor(Math.random() * all.length)].file)
+}

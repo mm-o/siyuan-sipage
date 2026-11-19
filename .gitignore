@@ -1,0 +1,17 @@
+.idea
+.vscode
+.DS_Store
+
+node_modules
+dist
+dev-dist
+package.zip
+.env
+tmp
+
+# 验证脚本（Playwright）输出
+docs/screens
+
+# 第三方参考物（iTab 离线包解包 / 技能库），不入库
+reference
+skills

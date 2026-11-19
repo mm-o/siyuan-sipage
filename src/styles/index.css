@@ -1,0 +1,382 @@
+/**
+ * 插件样式入口（唯一全局样式文件）
+ *
+ * 一、设计令牌（依据 apple-design-skill 的 HIG 原文）
+ *   liquid-glass.md  「Backdrop blur: regular 20–40px, clear 8–16px」
+ *                    「Fill: regular 60–80% opacity of white or black」
+ *                    「webview: backdrop-filter: blur(24px) saturate(1.4) + 1px 描边」
+ *                    「Targets: desktop 28×28pt default, 20×20pt minimum」
+ *   typography.md    macOS body 13pt / caption 11pt / title 15pt
+ *   accessibility.md 对比度、减少透明/动效
+ *   玻璃必须跟随外观：浅色用白色系 fill，深色用黑色系（思源在 <body> 上加 .body--dark）。
+ *
+ * 二、插件级基础样式（只作用于插件自己的三个根，不污染思源）
+ *   .desk-root / .desk-sheet-mask / .desk-embed-card
+ */
+
+/* ══ 令牌 ══════════════════════════════════════════════════ */
+:root {
+  /* 玻璃 */
+  --desk-blur-regular: 24px;
+  --desk-blur-clear: 12px;
+  --desk-saturate: 1.4;
+  --desk-glass-fill: rgb(255 255 255 / 76%);
+  --desk-glass-fill-strong: rgb(255 255 255 / 92%);
+  --desk-glass-clear: rgb(255 255 255 / 40%);
+  --desk-stroke: rgb(0 0 0 / 8%);
+  --desk-stroke-strong: rgb(0 0 0 / 16%);
+
+  /* 纯色卡片面（对齐 参考实现 的 --bg-card：浅 #fff / 深 #222） */
+  --desk-surface: #fff;
+  --desk-surface-stroke: rgb(0 0 0 / 6%);
+  --desk-surface-ctl: rgb(20 22 28 / 62%);
+  --desk-surface-ctl-stroke: rgb(0 0 0 / 12%);
+  --desk-surface-shadow:
+    0 1px 3px rgb(0 0 0 / 8%),
+    0 4px 16px rgb(0 0 0 / 4%);
+
+  /* 详情里的「栏」：接近纯色的毛玻璃（92% 面 + 一点模糊），对比够、还看得出玻璃 */
+  /* 弹窗里的栏：外角跟着弹窗，栏与栏相邻的那两个角收小 */
+  --desk-r-pane: var(--desk-r-sheet);
+  --desk-r-pane-in: 6px;
+  --desk-pane-opacity: 0.8;
+  --desk-pane: color-mix(in srgb, var(--desk-surface) calc(var(--desk-pane-opacity) * 100%), transparent);
+  --desk-pane-stroke: rgb(0 0 0 / 10%);
+  --desk-pane-shadow: 0 8px 28px rgb(0 0 0 / 12%);
+
+  /* 文字 */
+  --desk-text: #1d1f24;
+  --desk-text-2: rgb(29 31 36 / 66%);
+  --desk-text-3: rgb(29 31 36 / 44%);
+
+  /* 强调色 */
+  --desk-accent: var(--b3-theme-primary, #0a84ff);
+  --desk-danger: var(--b3-theme-error, #ff453a);
+
+  /* 字号（HIG 档位） */
+  --desk-fs-2xs: 10px;
+  --desk-fs-caption: 11px;
+  --desk-fs-sm: 12px;
+  --desk-fs-body: 13px;
+  --desk-fs-lg: 14px;
+  --desk-fs-title: 15px;
+  --desk-fs-headline: 17px;
+  --desk-fs-large: 22px;
+  --desk-fw-medium: 500;
+  --desk-fw-semibold: 600;
+
+  /* 圆角 */
+  --desk-r-xs: 2px;
+  --desk-r-sm: 6px;
+  --desk-r-md: 8px;
+  --desk-r-control: 10px;
+  --desk-r-card: 16px;
+  /* 卡内图标：与卡片同一曲率（卡片 16px ≈ 其边长的 10%） */
+  --desk-r-icon: 10%;
+  --desk-r-sheet: 18px;
+  --desk-r-pill: 999px;
+
+  /* 间距（4pt 栅格） */
+  --desk-aside-w: 240px;   /* 详情右栏宽度（双栏统一） */
+  --desk-sp-0: 2px;
+  --desk-sp-1: 4px;
+  --desk-sp-1h: 6px;
+  --desk-sp-2: 8px;
+  --desk-sp-2h: 10px;
+  --desk-sp-3: 12px;
+  --desk-sp-4: 16px;
+
+  /* 卡片内边距：容器单位，随卡片尺寸缩放（三张内容卡共用） */
+  --desk-card-pad-y: clamp(10px, 6cqh, 18px);
+  --desk-card-pad-x: clamp(12px, 6cqw, 20px);
+  --desk-card-gap: clamp(4px, 3cqh, 10px);
+
+  /* 卡片内排版：随容器缩放，**上限只在这里给** —— 全屏时文字才会跟着变大 */
+  --desk-fs-card-title: clamp(11px, 7.4cqh, 56px);
+  --desk-fs-card-title-wide: clamp(15px, 8cqh, 56px);
+  --desk-fs-card-text: clamp(11px, 8cqh, 64px);
+  --desk-fs-card-text-wide: clamp(16px, 9cqh, 64px);
+  --desk-fs-card-meta: clamp(9px, 4.6cqh, 28px);
+  --desk-fs-card-sub: clamp(9px, 4.4cqh, 26px);
+
+  /* 详情：inset 让玻璃边可见；面板留白 20；间距 12 */
+  --desk-detail-inset: 12px;
+  --desk-detail-pad: 20px;
+  --desk-detail-gap: 8px;
+
+  /* 命中区 */
+  --desk-hit: 28px;
+  --desk-hit-min: 20px;
+
+  /* 阴影 */
+  --desk-shadow-1: 0 1px 2px rgb(0 0 0 / 12%);
+  --desk-shadow-2: 0 8px 24px rgb(0 0 0 / 16%);
+  --desk-shadow-3: 0 24px 60px rgb(0 0 0 / 28%);
+
+  /* 动效 */
+  --desk-dur-fast: 0.16s;
+  --desk-dur: 0.24s;
+  --desk-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --desk-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* 交互动效：悬停浮起 / 按下缩放 / 悬停阴影 / 入场时长 */
+  --desk-lift: -2px;
+  --desk-lift-press: 0.994;
+  --desk-hover-shadow: 0 10px 22px rgb(0 0 0 / 22%);
+  --desk-enter-dur: 620ms;
+  --desk-enter-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --desk-fade-in: var(--desk-enter-dur) var(--desk-enter-ease);
+}
+
+/* 深色外观：fill 换成黑色系 */
+.body--dark,
+html.dark,
+.dark {
+  --desk-glass-fill: rgb(22 24 30 / 72%);
+  --desk-glass-fill-strong: rgb(22 24 30 / 92%);
+  --desk-glass-clear: rgb(22 24 30 / 44%);
+  --desk-stroke: rgb(255 255 255 / 12%);
+  --desk-stroke-strong: rgb(255 255 255 / 22%);
+
+  --desk-surface: #222;
+  --desk-surface-stroke: rgb(255 255 255 / 8%);
+  --desk-surface-ctl: rgb(255 255 255 / 16%);
+  --desk-surface-ctl-stroke: rgb(255 255 255 / 18%);
+  --desk-surface-shadow:
+    0 1px 3px rgb(0 0 0 / 40%),
+    0 4px 16px rgb(0 0 0 / 24%);
+
+  --desk-pane: color-mix(in srgb, var(--desk-surface) calc(var(--desk-pane-opacity) * 100%), transparent);
+  --desk-pane-stroke: rgb(255 255 255 / 12%);
+  --desk-pane-shadow: 0 10px 32px rgb(0 0 0 / 38%);
+
+  --desk-text: #f2f4f8;
+  --desk-text-2: rgb(242 244 248 / 70%);
+  --desk-text-3: rgb(242 244 248 / 46%);
+
+  --desk-shadow-1: 0 1px 2px rgb(0 0 0 / 30%);
+  --desk-shadow-2: 0 8px 26px rgb(0 0 0 / 34%);
+  --desk-shadow-3: 0 24px 64px rgb(0 0 0 / 48%);
+}
+
+/* ══ 插件根 ════════════════════════════════════════════════ */
+/* 页签根（index.ts 里 addTab 挂载的容器） */
+.desk-tab-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--b3-theme-background, #fff);
+}
+
+/* 盒模型：插件不用 Tailwind preflight，只给自己的三个根做 border-box。
+   少了这一步，「height:100% + 内边距」会按 content-box 多出 2×padding。 */
+.desk-root,
+.desk-root *,
+.desk-root *::before,
+.desk-root *::after,
+.desk-sheet-mask,
+.desk-sheet-mask *,
+.desk-sheet-mask *::before,
+.desk-sheet-mask *::after,
+.desk-embed-card,
+.desk-full,
+.desk-embed-card *,
+.desk-embed-card *::before,
+.desk-embed-card *::after {
+  box-sizing: border-box;
+}
+
+/* 图标：思源全局有 `svg { fill: currentColor }`，会把线性图标填成实心块 */
+.desk-root svg,
+.desk-sheet-mask svg,
+.desk-embed-card svg,
+.desk-full svg {
+  fill: none;
+}
+
+/* 图标按钮：图标一律按块级元素摆，行高/基线不参与居中（否则图标偏 1~2px） */
+.desk-root button > svg,
+.desk-sheet-mask button > svg,
+.desk-embed-card button > svg,
+.desk-full button > svg {
+  display: block;
+}
+
+/* 统一玻璃表面 */
+@media (prefers-reduced-transparency: reduce) {
+  }
+
+/* 统一动效（原 ui/motion.css） */
+/* 统一动效：改自 HIG motion 建议 —— 短、可预期、可关闭。
+   时长/缓动令牌在 styles/index.css 里定义，这里只用、不重复声明。 */
+
+/* 弹层：遮罩淡入淡出（Sheet 用） */
+.desk-fade-enter-active,
+.desk-fade-leave-active {
+  transition: opacity var(--desk-dur) var(--desk-ease);
+}
+.desk-fade-enter-from,
+.desk-fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-fade-enter-active,
+  .desk-fade-leave-active {
+    transition: none;
+  }
+}
+
+/* ── 卡片交互动效 ────────────────────────────────────────
+   动效原则（apple-design-skill / motion.md）：短、可预期、可关闭、只动 transform 与 opacity。 */
+
+/* 未整理时：卡片走通用「悬停浮起」工具类（参数见 --desk-lift / --desk-hover-shadow） */
+.desk-root:not(.is-arrange) .item:hover {
+  transform: translateY(var(--desk-lift));
+  filter: drop-shadow(var(--desk-hover-shadow));
+}
+
+.desk-root:not(.is-arrange) .item:active {
+  transform: translateY(0) scale(var(--desk-lift-press));
+  transition-duration: var(--desk-dur-fast);
+}
+
+.desk-root:not(.is-arrange) .item {
+  transition:
+    transform var(--desk-dur) var(--desk-ease-out),
+    filter var(--desk-dur) var(--desk-ease-out);
+}
+
+/* 整理模式：四条边按钮与中心手柄「随卡片悬停」淡入 + 轻微放大 */
+.desk-root .edge,
+.desk-root .handle {
+  transition:
+    opacity var(--desk-dur-fast) var(--desk-ease-out),
+    transform var(--desk-dur-fast) var(--desk-ease-out);
+}
+
+.desk-root .item:hover .edge,
+.desk-root .item:hover .handle {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-root:not(.is-arrange) .item,
+  .desk-root .edge,
+  .desk-root .handle {
+    transition: none;
+  }
+  .desk-root:not(.is-arrange) .item:hover {
+    transform: none;
+  }
+}
+
+/* ── 通用交互工具类 ────────────────────────────────────── */
+/* ── 弹窗入场（取自热力图弹窗的 hg-bloom）───────────────
+   0 → 1 的透明度 + 轻微放大，让内容“落下来”而不是硬闪。 */
+/* 卡片本体：只做极短淡入（真正的“一点点浮现”交给下面 .desk-seq 的逐元素阶梯） */
+@keyframes desk-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* 内容：一块块「落下」，延迟递增，形成雨滴式的逐格出现 */
+@keyframes desk-drop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.desk-enter {
+  animation: desk-fade var(--desk-enter-dur) var(--desk-enter-ease) both;
+}
+
+/* 逐元素浮现：容器加 .desk-seq，里面的小元素按序号依次出现（25ms 阶梯） */
+.desk-seq > * {
+  animation: desk-drop calc(var(--desk-enter-dur) * 0.85) var(--desk-enter-ease) both;
+}
+
+.desk-seq > :nth-child(1) { animation-delay: calc(var(--desk-seq-step, 40ms) * 0); }
+.desk-seq > :nth-child(2) { animation-delay: calc(var(--desk-seq-step, 40ms) * 1); }
+.desk-seq > :nth-child(3) { animation-delay: calc(var(--desk-seq-step, 40ms) * 2); }
+.desk-seq > :nth-child(4) { animation-delay: calc(var(--desk-seq-step, 40ms) * 3); }
+.desk-seq > :nth-child(5) { animation-delay: calc(var(--desk-seq-step, 40ms) * 4); }
+.desk-seq > :nth-child(6) { animation-delay: calc(var(--desk-seq-step, 40ms) * 5); }
+.desk-seq > :nth-child(7) { animation-delay: calc(var(--desk-seq-step, 40ms) * 6); }
+.desk-seq > :nth-child(8) { animation-delay: calc(var(--desk-seq-step, 40ms) * 7); }
+.desk-seq > :nth-child(n + 9) { animation-delay: calc(var(--desk-seq-step, 40ms) * 8); }
+
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-enter {
+    animation: none;
+  }
+}
+
+/* ── 进度条：从 0 走到当前值 ────────────────────────────
+   宽度照常由数据决定，这里只用 transform 把“出现”过程演成走满。 */
+@keyframes desk-fill {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.desk-fill > i,
+.desk-fill .fill {
+  transform-origin: left center;
+  animation: desk-fill var(--desk-enter-dur) var(--desk-enter-ease) both;
+}
+
+/* ── 逐字浮现（一句话 / 诗词 / 英语）─────────────────── */
+@keyframes desk-char {
+  from {
+    opacity: 0;
+    transform: translateY(0.18em);
+    filter: blur(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* 长文本（诗词/英语）用更快的字距，避免读一句要等两秒 */
+.desk-chars.is-fast { --desk-char-step: 12ms; }
+
+.desk-chars > span {
+  display: inline-block;
+  animation: desk-char 320ms var(--desk-enter-ease) both;
+  animation-delay: calc(var(--i, 0) * var(--desk-char-step, 30ms));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-fill > i,
+  .desk-fill .fill,
+  .desk-chars > span {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-draw { animation: none; }
+}

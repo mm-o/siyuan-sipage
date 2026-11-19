@@ -1,0 +1,205 @@
+<template>
+  <div class="wx" :style="{ backgroundImage: sky }">
+    <template v-if="data">
+      <!-- 上：左「地名 + 温度」，右「天气 + 最高最低」 -->
+      <div class="top">
+        <div class="left">
+          <span class="place"><MapPin :size="12" :stroke-width="2" />{{ place?.name }}</span>
+          <b class="temp">{{ data.now.temp }}°</b>
+        </div>
+        <div class="right">
+          <span class="desc">{{ cond.label }}<component :is="cond.icon" class="icon" :stroke-width="1.6" /></span>
+          <span class="range">最低 {{ today.min }}° 最高 {{ today.max }}°</span>
+        </div>
+      </div>
+
+      <!-- 下：未来 6 天 -->
+      <ul class="days">
+        <li v-for="(day, i) in forecast" :key="day.date">
+          <span class="d-week">{{ weekOf(day.date, i) }}</span>
+          <component :is="describe(day.code).icon" class="d-icon" :stroke-width="1.6" />
+          <span class="d-temp">{{ day.min }}~{{ day.max }}</span>
+        </li>
+      </ul>
+    </template>
+
+    <div v-else class="state">
+      <span>{{ error || "加载中…" }}</span>
+      <button v-if="error" type="button" @click.stop="reload">重试</button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+/**
+ * 天气卡（对齐 iTab app-weather）
+ * 上：地名 + 大温度 / 天气 + 高低温；下：未来 6 天。字号全部 cqmin，等比放大不变形。
+ */
+import { computed } from "vue"
+import { MapPin } from "lucide-vue-next"
+import { describe, skyBackdrop, useWeather } from "./weather"
+
+const { place, data, error, reload } = useWeather()
+
+const cond = computed(() => describe(data.value?.now.code ?? 0, false))
+const sky = computed(() => skyBackdrop(data.value?.now.code ?? 0, data.value?.now.isDay ?? true))
+
+const today = computed(() => data.value?.days?.[0] ?? { max: 0, min: 0 })
+const forecast = computed(() => (data.value?.days ?? []).slice(1, 7))
+
+const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+function weekOf(date: string, i: number) {
+  if (i === 0) return "明天"
+  const d = new Date(date)
+  return Number.isNaN(d.getTime()) ? `第${i + 1}天` : WEEK[d.getDay()]
+}
+</script>
+
+<style scoped>
+.wx {
+  container-type: size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2cqmin;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  overflow: hidden;
+  background-color: #184482;
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+}
+
+/* 上半：左右两栏 */
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 3cqmin;
+  min-width: 0;
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5cqmin;
+  min-width: 0;
+}
+
+.right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* 所有文字单行，绝不溢出 */
+.place,
+.temp,
+.desc,
+.range,
+.d-week,
+.d-temp {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.place {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5cqmin;
+  font-size: 11cqmin;
+  font-weight: 500;
+}
+
+.temp {
+  font-size: 34cqmin;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.desc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4cqmin;
+  font-size: 11cqmin;
+}
+
+.icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+
+.range {
+  font-size: 9.5cqmin;
+  opacity: 0.86;
+}
+
+/* 下半：未来 6 天等分列 */
+.days {
+  display: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 1cqmin;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.days li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5cqmin;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.d-week {
+  font-size: 8.5cqmin;
+}
+
+.d-icon {
+  width: 9cqmin;
+  height: 9cqmin;
+}
+
+.d-temp {
+  font-size: 8.5cqmin;
+  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 小尺寸只给温度，够宽再长出地名/高低温/预报 */
+@container (min-width: 110px) {
+  .place,
+  .desc,
+  .range {
+    display: inline-flex;
+  }
+}
+
+@container (min-width: 170px) {
+  .days {
+    display: grid;
+  }
+}
+
+.state {
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  font-size: 8cqmin;
+  opacity: 0.9;
+}
+</style>

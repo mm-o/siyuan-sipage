@@ -1,0 +1,40 @@
+{
+  "name": "desk-cards",
+  "author": "siyuan-plugin-sizhuo",
+  "url": "https://github.com/siyuan-note/plugin-sample-vite-vue",
+  "version": "5.63.0",
+  "minAppVersion": "2.10.14",
+  "disabledInPublish": true,
+  "backends": [
+    "all"
+  ],
+  "frontends": [
+    "all"
+  ],
+  "displayName": {
+    "default": "Desk Cards",
+    "en": "Desk Cards",
+    "zh-CN": "妗岄潰鍗＄墖"
+  },
+  "description": {
+    "default": "Widget cards for SiYuan: calendar, clock, daily quote, poem and more",
+    "en": "Widget cards for SiYuan: calendar, clock, daily quote, poem and more",
+    "zh-CN": "鎬濇簮閲岀殑妗岄潰鍗＄墖锛氭棩鍘嗐€佹椂閽熴€佸ぉ姘斻€佹瘡鏃ヤ竴瑷€銆佽瘲璇嶇瓑"
+  },
+  "readme": {
+    "default": "README.md",
+    "en": "README.md",
+    "zh-CN": "README.zh-CN.md"
+  },
+  "icon": "icon.png",
+  "preview": "preview.webp",
+  "funding": {
+    "custom": []
+  },
+  "keywords": [
+    "desk",
+    "card",
+    "widget",
+    "dashboard"
+  ]
+}

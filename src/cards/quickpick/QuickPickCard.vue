@@ -1,0 +1,40 @@
+<template>
+  <div class="slot-card is-plain">
+    <div class="doc-list desk-seq" :style="{ '--rows': rowsMax }">
+      <button
+        v-for="(doc, i) in rows"
+        :key="i"
+        class="doc-row"
+        :class="{ 'is-more': !doc }"
+        type="button"
+        :style="{ '--bg': docColor(i).bg, '--line': docColor(i).line, '--ink': docColor(i).ink }"
+        @click="onRow(doc, $event)"
+      >
+        <component :is="doc ? FileText : Ellipsis" :size="16" :stroke-width="1.8" />
+        <span class="doc-title">{{ doc ? doc.title : "更多" }}</span>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+/**
+ * 快捷打开卡
+ * 与最近文档共用 docRows / docColor：行 = 文档 + 末行「更多」，无文档时只剩「更多」。
+ */
+import { computed } from "vue"
+import { Ellipsis, FileText } from "lucide-vue-next"
+import { docs, openDoc } from "@/core/quickdocs"
+import { docColor, docRows } from "@/ui/view"
+
+const props = defineProps<{ size?: string; w?: number; h?: number }>()
+
+const rowsMax = computed(() => Math.max(1, Math.floor(props.h ?? 2)))
+const rows = docRows(docs, computed(() => props.h))
+
+function onRow(doc: (typeof docs.value)[number] | undefined, e: MouseEvent) {
+  if (!doc?.id) return
+  e.stopPropagation()
+  void openDoc(doc.id)
+}
+</script>
