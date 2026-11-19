@@ -131,7 +131,7 @@ async function copyPoem() {
 </script>
 
 <style scoped>
-/* 结构来自 ui.css 的 .desk-photo-*；这里只管字号与行数 */
+/* 结构来自 styles/index.css 的 .desk-photo-*；这里只管字号与行数 */
 .head {
   display: flex;
   flex-direction: column;
@@ -196,7 +196,7 @@ async function copyPoem() {
   text-overflow: ellipsis;
 }
 
-/* 宽卡：，诗行 4 行（字号由 ui.css 的 .is-wide.is-big .desk-photo-text 统一给） */
+/* 宽卡：，诗行 4 行（字号由 styles/index.css 的 .is-wide.is-big .desk-photo-text 统一给） */
 .is-wide.is-big .lines {
   -webkit-line-clamp: 4;
   line-height: 1.7;

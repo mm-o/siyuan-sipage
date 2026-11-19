@@ -56,7 +56,6 @@
 import { GlassButton } from "@/ui/controls"
 import { computed, nextTick, onBeforeUnmount, ref, watch, type Component } from "vue"
 import { Pin, PinOff, X } from "lucide-vue-next"
-import "@/styles/index.css"
 
 const props = withDefaults(
   defineProps<{

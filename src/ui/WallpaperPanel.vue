@@ -108,7 +108,6 @@ import {
   type CoverItem,
   type WallSource,
 } from "@/core/image"
-import "@/ui/ui.css"
 
 const SOURCES: { value: WallSource; label: string; desc: string; icon: Component }[] = [
   { value: "cover", label: "思源头图", desc: "本地 18 个分类", icon: ImageIcon },

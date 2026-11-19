@@ -101,10 +101,9 @@
  *   accessibility.md  文本对比度（caption 用 72% 白）
  */
 import { computed } from "vue"
-import Slider from "@/ui/primitives/Slider.vue"
+import Slider from "@/ui/Slider.vue"
 import {appearance as a, DEFAULT_APPEARANCE as D, resetAppearance, addToDesk, countOnDesk, removeFromDesk, desk } from "@/core/store"
 import { wallpaper } from "@/core/store"
-import "@/ui/ui.css"
 
 const previewBg = computed(() => ({
   backgroundImage: `url(${wallpaper.resolved || wallpaper.value})`,
@@ -130,7 +129,6 @@ function resetAll() {
 
 /* ── 卡片库（原 CardsLibraryPanel）───────────────────── */
 import { CARDS } from "@/core/registry"
-import "@/ui/ui.css"
 
 const countOf = (id: string) => countOnDesk(id)
 
@@ -150,7 +148,7 @@ function removeOne(id: string) {
 </script>
 
 <style scoped>
-/* 面板骨架与预览条来自 ui.css 的 .desk-panel / .desk-preview；这里只收紧行距 */
+/* 面板骨架与预览条来自 styles/index.css 的 .desk-panel / .desk-preview；这里只收紧行距 */
 .panel {
   gap: 1px;
 }

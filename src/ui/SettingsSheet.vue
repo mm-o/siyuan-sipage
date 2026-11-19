@@ -62,9 +62,8 @@ import pkg from "../../package.json"
 import { Image as ImageIcon, Info, LayoutGrid, SlidersHorizontal } from "lucide-vue-next"
 import { Settings as SettingsIcon } from "lucide-vue-next"
 import Sheet from "./Sheet.vue"
-import WallpaperPanel from "./settings/WallpaperPanel.vue"
-import CardsPanel from "./settings/CardsPanel.vue"
-import "@/ui/ui.css"
+import WallpaperPanel from "./WallpaperPanel.vue"
+import CardsPanel from "./CardsPanel.vue"
 
 const props = defineProps<{ open: boolean; tab?: string; origin?: DOMRect | null }>()
 const emit = defineEmits<{ "update:open": [boolean] }>()

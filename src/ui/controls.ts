@@ -1,7 +1,7 @@
 /**
  * 基础控件（原 ui/primitives/*.vue 六件合成这一处）
  *
- * 统一约定：只吃 props / 只发事件、无自带样式（外观全部来自 ui.css 与令牌）、
+ * 统一约定：只吃 props / 只发事件、无自带样式（外观全部来自 styles/index.css 与令牌）、
  * 图标一律 lucide（stroke 1.7），不自绘 SVG。
  */
 import { computed, h, onBeforeUnmount, onMounted, ref, type Component, type Ref } from "vue"

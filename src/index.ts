@@ -20,13 +20,13 @@ const PLUGIN_ICON_ID = "iconDeskCards"
 
 const PLUGIN_ICONS = `<symbol id="${PLUGIN_ICON_ID}" viewBox="0 0 32 32">${MARK}</symbol>`
 
+import "@/styles/index.css"
 import { Plugin, getFrontend, openTab } from "siyuan"
 import { createApp, type App } from "vue"
 import PluginInfoString from "@/../plugin.json"
 import { bootStore, useStorage } from "@/core/store"
 import DeskShell from "@/ui/DeskShell.vue"
 import { hydrateCards, startCardObserver, stopCardObserver, pickCardToInsert } from "@/embed/cards"
-import "@/styles/index.css"
 import { setApp } from "@/core/quickdocs"
 
 let PluginInfo = { version: "" }

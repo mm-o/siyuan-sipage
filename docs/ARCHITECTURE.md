@@ -22,7 +22,7 @@ icons.ts（无）           品牌标已并入 index.ts
 │  ├─ SettingsSheet.vue  设置外壳（左导航 + 三页：壁纸 / 组件设置 / 关于）
 │  ├─ CardFrame.vue      卡片外框（材质 / hover / 菜单 / 形状档类 is-<tier>）
 │  ├─ Sheet.vue          统一弹层（一套结构 + 从 origin FLIP）
-│  ├─ ui.css             共享样式（面板骨架 / 按钮 / 控件外观全在这里）
+│  ├─ styles/index.css             共享样式（面板骨架 / 按钮 / 控件外观全在这里）
 │  ├─ controls.ts        基础控件 GlassButton·SeriesNav·Segmented·Chips + 纯 DOM 工具 toast/copyText/docColor/docRows
 │  ├─ sizes.ts           尺寸语义层：sizeTier(w,h) → mini|wide|tall|square
 │  ├─ arrange.ts         拖拽 / 缩放状态机（useDeskGrid）
@@ -56,7 +56,7 @@ icons.ts（无）           品牌标已并入 index.ts
 
 3. **视觉只改两处**
    - 全局材质/圆角/字号/动效 → `styles/index.css`
-   - 面板内的按钮/行/输入/瓦片 → `ui/ui.css`
+   - 面板内的按钮/行/输入/瓦片 → `styles/index.css`
    卡片自己的排版写在自己的 `<style scoped>`，但字号层级用 `clamp(...cqh)` 跟随尺寸。
    卡片**面**（玻璃还是纯色）不归卡片管：写在 `registry` 的 `surface?: "glass" | "solid"` 上，由 `CardFrame` 统一切类（见 `DESIGN.md`「卡片材质」）。
 
@@ -91,7 +91,7 @@ icons.ts（无）           品牌标已并入 index.ts
 | 问题 | 可以抽 | 不能抽 |
 | --- | --- | --- |
 | 是否与某张卡的数据/文案绑定？ | 只吃 props，或只吃一个**结构化契约**（如 `{ step(dir) }`） | 需要知道 cardId、要发请求、要读 registry |
-| 是否有自己的样式特例？ | 无 scoped 样式，外观来自 `ui.css` + 令牌 | 为某张卡写特例选择器 |
+| 是否有自己的样式特例？ | 无 scoped 样式，外观来自 `styles/index.css` + 令牌 | 为某张卡写特例选择器 |
 | 抽出去之后卡片还剩什么？ | 卡片仍拥有自己的内容、排版、取数（`load(offset)`） | 卡片只剩一行 `<SharedCard />` |
 | 会不会反向依赖？ | 只依赖 vue / lucide / 同级控件 / 样式 | import `core/` 或 `cards/` |
 
@@ -139,7 +139,7 @@ const tier = sizeTier(props.w ?? 4, props.h ?? 2)   // 版式分支
 | 加一个设置分区 | `ui/settings/XPanel.vue` + `SECTIONS` 一行 | **2** |
 | 加一种壁纸来源 | `core/image.ts` 一个函数 + `WallpaperPanel` 一项 | **2** |
 | 换主题色/圆角/间距 | `styles/index.css` | **1** |
-| 调整卡片材质 | `CardFrame.vue` + `ui.css` | **2** |
+| 调整卡片材质 | `CardFrame.vue` + `styles/index.css` | **2** |
 
 ## 四、v2.8 的收敛（本轮瘦身）
 
@@ -164,7 +164,7 @@ const tier = sizeTier(props.w ?? 4, props.h ?? 2)   // 版式分支
 | 复制到剪贴板 | 三张卡各写一份 clipboard + execCommand 兜底（每份 ~12 行） | **`ui/view.ts` 的 `copyText()`** |
 | 提示条 | 早期曾单独一个文件 | 已与 `copyText` 合并进 **`ui/view.ts`**（两个纯 DOM 工具） |
 | 背景样式 | 三张卡各写 `url(cover \|\| 兜底)` | **`photoBg(cover, picture?)`** 一处 |
-| 设置面板骨架 | 四个面板各写 `.panel { flex column; gap }` | **`ui.css` 的 `.desk-panel`** |
+| 设置面板骨架 | 四个面板各写 `.panel { flex column; gap }` | **`styles/index.css` 的 `.desk-panel`** |
 | 预览条 | 壁纸 / 组件设置各写一份 `.preview`（132px + 描边 + 圆角） | **`.desk-preview` + `.desk-preview-tag`** |
 | 卡片菜单开关 | `CardFrame` 的 `menu?: { expand, refresh, size, remove }` 四开关（无人传） | **删除**，菜单固定四项 |
 

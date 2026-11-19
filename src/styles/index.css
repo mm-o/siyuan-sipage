@@ -395,3 +395,815 @@ html.dark,
 @media (prefers-reduced-motion: reduce) {
   .desk-draw { animation: none; }
 }
+
+/* ═══ 组件样式（原 styles/index.css：面板骨架 / 按钮 / 控件 / 卡片外框 / 桌面壳）═══ */
+
+/* 设置面板骨架：壁纸 / 组件设置 / 卡片库 / 关于 四个面板共用 */
+.desk-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-3);
+}
+
+/* 预览条：壁纸与卡片设置同一规格（高度 / 圆角 / 描边 / 裁切） */
+.desk-preview {
+  position: relative;
+  height: 132px;
+  border: 1px solid var(--desk-stroke);
+  border-radius: var(--desk-r-control);
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+/* 预览条左下角的说明胶囊 */
+.desk-preview-tag {
+  position: absolute;
+  left: var(--desk-sp-2);
+  bottom: var(--desk-sp-2);
+  padding: var(--desk-sp-0) 8px;
+  border-radius: var(--desk-r-pill);
+  background: rgb(0 0 0 / 45%);
+  color: #fff;
+  font-size: var(--desk-fs-caption);
+  backdrop-filter: blur(8px);
+}
+
+/* 按钮 */
+.desk-btn {
+  height: var(--desk-hit);
+  padding: 0 var(--desk-sp-3);
+  border-radius: var(--desk-r-control);
+  border: 1px solid var(--desk-stroke);
+  background: var(--desk-glass-clear);
+  color: var(--desk-text);
+  font: inherit;
+  font-size: var(--desk-fs-caption);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--desk-dur-fast) var(--desk-ease);
+}
+.desk-btn:hover {
+  background: color-mix(in srgb, var(--desk-accent) 14%, transparent);
+}
+.desk-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.desk-btn:focus-visible {
+  outline: 2px solid var(--desk-accent);
+  outline-offset: 2px;
+}
+
+.desk-row {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-3);
+  min-height: 42px;
+  padding: var(--desk-sp-1) 0;
+  border-bottom: 1px solid var(--desk-stroke);
+}
+
+.desk-row:last-child {
+  border-bottom: 0;
+}
+.desk-row-main {
+  display: flex;
+  flex-direction: column;
+  margin-right: auto;
+  min-width: 0;
+}
+.desk-row-main small {
+  color: var(--desk-text-3);
+}
+
+.desk-hint {
+  margin: 0;
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-3);
+}
+
+.desk-section-title {
+  margin: 14px 0 2px;
+  font-size: var(--desk-fs-caption);
+  font-weight: var(--desk-fw-semibold);
+  color: var(--desk-text-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.desk-section-title:first-child {
+  margin-top: 0;
+}
+
+.desk-kv {
+  display: flex;
+  gap: var(--desk-sp-3);
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-2);
+}
+.desk-kv em {
+  font-style: normal;
+  color: var(--desk-text);
+}
+
+.desk-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--desk-hit);
+  padding: 0 var(--desk-sp-3);
+  border-radius: var(--desk-r-control);
+  border: 1px solid var(--desk-stroke);
+  background: var(--desk-glass-clear);
+  color: var(--desk-text);
+  font: inherit;
+  font-size: var(--desk-fs-body);
+  outline: none;
+}
+.desk-input::placeholder {
+  color: var(--desk-text-3);
+}
+.desk-input:focus {
+  border-color: var(--desk-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--desk-accent) 26%, transparent);
+}
+
+.desk-divider {
+  height: 1px;
+  background: var(--desk-stroke);
+  margin: var(--desk-sp-2) 0;
+}
+
+.desk-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--desk-sp-1h);
+}
+.desk-tile {
+  aspect-ratio: 3 / 1.7;
+  border-radius: var(--desk-r-md);
+  border: 1px solid var(--desk-stroke);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  transition:
+    transform var(--desk-dur) var(--desk-ease),
+    box-shadow var(--desk-dur) var(--desk-ease);
+}
+.desk-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--desk-shadow-2);
+}
+
+.desk-tile.is-active {
+  box-shadow:
+    0 0 0 2px var(--desk-glass-fill-strong),
+    0 0 0 4px var(--desk-accent);
+}
+
+.desk-photo-card {
+  container-type: size;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  color: #fff;
+}
+
+.desk-photo {
+  position: absolute;
+  inset: 0;
+  background-color: #1b2a3a;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 200vmax rgb(0 0 0 / 38%);
+}
+
+.desk-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 16%), rgb(0 0 0 / 50%));
+}
+
+.desk-photo.is-detail {
+  box-shadow: inset 0 0 0 200vmax rgb(0 0 0 / 44%);
+}
+.desk-photo.is-detail::after {
+  background: linear-gradient(180deg, rgb(0 0 0 / 20%), rgb(0 0 0 / 54%));
+}
+
+.desk-photo-body {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--desk-card-gap);
+  padding: var(--desk-card-pad-y) var(--desk-card-pad-x);
+
+  overflow: hidden;
+}
+
+.desk-photo-title {
+  margin: 0;
+  font-size: var(--desk-fs-card-title);
+  font-weight: var(--desk-fw-semibold);
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+}
+
+.desk-photo-meta {
+  margin: 0;
+  font-size: var(--desk-fs-card-meta);
+  color: rgb(255 255 255 / 62%);
+  letter-spacing: 0.02em;
+}
+
+.desk-photo-text {
+  margin: 0;
+  font-size: var(--desk-fs-card-text);
+  line-height: 1.62;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 24%);
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+.desk-photo-sub {
+  margin: 0;
+  font-size: var(--desk-fs-card-sub);
+  color: rgb(255 255 255 / 58%);
+  letter-spacing: 0.02em;
+}
+
+/* 4x2（388×188）：大卡片统一放大正文，三张内容卡同一档
+   （各卡只在 scoped 里改行数，不再各写一个 font-size，避免一言大、另两张小） */
+.is-wide.is-big .desk-photo-text {
+  font-size: var(--desk-fs-card-text-wide);
+}
+
+.desk-detail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  gap: 0;
+}
+
+.desk-detail-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--desk-detail-gap);
+  padding: var(--desk-detail-pad);
+}
+
+.desk-detail-body {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--desk-detail-gap);
+  max-width: 66ch;
+  width: 100%;
+  margin: 0 auto;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.desk-detail-body::-webkit-scrollbar {
+  display: none;
+}
+
+.desk-detail-meta {
+  margin: 0;
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-3);
+  letter-spacing: 0.02em;
+}
+
+.desk-detail-quote {
+  margin: 0;
+  font-size: var(--desk-fs-large);
+  line-height: 1.55;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--desk-text);
+}
+
+.desk-detail-author {
+  margin: 0;
+  font-size: var(--desk-fs-body);
+  color: var(--desk-text-2);
+}
+
+.desk-detail-en {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: var(--desk-fs-large);
+  line-height: 1.45;
+  color: var(--desk-text);
+}
+
+.desk-detail-text {
+  margin: 0;
+  font-size: var(--desk-fs-title);
+  line-height: 1.7;
+  color: var(--desk-text-2);
+  white-space: pre-wrap;
+}
+
+.desk-detail-foot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--desk-sp-2);
+  width: 100%;
+  max-width: 66ch;
+  margin: 0 auto;
+  padding-top: var(--desk-detail-gap);
+  border-top: 1px solid var(--desk-stroke);
+  position: relative;
+  z-index: 1;
+}
+
+/* 详情里的「栏」：一块接近纯色的毛玻璃。
+   弹窗本身不再垫大背景（`Sheet` 透明），每个栏各自是一块面 —— 对比够、栏与栏之间有缝。 */
+/* 栏 = 独立的一块面：和顶栏用同一档底色与不透明度（--desk-pane / --desk-pane-opacity），
+   块与块之间靠缝分开；只有落在弹窗外缘的角是大弧度。 */
+/* 内部角小、外部角大：四角顺序 左上 / 右上 / 右下 / 左下。
+   顶栏在上面 → 内容栏的上边两角是内部；最左栏左下、最右栏右下才落在弹窗外。 */
+.desk-pane.is-left {
+  border-radius: var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane);
+}
+
+.desk-pane.is-mid {
+  border-radius: var(--desk-r-pane-in);
+}
+
+.desk-pane.is-right {
+  border-radius: var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane) var(--desk-r-pane-in);
+}
+
+.desk-pane.is-top {
+  border-radius: var(--desk-r-pane) var(--desk-r-pane) var(--desk-r-pane-in) var(--desk-r-pane-in);
+}
+
+.desk-pane.is-bottom {
+  border-radius: var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane) var(--desk-r-pane);
+}
+
+.desk-pane.is-solo {
+  border-radius: var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane) var(--desk-r-pane);
+}
+
+.desk-pane {
+  border-radius: var(--desk-r-pane);
+  background: var(--desk-pane);
+  border: 1px solid var(--desk-pane-stroke);
+  box-shadow: var(--desk-pane-shadow);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+
+
+
+/* 动作组：详情的「上一条 / 下一条 · 喜欢 / 复制 / 换背景」都装在这个 flex 行里
+   （`SeriesNav` 的 ‹ › 也用它）。少了这条，组内按钮会跟着行高各自落位 → 看起来不在一条线上。 */
+.desk-fab {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-2);
+}
+
+.desk-detail.on-photo {
+  color: #fff;
+}
+
+.desk-detail.on-photo .desk-detail-panel,
+.desk-detail.on-photo .desk-detail-body {
+  position: relative;
+  z-index: 1;
+}
+
+.desk-detail.on-photo .desk-detail-meta {
+  color: rgb(255 255 255 / 70%);
+}
+
+.desk-detail.on-photo .desk-detail-quote,
+.desk-detail.on-photo .desk-detail-en {
+  color: #fff;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 28%);
+}
+
+.desk-detail.on-photo .desk-detail-author,
+.desk-detail.on-photo .desk-detail-text {
+  color: rgb(255 255 255 / 74%);
+}
+
+.desk-detail.on-photo .desk-detail-foot {
+  border-top-color: rgb(255 255 255 / 14%);
+}
+
+/* ── 桌面：详情与全屏宿主（DeskShell 用） ── */
+/* ── 详情 / 全屏 ── */
+.desk-expanded {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.desk-expanded.desk-pane {
+  overflow: hidden;
+  border-radius: var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane) var(--desk-r-pane);
+}
+
+.desk-expanded > * {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  border-radius: inherit;
+}
+
+.desk-full {
+  position: fixed;
+  inset: 0;
+  z-index: 9200;
+}
+
+.desk-full-inner,
+.desk-full-inner > * {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 0;
+}
+
+.desk-full-inner {
+  position: relative;
+  overflow: hidden;
+  color: var(--desk-text);
+  background: var(--desk-surface);
+}
+
+.desk-full-close {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2;
+}
+
+/* 桌面壳（原 styles/desk.css） */
+/**
+ * 桌面壳（DeskShell.vue）样式
+ *
+ * 三层结构，职责互不干扰：
+ *   .desk-root   绝对定位、overflow:hidden —— 桌面窗口本身
+ *   .desk-wallpaper / -mask   绝对定位铺满 root —— 永远覆盖整块桌面（不含滚动条空隙）
+ *   .desk-scroll  绝对定位、overflow:auto —— 唯一滚动层，滚动条只在这里
+ */
+
+.desk-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #0f172a;
+  color: #f8fafc;
+  font-family: var(--b3-font-family, "PingFang SC", "Microsoft YaHei", sans-serif);
+  font-size: var(--desk-fs-sm);
+  line-height: 1.5;
+}
+
+/* ── 壁纸：铺满桌面窗口 ── */
+.desk-wallpaper,
+.desk-wallpaper-mask {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.desk-wallpaper-mask {
+  z-index: -1;
+  pointer-events: none;
+  background: rgb(4 8 16 / 12%);
+}
+
+/* ── 滚动条：仍可滚动，但不占位、不显示 ── */
+.desk-scroll {
+  scrollbar-width: none;
+}
+
+.desk-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ── 图标网格卡（快捷方式 / 最近文档 / 快捷打开共用）────────────
+   规则只有三条：每 2*2 格一个槽位；槽位内留白形成缝隙；图标白玻璃、正方形。 */
+.slot-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  container-type: size;
+  background-color: #1b2a3a;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 200vmax rgb(0 0 0 / 34%);
+}
+
+/* 文档列表卡：不要照片底，直接贴在卡片材质上 */
+.slot-card.is-plain {
+  background-image: none;
+  background-color: transparent;
+}
+
+.slot-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+}
+
+.slot {
+  container-type: size;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(2px, 7%, 6px);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.slot:disabled { cursor: default; }
+
+.slot-ic {
+  display: grid;
+  place-items: center;
+  width: 84cqmin;
+  height: 84cqmin;
+  border-radius: 22%;
+  border: 1px solid rgb(255 255 255 / 34%);
+  background: rgb(255 255 255 / 16%);
+  backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  -webkit-backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 30%),
+    0 2px 8px rgb(0 0 0 / 18%);
+  color: #fff;
+  transition:
+    background var(--desk-dur-fast) var(--desk-ease),
+    transform var(--desk-dur-fast) var(--desk-ease);
+}
+
+.slot:hover .slot-ic {
+  background: rgb(255 255 255 / 28%);
+  transform: translateY(-1px);
+}
+
+.slot:active .slot-ic { transform: scale(0.94); }
+
+/* 末位「打开卡片」：和快捷方式同一套白玻璃，不参与内容数据 */
+.slot-ic.is-open {
+  background: rgb(255 255 255 / 22%);
+}
+
+.slot-ic svg {
+  width: 54%;
+  height: 54%;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 38%));
+}
+
+/* ── 文档列表卡（最近文档 / 快捷打开）──────────────
+   整卡铺满的彩色列表：每行 2 格高，行色按索引走彩虹，行内 = 图标 + 标题。 */
+.doc-list {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  flex: 0 0 calc(100% / var(--rows, 6));
+  min-height: 0;
+  gap: clamp(4px, 6%, 8px);
+  padding: 0 clamp(5px, 6%, 10px);
+  border-radius: 0;
+  background: var(--bg, rgb(255 255 255 / 60%));
+  border: 1px solid var(--line, rgb(0 0 0 / 12%));
+  color: var(--ink, #181051);   /* 同族深色（Neo：outline-l） */
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: filter var(--desk-dur-fast) var(--desk-ease);
+}
+
+.doc-row:hover { filter: brightness(1.05) saturate(1.15); }
+
+.doc-row.is-more {
+  justify-content: center;
+  color: var(--ink, #181051);
+  opacity: 0.86;
+}
+
+.doc-row svg { flex: none; opacity: 0.85; }
+
+.doc-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: clamp(9px, 10cqh, 13px);
+  font-weight: var(--desk-fw-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ═══ 基础控件（原 ui/primitives/*.vue，样式集中在这里） ═══ */
+/* ── GlassButton ── */
+
+.gb {
+  width: var(--desk-hit, 28px);
+  height: var(--desk-hit, 28px);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  /* 行高归零：inline svg 的基线会让图标偏上/偏下 1px */
+  line-height: 0;
+  font-size: 0;
+  border-radius: 50%;
+  /* 毛玻璃：半透明深色 + 清透模糊 + 内侧高光 */
+  border: 1px solid rgb(255 255 255 / 24%);
+  background: rgb(20 22 28 / 34%);
+  backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  -webkit-backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 18%),
+    0 2px 8px rgb(0 0 0 / 22%);
+  color: rgb(255 255 255 / 92%);
+  cursor: pointer;
+  transition:
+    background var(--desk-dur-fast) var(--desk-ease),
+    transform var(--desk-dur-fast) var(--desk-ease),
+    color var(--desk-dur-fast) var(--desk-ease);
+}
+
+.gb:hover {
+  background: rgb(20 22 28 / 58%);
+  transform: translateY(-1px);
+}
+
+.gb:active {
+  transform: scale(0.94);
+}
+
+.gb.is-on {
+  color: #ff6b8a;
+  border-color: rgb(255 107 138 / 45%);
+  background: rgb(255 107 138 / 16%);
+}
+
+.gb:focus-visible {
+  outline: 2px solid var(--desk-accent);
+  outline-offset: 2px;
+}
+
+/* ── Segmented ── */
+
+.seg {
+  display: flex;
+  gap: var(--desk-sp-0);
+  padding: var(--desk-sp-0);
+  border-radius: var(--desk-r-control);
+  background: color-mix(in srgb, var(--desk-text) 8%, transparent);
+}
+
+.seg-item {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 24px;
+  border: 0;
+  border-radius: calc(var(--desk-r-control) - 2px);
+  background: transparent;
+  color: var(--desk-text-2);
+  font: inherit;
+  font-size: var(--desk-fs-caption);
+  cursor: pointer;
+  transition:
+    background var(--desk-dur) var(--desk-ease),
+    color var(--desk-dur) var(--desk-ease);
+}
+
+.seg-item:hover {
+  color: var(--desk-text);
+}
+
+.seg-item.active {
+  background: var(--desk-glass-fill-strong);
+  color: var(--desk-text);
+  font-weight: var(--desk-fw-medium);
+  box-shadow: var(--desk-shadow-1);
+}
+
+/* ── Chips ── */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--desk-sp-1h);
+}
+
+.chip {
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--desk-r-sm);
+  border: 1px solid color-mix(in srgb, var(--desk-text) 14%, transparent);
+  background: transparent;
+  color: var(--desk-text-2);
+  font: inherit;
+  font-size: var(--desk-fs-caption);
+  cursor: pointer;
+  transition:
+    background var(--desk-dur-fast) var(--desk-ease),
+    color var(--desk-dur-fast) var(--desk-ease),
+    border-color var(--desk-dur-fast) var(--desk-ease);
+}
+
+.chip:hover {
+  color: var(--desk-text);
+  border-color: color-mix(in srgb, var(--desk-accent) 50%, transparent);
+}
+
+.chip.active {
+  color: #fff;
+  background: var(--desk-accent);
+  border-color: var(--desk-accent);
+  font-weight: var(--desk-fw-medium);
+}
+
+/* ── 照片底：未选中 = 白字 + 深色药丸（HIG：玻璃上的文字必须有底色兜底） ── */
+.chip.on-photo {
+  height: var(--desk-hit, 24px);
+  border-color: rgb(255 255 255 / 30%);
+  background: rgb(16 18 24 / 52%);
+  color: #fff;
+  backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  -webkit-backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
+  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
+
+.chip.on-photo:hover {
+  color: #fff;
+  border-color: rgb(255 255 255 / 55%);
+  background: rgb(16 18 24 / 68%);
+}
+
+.chip.on-photo.active {
+  color: #14161a;
+  background: #fff;
+  border-color: transparent;
+  text-shadow: none;
+}

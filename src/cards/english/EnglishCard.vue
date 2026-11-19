@@ -174,7 +174,7 @@ onBeforeUnmount(stopPlay)
 </script>
 
 <style scoped>
-/* 结构来自 ui.css 的 .desk-photo-*；这里只管字体家族与行数 */
+/* 结构来自 styles/index.css 的 .desk-photo-*；这里只管字体家族与行数 */
 .line {
   font-family: Georgia, "Times New Roman", serif;
   line-height: 1.45;
@@ -223,7 +223,7 @@ onBeforeUnmount(stopPlay)
   -webkit-line-clamp: 1;
 }
 
-/* 宽卡：（正文字号由 ui.css 的 .is-wide.is-big .desk-photo-text 统一给） */
+/* 宽卡：（正文字号由 styles/index.css 的 .is-wide.is-big .desk-photo-text 统一给） */
 .is-wide.is-big .line {
   -webkit-line-clamp: 3;
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.3 — 样式与 ui 层再压一轮
+
+- **两张样式表合一**：`ui/ui.css`(817) 并入 `styles/index.css`(398) → 唯一一份 1210 行
+  （令牌 + 断点刻度 + 插件根 + 面板骨架 + 按钮 + 控件 + 卡片外框 + 桌面壳）
+- 清掉 7 处分散的 `import "…css"`，样式只由 `index.ts` 引一次
+- **ui 子目录清零**：`ui/settings/` 与 `ui/primitives/` 扁平化
+  → `ui/WallpaperPanel.vue` `ui/CardsPanel.vue` `ui/Slider.vue`
+- 合并样式表时 `.desk-wallpaper-mask` 被拆成两块，并回一块；说明文字里旧的 `ui.css` 路径全部更新
+- `src/ui` 现在 **10 个文件、无子目录**
+
 ## v0.6.2 — core 收敛：尺寸归设计层，存储/缓存/日期归位（core 8 → 5 文件）
 
 - `core/sizes.ts` → **`ui/sizes.ts`**：尺寸语义属于设计系统（和断点刻度、`is-<tier>` 同一层）

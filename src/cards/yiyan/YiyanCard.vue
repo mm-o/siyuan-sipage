@@ -92,7 +92,7 @@ async function copy() {
 </script>
 
 <style scoped>
-/* 字号/行数只跟尺寸相关；结构（照片、留白、居中、行数上限）来自 ui.css 的 .desk-photo-* */
+/* 字号/行数只跟尺寸相关；结构（照片、留白、居中、行数上限）来自 styles/index.css 的 .desk-photo-* */
 .quote {
   -webkit-line-clamp: 4;
 }
@@ -121,7 +121,7 @@ async function copy() {
   text-overflow: ellipsis;
 }
 
-/* 宽卡：，引文 3 行（字号由 ui.css 的 .is-wide.is-big .desk-photo-text 统一给） */
+/* 宽卡：，引文 3 行（字号由 styles/index.css 的 .is-wide.is-big .desk-photo-text 统一给） */
 .is-wide.is-big .quote {
   -webkit-line-clamp: 3;
 }

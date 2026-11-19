@@ -154,8 +154,6 @@ import { useDeskGrid, normalizeRatios } from "./arrange"
 import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
 import SettingsSheet from "./SettingsSheet.vue"
-import "@/styles/index.css"
-import "@/ui/ui.css"
 
 /** 四条边：图标与文案在同一张表里（都是 Move 家族，和中心手柄一致） */
 const EDGES = [

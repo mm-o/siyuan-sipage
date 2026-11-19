@@ -66,7 +66,7 @@ node tools/verify/shot-calendar.mjs     # 日历卡 + 详情（可加 light|dark
 
 ## 弹窗结构规则（底层约定，v3.49 起）
 
-这三条是**框架层**的约定，写在这里就是为了以后不再逐卡各写一份：改规则只改 `ui.css` 与 `Sheet.vue`，各卡片只标位置类。
+这三条是**框架层**的约定，写在这里就是为了以后不再逐卡各写一份：改规则只改 `styles/index.css` 与 `Sheet.vue`，各卡片只标位置类。
 
 ### 1. 结构：顶栏 pane + 内容 pane(s)
 
@@ -94,7 +94,7 @@ Sheet（壳，无底色/描边/投影/模糊）
 | `.is-right` | 6 6 18 6 | 最右栏 |
 | `.is-solo` | 6 6 18 18 | 单栏内容（照片卡 / 设置面板） |
 
-**只有这六条规则**，定义在 `src/ui/ui.css`，禁止在卡片里内联 `border-radius` 覆盖它们（写死数值就会再次出现「内角 18 对着外角 18」的错位）。
+**只有这六条规则**，定义在 `src/styles/index.css`，禁止在卡片里内联 `border-radius` 覆盖它们（写死数值就会再次出现「内角 18 对着外角 18」的错位）。
 
 ### 3. 滚动：卡片裁切、弹窗滚动
 
@@ -137,7 +137,7 @@ Sheet（壳，无底色/描边/投影/模糊）
 `Sheet` 里**没有** `variant`、没有标题栏、没有 `.desk-sheet-head`：标题属于内容。
 关闭键永远悬浮在右上（28pt），Esc / 点遮罩都能关，关闭时缩回 `origin`。
 
-三张内容卡（每日一言 / 每日英语 / 每日诗词）的详情**结构完全相同**，代码在 `ui/ui.css`：
+三张内容卡（每日一言 / 每日英语 / 每日诗词）的详情**结构完全相同**，代码在 `styles/index.css`：
 
 ```html
 <div class="desk-detail on-photo">          <!-- 卡片根：inset 12px，照片 + 遮罩 -->
@@ -224,7 +224,7 @@ Sheet（壳，无底色/描边/投影/模糊）
 
 ## 照片型内容卡（一言 / 英语 / 诗词，同一套结构）
 
-三张每日卡**结构完全一致**，结构写在 `ui/ui.css`，卡片只覆盖字号与行数：
+三张每日卡**结构完全一致**，结构写在 `styles/index.css`，卡片只覆盖字号与行数：
 
 ```html
 <div class="desk-photo-card">            <!-- 容器：container-type:size，字号用 cqh/cqw -->
@@ -330,7 +330,7 @@ iTab 的「网格落位」+ **按内容定列数**。卡片少而大，照抄 iT
 共同规则：
 
 - **单列垂直居中**：都用 `.desk-photo-body`；
-- **宽卡的正文字号只在一处给**：`ui.css` 的 `.is-big .desk-photo-text`；
+- **宽卡的正文字号只在一处给**：`styles/index.css` 的 `.is-big .desk-photo-text`；
 - 内留白只来自 `--desk-card-pad-y/-x` 与 `--desk-card-gap`（容器单位）；
 - 文字行数上限来自 `.desk-photo-text` 的 `-webkit-line-clamp`；
 - 卡片上不放日期；朗读键只在中/大卡出现。

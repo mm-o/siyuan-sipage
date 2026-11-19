@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { GlassButton } from "@/ui/controls"
 import { Pause, Play, RotateCcw, SkipForward } from "lucide-vue-next"
-import Slider from "@/ui/primitives/Slider.vue"
+import Slider from "@/ui/Slider.vue"
 import { COVERS } from "@/core/image"
 import { NOISES, clockText, pause, pomodoro, records, reset, skip, start, toggleNoise, usePomodoro } from "./pomodoro"
 
