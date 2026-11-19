@@ -47,15 +47,38 @@
         <h3 class="set-side-title">{{ sideTitle }}</h3>
 
         <!-- 预览卡：外观 / 壁纸分区 -->
-        <div v-if="current === 'wallpaper' || current === 'cards'" class="set-preview" :style="previewBg">
-          <div class="set-preview-card" :style="previewCard">
-            <span class="pc-date">11.13 星期五</span>
-            <span class="pc-big">13</span>
-            <span class="pc-line" />
-            <span class="pc-quote" />
+        <template v-if="current === 'wallpaper' || current === 'cards'">
+          <div class="set-preview" :style="previewBg">
+            <div class="set-preview-card" :style="previewCard">
+              <span class="pc-date">11.13 星期五</span>
+              <span class="pc-big">13</span>
+              <span class="pc-line" />
+              <span class="pc-quote" />
+            </div>
+            <span class="set-preview-tag">{{ tag }}</span>
           </div>
-          <span class="set-preview-tag">{{ tag }}</span>
-        </div>
+
+          <!-- 当前壁纸：来源 + 尺寸 -->
+          <div class="set-meta">
+            <span class="set-meta-src">{{ sourceLabel }}</span>
+            <span class="set-meta-size">{{ wallSize }}</span>
+          </div>
+
+          <!-- 最近使用：点一下切回去 -->
+          <template v-if="current === 'wallpaper'">
+            <h4 class="set-side-sub">最近使用</h4>
+            <div class="set-recent">
+              <button
+                v-for="(r, i) in recent"
+                :key="`${r.type}-${r.value}-${i}`"
+                class="set-recent-item"
+                :class="{ 'is-active': r.type === wallpaper.type && r.value === wallpaper.value }"
+                :style="wallpaperBg(r)"
+                @click="useWall(r)"
+              />
+            </div>
+          </template>
+        </template>
 
         <!-- 卡片库：选中卡片的预览 + 张数 + 添加 -->
         <template v-else-if="current === 'library'">
@@ -76,8 +99,15 @@
           </div>
         </template>
 
-        <p v-if="current === 'library'" class="set-side-hint">同一张卡可以放多张；尺寸与位置在桌面「整理模式」里拖。</p>
+        <p v-if="current === 'wallpaper'" class="set-side-hint">缩略图点一下即换；最近 6 张留在这里，随时切回。</p>
+        <p v-else-if="current === 'library'" class="set-side-hint">同一张卡可以放多张；尺寸与位置在桌面「整理模式」里拖。</p>
         <p v-else-if="current === 'cards'" class="set-side-hint">拖动滑轨立刻生效，双击滑轨恢复该项默认值。</p>
+
+        <dl v-if="current === 'wallpaper'" class="set-stats">
+          <div><dt>模糊</dt><dd>{{ wallpaper.blur }}</dd></div>
+          <div><dt>遮罩</dt><dd>{{ Math.round(wallpaper.mask * 100) }}%</dd></div>
+          <div><dt>张贴</dt><dd>{{ desk.cards.length }}</dd></div>
+        </dl>
 
         <div class="set-side-foot">
           <button class="desk-btn" type="button" @click="resetAll">恢复默认</button>
@@ -108,6 +138,7 @@ import WallpaperPanel from "./WallpaperPanel.vue"
 import CardsPanel from "./CardsPanel.vue"
 import LibraryPanel from "./LibraryPanel.vue"
 import { appearance, desk, resetAppearance, resetDesk, wallpaper, addToDesk, countOnDesk, removeFromDesk } from "@/core/store"
+import { SOURCE_LABEL, wallpaperBg, wallSource } from "@/core/image"
 import { CARDS } from "@/core/registry"
 import pkg from "../../package.json"
 
@@ -142,10 +173,8 @@ const sideTitle = computed(
 const version = pkg.version
 const frontend = getFrontend()
 
-/* 预览：用真实壁纸做底，卡片骨架读取同一批外观变量 */
-const previewBg = computed(() => ({
-  backgroundImage: `url(${wallpaper.resolved || wallpaper.value})`,
-}))
+/* 预览：用真实壁纸做底（图片 / 纯色 / 跟随思源三态统一由 wallpaperBg 给出） */
+const previewBg = computed(() => wallpaperBg(wallpaper))
 const previewCard = computed(() => ({
   borderRadius: `${appearance.radius}px`,
   backdropFilter: `blur(${appearance.blur}px) saturate(1.4)`,
@@ -156,6 +185,45 @@ const previewCard = computed(() => ({
 const tag = computed(
   () => `圆角 ${appearance.radius} · 模糊 ${appearance.blur} · 玻璃 ${Math.round(appearance.opacity * 100)}%`,
 )
+
+/* 壁纸信息：来源名 + 真实像素尺寸（主题/纯色没有像素，就给颜色） */
+const sourceLabel = computed(() => SOURCE_LABEL[wallSource(wallpaper)])
+const wallSize = ref("")
+watch(
+  [() => wallpaper.type, () => wallpaper.value],
+  () => {
+    if (wallpaper.type === "theme") {
+      wallSize.value = "主题色"
+      return
+    }
+    if (wallpaper.type === "solid") {
+      wallSize.value = wallpaper.value.toUpperCase()
+      return
+    }
+    if (wallpaper.type === "siyuan" && !wallpaper.value) {
+      wallSize.value = "思源资源"
+      return
+    }
+    const src = wallpaper.resolved || wallpaper.value
+    if (!src) {
+      wallSize.value = ""
+      return
+    }
+    const img = new Image()
+    img.onload = () => (wallSize.value = `${img.naturalWidth}×${img.naturalHeight}`)
+    img.onerror = () => (wallSize.value = "加载失败")
+    img.src = src
+  },
+  { immediate: true },
+)
+
+/* 最近使用 */
+const recent = computed(() => wallpaper.recent ?? [])
+function useWall(r: NonNullable<typeof wallpaper.recent>[number]) {
+  wallpaper.type = r.type
+  wallpaper.source = r.source
+  wallpaper.value = r.value
+}
 
 /**
  * 预览尺寸：用注册表的约束推出来，不另写一套。
@@ -291,6 +359,44 @@ function resetAll() {
   border-top: 1px solid var(--desk-stroke);
 }
 
+/* 最近使用网格按行高自适应：整栏拉满，不留大块空白 */
+.set-side > .set-recent {
+  flex: 0 1 auto;
+  max-height: 190px;
+  overflow: hidden;
+}
+
+.set-side > .set-side-hint {
+  margin-top: var(--desk-sp-2);
+}
+
+/* 底部小统计：把右栏剩余空间变成实时反馈 */
+.set-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--desk-sp-1h);
+  margin: auto 0 0;
+}
+
+.set-stats div {
+  padding: var(--desk-sp-1h) var(--desk-sp-2);
+  border-radius: var(--desk-r-md);
+  border: 1px solid var(--desk-stroke);
+  text-align: center;
+}
+
+.set-stats dt {
+  font-size: var(--desk-fs-2xs);
+  color: var(--desk-text-3);
+}
+
+.set-stats dd {
+  margin: 2px 0 0;
+  font-size: var(--desk-fs-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--desk-text);
+}
+
 /* 预览卡：真实壁纸 + 当前外观参数 */
 .set-preview {
   position: relative;
@@ -301,6 +407,62 @@ function resetAll() {
   background-size: cover;
   background-position: center;
   overflow: hidden;
+}
+
+/* 来源 + 尺寸 */
+.set-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--desk-sp-2);
+}
+
+.set-meta-src {
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-2);
+}
+
+.set-meta-size {
+  font-size: var(--desk-fs-2xs);
+  color: var(--desk-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 最近使用：3 × 2，与来源网格同构 */
+.set-side-sub {
+  margin: 0;
+  font-size: var(--desk-fs-caption);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--desk-text-3);
+}
+
+.set-recent {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--desk-sp-1h);
+}
+
+.set-recent-item {
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid var(--desk-stroke);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  transition:
+    transform var(--desk-dur-fast) var(--desk-ease),
+    box-shadow var(--desk-dur-fast) var(--desk-ease);
+}
+
+.set-recent-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--desk-shadow-2);
+}
+
+.set-recent-item.is-active {
+  box-shadow: 0 0 0 2px var(--desk-accent);
 }
 
 .set-preview-card {

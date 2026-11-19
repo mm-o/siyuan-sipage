@@ -60,9 +60,10 @@ import { computed } from "vue"
 import Slider from "@/ui/Slider.vue"
 import {appearance as a, DEFAULT_APPEARANCE as D, resetAppearance, addToDesk, countOnDesk, removeFromDesk, desk } from "@/core/store"
 import { wallpaper } from "@/core/store"
+import { wallpaperBg } from "@/core/image"
 
 const previewBg = computed(() => ({
-  backgroundImage: `url(${wallpaper.resolved || wallpaper.value})`,
+  ...wallpaperBg(wallpaper),
   filter: wallpaper.blur ? `blur(${wallpaper.blur}px)` : undefined,
 }))
 

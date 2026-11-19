@@ -40,7 +40,9 @@ export async function forwardProxy(
   const json = await res.json()
   if (json?.code !== 0 || !json?.data?.body) throw new Error(json?.msg || "proxy failed")
   if (encoding === "text") return String(json.data.body)
-  const mime = String(json.data.contentType || "image/jpeg").split(";")[0]
+  const mime = String(json.data.contentType || "").split(";")[0].trim()
+  // 接口挂了常返一张 200 + text/html 的错误页，只认真正的图
+  if (!mime.startsWith("image/")) throw new Error(`not an image: ${mime || "empty"}`)
   return `data:${mime};base64,${json.data.body}`
 }
 
@@ -160,15 +162,48 @@ export async function loadCoverGroups(): Promise<CoverGroup[]> {
 
 /* ── 壁纸来源 ────────────────────────────────────────────── */
 
-export type WallSource = "cover" | "bing" | "picsum" | "random" | "solid" | "url"
+export type WallSource = "theme" | "siyuan" | "cover" | "bing" | "gitee" | "picsum" | "random" | "solid" | "url"
 
 export const SOURCE_LABEL: Record<WallSource, string> = {
+  theme: "跟随思源",
+  siyuan: "思源资源",
   cover: "思源头图",
   bing: "必应每日",
+  gitee: "国内图源",
   picsum: "Picsum 随机",
   random: "本地随机",
   solid: "纯色",
   url: "图片链接",
+}
+
+/**
+ * 跟随思源：底色不写死，直接吃主题变量。
+ * 主题一换，变量一变，壁纸跟着变，不需要任何 JS 监听。
+ */
+export const THEME_BG =
+  "radial-gradient(120% 88% at 20% 0%, color-mix(in srgb, var(--b3-theme-primary, #3575f0) 38%, var(--b3-theme-background, #12161f)) 0%, transparent 58%), var(--b3-theme-background, #12161f)"
+
+/**
+ * 思源资源：直接用笔记本 assets 里的图，内核按 /assets/... 直给，
+ * 零网络、零转发；value 为空时退到题头图首张。
+ */
+export const SIYUAN_FALLBACK_BG = 'url("/appearance/covers/cover_001.webp")'
+
+/** 壁纸状态 → 背景样式（唯一出口：桌面、设置预览、组件设置预览都用它） */
+export function wallpaperBg(w: { type: string; value: string; resolved?: string }): Record<string, string> {
+  if (w.type === "theme") return { background: THEME_BG }
+  if (w.type === "siyuan") return { backgroundImage: w.value ? `url(${w.value})` : SIYUAN_FALLBACK_BG }
+  if (w.type === "solid") return { background: w.value }
+  return { backgroundImage: `url(${w.resolved || w.value})` }
+}
+
+/** 壁纸状态 → 来源（面板高亮与右栏文案共用同一套推导） */
+export function wallSource(w: { type: string; source?: string }): WallSource {
+  if (w.type === "theme") return "theme"
+  if (w.type === "siyuan") return "siyuan"
+  if (w.type === "solid") return "solid"
+  if (w.type === "url") return "url"
+  return (w.source as WallSource) || "cover"
 }
 
 const BING_API = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8&mkt=zh-CN"
@@ -203,9 +238,60 @@ export async function loadBingImages(): Promise<BingImage[]> {
   }
 }
 
-/** Picsum（seed 形式，换一张就是换 seed） */
-export function picsumWallpaper(seed = Math.random().toString(36).slice(2, 10)) {
-  return `https://picsum.photos/seed/${seed}/1920/1080`
+/* ── 外网图：统一走内核 POST 转发，取回 base64 后转 data URL ── */
+
+/**
+ * 取一张外网图，返回可直接放进 url() 的 data URL。
+ * 内核的 GET?url= 形式对二进制返 0 字节，只有 POST JSON 那个口能拿到 body，
+ * 所以任何外网图都必须经过这里 —— 这是全项目唯一的取图口。
+ */
+const fetchImage = (url: string) => forwardProxy(url, "base64")
+
+const picsumWall = (seed: string, w: number, h: number) =>
+  fetchImage(`https://picsum.photos/seed/${seed}/${w}/${h}`)
+
+export interface PicsumImage {
+  seed: string
+  thumb: string
+}
+
+/** 一批 Picsum 图：缩略图 480×270 即最终壁纸，同一 seed 必是同一张 */
+export async function picsumBatch(count = 12, seeds?: string[]): Promise<PicsumImage[]> {
+  const list = seeds ?? Array.from({ length: count }, () => randSeed())
+  return Promise.all(list.map(async (seed) => ({ seed, thumb: await picsumWall(seed, 480, 270) })))
+}
+
+function randSeed() {
+  return Math.random().toString(36).slice(2, 8)
+}
+
+/** 首批固定，打开面板立刻有图；「换一批」才随机 */
+const PICSUM_SEEDS = ["grain", "ridge", "harbor", "dune", "fern", "lumen", "ember", "vista", "ash", "tide", "nimbus", "quarry"]
+
+export const picsumFirst = () => picsumBatch(PICSUM_SEEDS.length, PICSUM_SEEDS)
+export const picsumShuffle = (count = 12) => picsumBatch(count)
+
+/** 国内图源：alcy.cc 单次直出 webp，实测 0.7s，国内可直连 */
+export const ALCY_API = "https://t.alcy.cc/pc"
+
+export const alcyWallpaper = () => fetchImage(ALCY_API)
+
+/** 一批国内图源：接口每次返回不同图，用时间戳做去重键 */
+export interface AlcyImage {
+  seed: string
+  thumb: string
+  full: string
+}
+
+export async function alcyBatch(count = 12): Promise<AlcyImage[]> {
+  const now = Date.now()
+  return Promise.all(
+    Array.from({ length: count }, async (_, i) => {
+      const url = await alcyWallpaper()
+      // 接口本身随机：缩略图即原图，点哪张用哪张
+      return { seed: `a${now.toString(36)}${i}`, thumb: url, full: url }
+    }),
+  )
 }
 
 /** 从思源题头图里随机一张 */
@@ -213,4 +299,40 @@ export async function randomCoverUrl(): Promise<string> {
   const all = (await loadCoverGroups()).flatMap((g) => g.items)
   if (!all.length) return COVERS[0]
   return coverUrl(all[Math.floor(Math.random() * all.length)].file)
+}
+
+/* ── 思源资源：直接用笔记本里已有的图片 ───────────────────── */
+
+export interface AssetImage {
+  path: string
+  url: string
+}
+
+let assetCache: AssetImage[] | null = null
+let assetLoading: Promise<AssetImage[]> | null = null
+
+/** 思源插图资产（assets/ 下的图片），内核直接给，零网络 */
+export function loadAssets(): Promise<AssetImage[]> {
+  if (assetCache) return Promise.resolve(assetCache)
+  assetLoading ??= (async () => {
+    const res = await fetch("/api/search/searchAsset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ k: "image" }),
+    })
+    const json = await res.json()
+    const raw = json?.code === 0 && Array.isArray(json.data) ? json.data : []
+    assetCache = raw
+      .map((it: any) => String(it?.path || ""))
+      .filter((p: string) => /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(p))
+      .map((p: string) => ({ path: p, url: `/${p}` }))
+    return assetCache
+  })()
+  return assetLoading
+}
+
+export async function randomAssetUrl(): Promise<string> {
+  const list = await loadAssets()
+  if (!list.length) return COVERS[0]
+  return list[Math.floor(Math.random() * list.length)].url
 }

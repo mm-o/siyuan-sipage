@@ -150,6 +150,7 @@ import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVert
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
 import { PANEL_CLOCK, desk, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
+import { wallpaperBg } from "@/core/image"
 import { useDeskGrid, normalizeSizes } from "./arrange"
 import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
@@ -163,13 +164,12 @@ const EDGES = [
   { id: "w", icon: MoveHorizontal, label: "左" },
 ] as const
 
-/* 壁纸 */
-const wallpaperStyle = computed(() => {
-  const blur = wallpaper.blur ? `blur(${wallpaper.blur}px)` : undefined
-  const transform = wallpaper.blur ? "scale(1.04)" : undefined
-  if (wallpaper.type === "solid") return { background: wallpaper.value, filter: blur, transform }
-  return { backgroundImage: `url(${wallpaper.resolved || wallpaper.value})`, filter: blur, transform }
-})
+/* 壁纸：三种形态（图片 / 纯色 / 跟随思源）由 wallpaperBg 统一给出 */
+const wallpaperStyle = computed(() => ({
+  ...wallpaperBg(wallpaper),
+  filter: wallpaper.blur ? `blur(${wallpaper.blur}px)` : undefined,
+  transform: wallpaper.blur ? "scale(1.04)" : undefined,
+}))
 const maskStyle = computed(() => ({ background: `rgba(4, 8, 16, ${wallpaper.mask})` }))
 
 /* 时间 */

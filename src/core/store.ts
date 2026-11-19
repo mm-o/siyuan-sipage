@@ -61,13 +61,22 @@ function save(key: string, value: unknown) {
 const G = globalThis as unknown as Record<string, any>
 
 /* ── 壁纸 ─────────────────────────────────────────────── */
-interface WallpaperState {
-  type: "cover" | "solid" | "url"
+interface WallItem {
+  type: WallpaperState["type"]
   value: string
-  source?: "cover" | "bing" | "picsum" | "random"
+  source?: WallpaperState["source"]
+}
+
+interface WallpaperState {
+  /** theme = 跟随思源主题色；siyuan = 思源 assets 里的图 */
+  type: "cover" | "solid" | "url" | "theme" | "siyuan"
+  value: string
+  source?: "cover" | "bing" | "picsum" | "gitee" | "random"
   resolved?: string
   blur: number
   mask: number
+  /** 最近用过（最多 6 条，右栏预览下方回切用） */
+  recent?: WallItem[]
 }
 
 const DEFAULT_WALLPAPER: WallpaperState = {
@@ -525,5 +534,19 @@ function persistAll() {
 }
 
 watch([wallpaper, appearance, desk, weather, countdown], persistAll, { deep: true })
+/* 壁纸一换就记一笔，右栏「最近使用」直接读它；同一个不去重 */
+watch(
+  () => [wallpaper.type, wallpaper.value] as const,
+  ([type, value]) => {
+    if (!value) return
+    const list = wallpaper.recent ?? []
+    if (list[0]?.type === type && list[0]?.value === value) return
+    wallpaper.recent = [
+      { type, value, source: wallpaper.source },
+      ...list.filter((r) => !(r.type === type && r.value === value)),
+    ].slice(0, 6)
+  },
+  { immediate: true },
+)
 /* 动效设置 → CSS 变量，改完立刻生效 */
 watch(() => [appearance.motion, appearance.motionDur, appearance.motionStagger, appearance.motionChar], applyMotionVars, { immediate: true })
