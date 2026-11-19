@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue"
-import type { CardSize } from "@/core/registry"
 import { blockState } from "./block"
 import { mountProtyle } from "./block"
 import "./styles.css"
@@ -9,7 +8,7 @@ import "./styles.css"
  * 思源块卡片：用内核 Protyle 渲染（自定义块只有它能挂载），只显示块本体。
  * 全屏切换会重建宿主节点，所以 host 变化与 fullscreenchange 都要重挂一次。
  */
-defineProps<{ size?: CardSize }>()
+defineProps<{ size?: string; w?: number; h?: number }>()
 
 const host = ref<HTMLElement>()
 let handle: { destroy: () => void } | null = null

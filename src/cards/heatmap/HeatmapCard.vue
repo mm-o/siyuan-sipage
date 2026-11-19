@@ -84,11 +84,11 @@
  *   2x4  26 周网格 + 标题 + 月份标签 + 两句统计
  */
 import { computed } from "vue"
-import type { CardSize } from "@/core/registry"
+import { sizeTier } from "@/core/sizes"
 import { buildGrid, buildStats, splitGrid, useHeatmap } from "./heatmap"
 import "./styles.css"
 
-const props = withDefaults(defineProps<{ size?: CardSize }>(), { size: "2x2" })
+const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number }>(), { size: "2x2", w: 4, h: 2 })
 
 interface Plan {
   weeks: number
@@ -99,15 +99,14 @@ interface Plan {
   figures: boolean
 }
 
-const PLAN: { [K in CardSize]?: Plan } = {
-  "1x1": { weeks: 10, caption: false, months: false, legend: false, figures: false },
-  "2x1": { weeks: 20, caption: false, months: false, legend: false, figures: false },
-  "2x2": { weeks: 18, caption: true, months: false, legend: false, figures: true },
-  "4x2": { weeks: 53, caption: true, months: true, legend: true, figures: true },
-  "2x4": { weeks: 26, caption: true, months: true, legend: false, figures: true },
-}
+const plan = computed<Plan>(() => {
+  const tier = sizeTier(props.w ?? 4, props.h ?? 2)
+  if (tier === "wide") return { months: false, foot: true }
+  if (tier === "tall") return { months: true, foot: true }
+  if (tier === "mini") return { months: false, foot: false }
+  return { months: true, foot: false }
+})
 
-const plan = computed(() => PLAN[props.size] ?? PLAN["2x2"]!)
 const weeks = computed(() => plan.value.weeks)
 
 const { counts, error, reload } = useHeatmap(weeks.value)
@@ -280,16 +279,16 @@ const stats = computed(() => buildStats(counts.value ?? new Map(), weeks.value))
 }
 
 /* ── 尺寸版式 ─────────────────────────────────────────── */
-.is-2x1 .hm-body {
+.is-wide:not(.is-big) .hm-body {
   justify-content: center;
 }
 
-.is-2x4 .hm-chart {
+.is-tall .hm-chart {
   flex: 0 0 auto;
   height: 56%;
 }
 
-.is-2x4 .hm-foot {
+.is-tall .hm-foot {
   flex-wrap: wrap;
   align-content: flex-start;
 }

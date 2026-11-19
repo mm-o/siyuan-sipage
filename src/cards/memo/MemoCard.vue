@@ -23,10 +23,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import type { CardSize } from "@/core/registry"
 import { add, leftCount, toggle, visible } from "./memo"
 
-const props = defineProps<{ size?: CardSize }>()
+const props = defineProps<{ size?: string; w?: number; h?: number }>()
 const draft = ref("")
 
 /** 尺寸只决定显示几行 / 有没有输入框 */

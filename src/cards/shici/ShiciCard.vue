@@ -56,7 +56,6 @@
  * 序列与背景由 core/daily 统一管理：卡片与详情永远同一首诗、同一张图。
  */
 import { computed, ref } from "vue"
-import type { CardSize } from "@/core/registry"
 import { Check, Copy, Image as ImageIcon } from "lucide-vue-next"
 import Chips from "@/ui/primitives/Chips.vue"
 import GlassButton from "@/ui/primitives/GlassButton.vue"
@@ -65,7 +64,7 @@ import { DAILY_API, dailySeries } from "@/core/daily"
 import { photoBg } from "@/ui/view"
 import { copyText } from "@/ui/view"
 
-const props = withDefaults(defineProps<{ size?: CardSize; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
+const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
 
 interface Poem {
   title: string
@@ -159,11 +158,11 @@ async function copyPoem() {
 }
 
 /* 1×1：标题 + 作者，标题收到 11px 让五六个字排一行 */
-.is-1x1 .desk-photo-body {
+.is-mini .desk-photo-body {
   padding: var(--desk-card-pad-y) 10px;
 }
 
-.is-1x1 .title {
+.is-mini .title {
   font-size: var(--desk-fs-card-title);
   line-height: 1.35;
   display: -webkit-box;
@@ -172,25 +171,25 @@ async function copyPoem() {
   overflow: hidden;
 }
 
-.is-1x1 .meta {
+.is-mini .meta {
   font-size: var(--desk-fs-card-sub);
 }
 
-.is-1x1 .lines {
+.is-mini .lines {
   display: none;
 }
 
 /* 2×1：高度只有 88px —— 标题 + 两句诗，朝代·作者让位给正文 */
-.is-2x1 .meta {
+.is-wide:not(.is-big) .meta {
   display: none;
 }
 
-.is-2x1 .lines {
+.is-wide:not(.is-big) .lines {
   -webkit-line-clamp: 2;
   font-size: var(--desk-fs-card-text);
 }
 
-.is-2x1 .title {
+.is-wide:not(.is-big) .title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
@@ -199,17 +198,17 @@ async function copyPoem() {
   text-overflow: ellipsis;
 }
 
-/* 4×2：宽版，诗行 4 行（字号由 ui.css 的 .is-4x2 .desk-photo-text 统一给） */
-.is-4x2 .lines {
+/* 宽卡：，诗行 4 行（字号由 ui.css 的 .is-wide.is-big .desk-photo-text 统一给） */
+.is-wide.is-big .lines {
   -webkit-line-clamp: 4;
   line-height: 1.7;
 }
 
-.is-4x2 .title {
+.is-wide.is-big .title {
   font-size: var(--desk-fs-card-title-wide);
 }
 
-.is-4x2 .meta {
+.is-wide.is-big .meta {
   font-size: var(--desk-fs-card-meta);
 }
 

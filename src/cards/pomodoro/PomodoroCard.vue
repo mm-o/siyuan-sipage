@@ -24,10 +24,9 @@
 </template>
 
 <script setup lang="ts">
-import type { CardSize } from "@/core/registry"
 import { clockText, pause, pomodoro, reset, start, usePomodoro } from "./pomodoro"
 
-defineProps<{ size?: CardSize }>()
+defineProps<{ size?: string; w?: number; h?: number }>()
 
 const { running, left, percent } = usePomodoro()
 </script>

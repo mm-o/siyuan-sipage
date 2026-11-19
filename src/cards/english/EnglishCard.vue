@@ -51,7 +51,6 @@
  * 朗读：接口给了 tts 就播音频，本地句库用系统语音合成。
  */
 import { computed, onBeforeUnmount, ref } from "vue"
-import type { CardSize } from "@/core/registry"
 import { BookOpen, Check, Copy, Image as ImageIcon, Pause, Play } from "lucide-vue-next"
 import GlassButton from "@/ui/primitives/GlassButton.vue"
 import SeriesNav from "@/ui/primitives/SeriesNav.vue"
@@ -59,7 +58,7 @@ import { DAILY_API, dailySeries } from "@/core/daily"
 import { photoBg } from "@/ui/view"
 import { copyText } from "@/ui/view"
 
-const props = withDefaults(defineProps<{ size?: CardSize; mode?: "card" | "detail" }>(), {
+const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), {
   size: "2x2",
   mode: "card",
 })
@@ -201,36 +200,36 @@ onBeforeUnmount(stopPlay)
 }
 
 /* 1×1 / 2×1 空间不够：不显示朗读键（详情里仍可朗读） */
-.is-1x1 .play,
-.is-2x1 .play {
+.is-mini .play,
+.is-wide:not(.is-big) .play {
   display: none;
 }
 
 /* 1×1：只留句子 */
-.is-1x1 .note {
+.is-mini .note {
   display: none;
 }
 
-.is-1x1 .line {
+.is-mini .line {
   font-size: var(--desk-fs-card-text);
   -webkit-line-clamp: 3;
 }
 
 /* 2×1：句子两行 + 释义一行 */
-.is-2x1 .line {
+.is-wide:not(.is-big) .line {
   -webkit-line-clamp: 2;
 }
 
-.is-2x1 .note {
+.is-wide:not(.is-big) .note {
   -webkit-line-clamp: 1;
 }
 
-/* 4×2：宽版（正文字号由 ui.css 的 .is-4x2 .desk-photo-text 统一给） */
-.is-4x2 .line {
+/* 宽卡：（正文字号由 ui.css 的 .is-wide.is-big .desk-photo-text 统一给） */
+.is-wide.is-big .line {
   -webkit-line-clamp: 3;
 }
 
-.is-4x2 .note {
+.is-wide.is-big .note {
   font-size: var(--desk-fs-card-meta);
 }
 </style>

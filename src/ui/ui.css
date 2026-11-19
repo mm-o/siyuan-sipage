@@ -252,7 +252,7 @@
 
 /* 4x2（388×188）：大卡片统一放大正文，三张内容卡同一档
    （各卡只在 scoped 里改行数，不再各写一个 font-size，避免一言大、另两张小） */
-.is-4x2 .desk-photo-text {
+.is-wide.is-big .desk-photo-text {
   font-size: var(--desk-fs-card-text-wide);
 }
 

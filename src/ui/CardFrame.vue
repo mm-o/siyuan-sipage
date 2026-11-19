@@ -2,7 +2,7 @@
   <article
     ref="frameRef"
     class="frame"
-    :class="{ pressed, 'is-solid': solid }"
+    :class="[`is-${tier}`, { 'is-big': big, pressed, 'is-solid': solid }]"
     @mousedown="pressed = true"
     @mouseup="pressed = false"
     @mouseleave="pressed = false"
@@ -31,14 +31,15 @@
  *   - 菜单直接用思源原生 Menu：样式、图标、键盘、点外关闭全部跟思源一致，
  *     也不会有「图标被思源全局 svg{fill:currentColor} 填实」的问题（自绘菜单会被 Teleport 到 body 之外）。
  */
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { Maximize2, MoreHorizontal } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
+import { isBig, sizeTier } from "@/core/sizes"
 import GlassButton from "./primitives/GlassButton.vue"
 import "@/styles/index.css"
 
-const props = defineProps<{ cardId: string; size: string }>()
+const props = defineProps<{ cardId: string; size: string; w: number; h: number }>()
 
 const emit = defineEmits<{
   expand: [DOMRect]
@@ -49,6 +50,9 @@ const emit = defineEmits<{
 }>()
 
 const def = getCard(props.cardId)
+/** 形状档（卡片靠它切版式，任何拖拽尺寸都能命中） */
+const tier = computed(() => sizeTier(props.w, props.h))
+const big = computed(() => isBig(props.w, props.h))
 /** 纯色面：信息型卡片（日历）对齐 参考实现 的白卡，不吃外观里的不透明度 */
 const solid = def?.surface === "solid"
 /** 控件开关：注册表没写就当全开 */

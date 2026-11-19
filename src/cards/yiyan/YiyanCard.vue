@@ -42,7 +42,6 @@
  * 卡片与详情永远是同一句、同一张图。
  */
 import { computed, ref } from "vue"
-import type { CardSize } from "@/core/registry"
 import { Check, Copy, Heart, Image as ImageIcon } from "lucide-vue-next"
 import GlassButton from "@/ui/primitives/GlassButton.vue"
 import SeriesNav from "@/ui/primitives/SeriesNav.vue"
@@ -50,7 +49,7 @@ import { DAILY_API, dailySeries } from "@/core/daily"
 import { photoBg } from "@/ui/view"
 import { copyText } from "@/ui/view"
 
-const props = withDefaults(defineProps<{ size?: CardSize; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
+const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
 
 interface Quote {
   hitokoto: string
@@ -100,12 +99,12 @@ async function copy() {
 }
 
 /* 1×1：只留引文与出处，行数收窄（88px 里 2 行 + 出处刚好放得下） */
-.is-1x1 .quote {
+.is-mini .quote {
   font-size: var(--desk-fs-card-text);
   -webkit-line-clamp: 2;
 }
 
-.is-1x1 .from {
+.is-mini .from {
   font-size: var(--desk-fs-card-sub);
   white-space: nowrap;
   overflow: hidden;
@@ -113,22 +112,22 @@ async function copy() {
 }
 
 /* 2×1：高度减半 —— 引文两行 + 出处一行 */
-.is-2x1 .quote {
+.is-wide:not(.is-big) .quote {
   -webkit-line-clamp: 2;
 }
 
-.is-2x1 .from {
+.is-wide:not(.is-big) .from {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* 4×2：宽版，引文 3 行（字号由 ui.css 的 .is-4x2 .desk-photo-text 统一给） */
-.is-4x2 .quote {
+/* 宽卡：，引文 3 行（字号由 ui.css 的 .is-wide.is-big .desk-photo-text 统一给） */
+.is-wide.is-big .quote {
   -webkit-line-clamp: 3;
 }
 
-.is-4x2 .from {
+.is-wide.is-big .from {
   font-size: var(--desk-fs-card-meta);
 }
 </style>

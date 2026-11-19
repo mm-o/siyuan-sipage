@@ -53,11 +53,11 @@
  *   2x4  主事件 + 5 行
  */
 import { computed } from "vue"
-import type { CardSize } from "@/core/registry"
+import { isBig, sizeTier } from "@/core/sizes"
 import { countdown } from "@/core/store"
 import { categoryOf, coverStyleOf, sortViews, softOf } from "./countdown"
 
-const props = withDefaults(defineProps<{ size?: CardSize }>(), { size: "2x2" })
+const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number }>(), { size: "2x2", w: 4, h: 2 })
 
 interface Plan {
   /** 显示目标日 */
@@ -66,15 +66,18 @@ interface Plan {
   rows: number
 }
 
-const PLAN: { [K in CardSize]?: Plan } = {
-  "1x1": { date: false, rows: 0 },
-  "2x1": { date: true, rows: 0 },
-  "2x2": { date: true, rows: 2 },
-  "4x2": { date: true, rows: 3 },
-  "2x4": { date: true, rows: 5 },
-}
-
-const plan = computed(() => PLAN[props.size] ?? PLAN["2x2"]!)
+/**
+ * 版式表按「形状档 + 大卡」取，不按精确格数：
+ * 之前用 "4x2" 这种键，卡片拖成 8x4 就取不到 → 退回默认。
+ */
+const plan = computed<Plan>(() => {
+  const t = sizeTier(props.w ?? 4, props.h ?? 2)
+  const big = isBig(props.w ?? 4, props.h ?? 2)
+  if (t === "mini") return { date: false, rows: 0 }
+  if (t === "wide") return { date: true, rows: big ? 3 : 0 }
+  if (t === "tall") return { date: true, rows: big ? 5 : 2 }
+  return { date: true, rows: big ? 5 : 2 }
+})
 
 const ordered = computed(() => sortViews(countdown.events))
 const hero = computed(() => ordered.value[0] ?? null)
@@ -263,13 +266,13 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 }
 
 /* ── 尺寸版式 ─────────────────────────────────────────── */
-/* 1x1：只留标题 + 数字，垂直居中 */
-.is-1x1 .cd-hero {
+/* 极小区：只留标题 + 数字，垂直居中 */
+.is-mini .cd-hero {
   justify-content: center;
 }
 
 /* 2x1：主事件横排（标题在上、数字在下，右侧日期） */
-.is-2x1 .cd-hero {
+.is-wide:not(.is-big) .cd-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
@@ -278,27 +281,27 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
   align-content: center;
   column-gap: clamp(8px, 3cqw, 20px);
 }
-.is-2x1 .cd-hero-title {
+.is-wide:not(.is-big) .cd-hero-title {
   grid-area: title;
 }
-.is-2x1 .cd-hero-days {
+.is-wide:not(.is-big) .cd-hero-days {
   grid-area: days;
 }
-.is-2x1 .cd-hero-date {
+.is-wide:not(.is-big) .cd-hero-date {
   grid-area: date;
   align-self: center;
   text-align: right;
 }
 
 /* 4x2：左主事件、右 3 行 */
-.is-4x2 .cd-body {
+.is-wide.is-big .cd-body {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   grid-template-rows: minmax(0, 1fr);
   column-gap: clamp(6px, 2.4cqw, 14px);
 }
 
-/* 2x4：主事件在上、5 行在下 */
-.is-2x4 .cd-body {
+/* 竖卡：主事件在上、5 行在下 */
+.is-tall .cd-body {
   grid-template-rows: minmax(0, 0.9fr) minmax(0, 1.1fr);
 }
 
@@ -312,8 +315,8 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 }
 
 @container (max-height: 259px) {
-  .is-2x2 .cd-rows,
-  .is-4x2 .cd-rows {
+  .is-square:not(.is-big) .cd-rows,
+  .is-wide.is-big .cd-rows {
     display: none;
   }
 }
