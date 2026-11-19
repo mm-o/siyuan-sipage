@@ -1,59 +1,154 @@
 /**
- * 写作热力图卡片：只有网格
+ * 写作热力图的格子（卡片与详情共用，唯一一处）
  *
- * 列数由卡片宽度决定（--weeks），格子用 1fr 等分 + aspect-ratio 保持方形，
- * 因此任何尺寸都只是"变大变小"，不会错位；也不写任何文字。
+ * 设计取舍（apple-design-skill）：
+ *   - `charts.md › Color`「Avoid relying solely on color… add visual separation」→ 格子之间留 3px 缝，
+ *     深浅之外还有数字与列表；`color.md`「一种颜色只表示一件事」→ **只用一个色相**（思源主色），
+ *     深浅 = 写得多不多，不做彩色彩虹（色相是类别通道，硬拿来表示强度会让人误读）。
+ *   - `dark-mode.md › Dark Mode colors`「custom colors need bright and dim variants」→ 4 档全部由
+ *     `--desk-accent` 与 `--desk-surface` 混出来，浅色/深色外观各自成立，不写死 hex。
+ *   - 格子是**平涂的小圆角方块**（radius 3），不加渐变/高光/虚化：数据标记（mark）要干净，
+ *     毛玻璃质感交给容器（Sheet 的玻璃面），两者混在一起就成了「糖豆」。
+ *   - 打开时从年头到年尾依次淡入（`--col / --row` 错峰），`prefers-reduced-motion` 时关闭。
  */
-.hm-card {
-  container-type: size;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.hm-body {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  padding: 3cqmin;
-}
-
-.hm-chart {
-  /* 必须占满：flex-basis 0 + width 100%，否则百分比高度会塌成 0 */
-  flex: 1 1 0;
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-}
-
-/* 单层网格：7 行（周一…周日）× N 列，cell 直接是子项 */
 .hg {
+  --hg-gap: 3px;
+  --hg-radius: 3px;
+  position: relative;
+}
+
+/* 顶部月份标签叠在网格上方，按列绝对定位，避免 nowrap 的标签把容器撑宽 */
+.hg-months {
+  position: relative;
+  height: 13px;
+  margin-bottom: var(--desk-sp-1);
+  font-size: var(--desk-fs-2xs);
+  line-height: 1;
+  color: var(--desk-text-3);
+}
+
+.hg-month {
+  position: absolute;
+  top: 0;
+  left: calc(var(--col) * 100% / var(--weeks));
+  white-space: nowrap;
+}
+
+/* 网格：宽度铺满，高度按「单格宽 × 7」推出来（= 700cqw / weeks），格子才是方的 */
+.hg-weeks {
+  display: grid;
+  grid-template-columns: repeat(var(--weeks), minmax(0, 1fr));
+  gap: var(--hg-gap);
+  width: 100%;
+  height: calc(700cqw / var(--weeks));
+  max-height: 100%;
+}
+
+.hg-week {
   display: grid;
   grid-template-rows: repeat(7, minmax(0, 1fr));
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 2px;
-  width: 100%;
-  height: 100%;
+  gap: var(--hg-gap);
+  min-width: 0;
+  min-height: 0;
 }
 
+/* ── 一格一天：单一色相的 5 档（半透明，玻璃面透上来）───── */
+/* 0 档近乎透空；有写的 4 档由主色 34/56/78/96% 递进。混透明而不是混白面：
+   卡片和弹层都是玻璃，混白面会变成贴在玻璃上的白贴纸。 */
 .hg-cell {
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--desk-text) 8%, transparent);
+  min-height: 0;
+  border-radius: var(--hg-radius);
+  background: color-mix(in srgb, var(--desk-text) 6%, transparent);
 }
 
-.hg-cell.is-1 { background: color-mix(in srgb, var(--desk-accent) 26%, transparent); }
-.hg-cell.is-2 { background: color-mix(in srgb, var(--desk-accent) 46%, transparent); }
-.hg-cell.is-3 { background: color-mix(in srgb, var(--desk-accent) 68%, transparent); }
-.hg-cell.is-4 { background: var(--desk-accent); }
+.hg-cell.is-1 {
+  background: color-mix(in srgb, var(--desk-accent) 34%, transparent);
+}
 
-.hm-state {
-  display: grid;
-  place-items: center;
+.hg-cell.is-2 {
+  background: color-mix(in srgb, var(--desk-accent) 56%, transparent);
+}
+
+.hg-cell.is-3 {
+  background: color-mix(in srgb, var(--desk-accent) 78%, transparent);
+}
+
+.hg-cell.is-4 {
+  background: color-mix(in srgb, var(--desk-accent) 96%, transparent);
+}
+
+/* 详情里的 hover：只描边，不动颜色（颜色只表示强度） */
+.hg-cell.is-hover {
+  outline: 1.5px solid var(--desk-text);
+  outline-offset: 1px;
+}
+
+/* ── 两周一段的排法（一年 53 周拆成上下两段，别拉成一条长龙）─────
+   每段按「高度 × 周数/7」定宽并居中，格子仍然是方的。 */
+.hg.is-split {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--desk-sp-2);
+  height: 100%;
+  min-height: 0;
+}
+
+/* 单段（不拆分）时 .hg-row 只是个普通块，高度由 .hg-weeks 自己算 */
+.hg-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+}
+
+/* 两段排法：每段按剩余高度撑开，格子仍是方的 */
+.hg.is-split > .hg-row {
+  flex: 1 1 0;
+}
+
+/* 两段：默认铺满宽度（格子略扁，绝不溢出）；
+   详情里有足够高度，再按「宽度 ÷ 周数 × 7」长成正方形。 */
+.hg.is-split > .hg-row > .hg-weeks {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+/* ── 打开时依次淡入（像数据一行行落下来）─────────────── */
+.hg.is-animate .hg-cell {
+  animation: hg-bloom 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--col, 0) * 6ms + var(--row, 0) * 5ms);
+}
+
+@keyframes hg-bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hg.is-animate .hg-cell {
+    animation: none;
+  }
+}
+
+/* 详情：两段均分可用高度（格子接近正方形，且绝不压到底部读数） */
+.hm-panel .hg.is-split > .hg-row {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.hm-panel .hg.is-split > .hg-row > .hg-weeks {
+  flex: 1 1 auto;
   width: 100%;
   height: 100%;
-  font-size: clamp(9px, 8cqmin, 14px);
-  color: var(--desk-text-3);
+  min-height: 0;
 }

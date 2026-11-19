@@ -703,26 +703,9 @@ function backToList() {
 
 
 
-.cd-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--desk-sp-1);
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--desk-text) 4%, transparent);
-  color: var(--desk-text-2);
-  font: inherit;
-  font-size: var(--desk-fs-sm);
-  cursor: pointer;
-}
 
-.cd-chip.is-active {
-  color: var(--desk-accent);
-  border-color: var(--desk-accent);
-  background: var(--desk-surface);
-}
+
+
 
 /* 开关（对齐 el-switch：40×22 药丸） */
 
