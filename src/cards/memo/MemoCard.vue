@@ -11,7 +11,7 @@
           <button class="mm-dot" type="button" :aria-label="item.done ? '标记未完成' : '标记完成'" @click="toggle(item.id)" />
           <span class="mm-text">{{ item.text }}</span>
         </li>
-        <li v-if="!visible.length" class="mm-empty">没有待办，点开详情可以添加</li>
+        <li v-if="!visible.length" class="mm-empty desk-note">没有待办，点开详情可以添加</li>
       </ul>
 
       <form v-if="plan.input" class="mm-add" @submit.prevent="submit">
@@ -125,10 +125,7 @@ function submit() {
   text-decoration: line-through;
 }
 
-.mm-empty {
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
+
 
 .mm-add {
   margin-top: auto;

@@ -10,6 +10,8 @@ import { Briefcase, Flag, Gift, Heart, House, LayoutGrid, Target } from "lucide-
 import { COVERS } from "@/core/image"
 import type { CountdownCategory, CountdownEvent } from "@/core/store"
 
+export type { CountdownEvent }
+
 /** 分类（`all` 只用于筛选，不写进事件） */
 interface CountdownCategoryDef {
   id: "all" | CountdownCategory
@@ -51,6 +53,11 @@ export const FILTERS: { label: string; value: CountdownFilter }[] = [
   { label: "全部", value: "all" },
   { label: "即将到来", value: "upcoming" },
   { label: "已过去", value: "past" },
+]
+
+export const REPEAT_OPTIONS = [
+  { label: "不重复", value: "none" as const },
+  { label: "每年", value: "year" as const },
 ]
 
 export const REPEAT_LABEL: Record<CountdownEvent["repeat"], string> = { none: "不重复", year: "每年" }

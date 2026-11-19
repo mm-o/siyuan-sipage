@@ -396,6 +396,41 @@ html.dark,
   .desk-draw { animation: none; }
 }
 
+/* ═══ 语义工具类（跨卡片同构的部分，卡片里不要再抄一遍）═══ */
+
+/* 详情面板骨架：三栏面板的根节点（左右列 + 自适应中列） */
+.desk-panel-row {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  gap: var(--desk-detail-gap);
+  color: var(--desk-text);
+}
+
+/* 单行省略（列表项名称、图例、正文摘句） */
+.desk-ellipsis {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 次级说明文字（时间戳、副标题、空态） */
+.desk-note {
+  margin: 0;
+  color: var(--desk-text-3);
+  font-size: var(--desk-fs-caption);
+}
+
+/* 标签行（可换行的 chip 组） */
+.desk-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--desk-sp-1h);
+}
+
 /* ═══ 组件样式（原 styles/index.css：面板骨架 / 按钮 / 控件 / 卡片外框 / 桌面壳）═══ */
 
 /* 设置面板骨架：壁纸 / 组件设置 / 卡片库 / 关于 四个面板共用 */

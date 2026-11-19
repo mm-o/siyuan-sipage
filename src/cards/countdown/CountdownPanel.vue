@@ -87,112 +87,19 @@
       </section>
 
       <!-- 右：详情 / 编辑 -->
-      <aside class="cd-card cd-detail desk-pane is-right">
-        <!-- 编辑表单 -->
-        <form v-if="editing" class="cd-form" @submit.prevent="save">
-          <button class="cd-back" type="button" @click="backToList">
-            <ChevronLeft :size="16" :stroke-width="2" />返回
-          </button>
-          <div class="cd-form-body cd-scroll">
-            <label class="cd-field">
-              <span class="cd-field-label">标题</span>
-              <input v-model="draft.title" class="desk-input" placeholder="例如：妈妈的生日" maxlength="24" />
-            </label>
-            <label class="cd-field">
-              <span class="cd-field-label">日期</span>
-              <input v-model="draft.date" class="desk-input" type="date" />
-            </label>
-            <div class="cd-field">
-              <span class="cd-field-label">分类</span>
-              <div class="cd-chips">
-                <button
-                  v-for="cat in EVENT_CATEGORIES"
-                  :key="cat.id"
-                  class="cd-chip"
-                  :class="{ 'is-active': draft.category === cat.id }"
-                  type="button"
-                  @click="draft.category = cat.id"
-                >
-                  <component :is="cat.icon" :size="13" :stroke-width="2" :style="{ color: cat.color }" />
-                  {{ cat.name }}
-                </button>
-              </div>
-            </div>
-            <div class="cd-field">
-              <span class="cd-field-label">重复</span>
-              <Segmented v-model="draft.repeat" :options="REPEAT_OPTIONS" />
-            </div>
-            <div v-if="draft.repeat === 'year'" class="cd-field-row">
-              <span class="cd-field-label">按农历（春节、中秋这类）</span>
-              <button class="cd-switch" :class="{ 'is-on': draft.lunar }" type="button" role="switch" :aria-checked="!!draft.lunar" @click="draft.lunar = !draft.lunar">
-                <span class="cd-switch-knob" />
-              </button>
-            </div>
-            <div class="cd-field-row">
-              <span class="cd-field-label">置顶</span>
-              <button class="cd-switch" :class="{ 'is-on': draft.pinned }" type="button" role="switch" :aria-checked="draft.pinned" @click="draft.pinned = !draft.pinned">
-                <span class="cd-switch-knob" />
-              </button>
-            </div>
-          </div>
-          <div class="cd-foot">
-            <button class="cd-btn" type="button" @click="cancelEdit">取消</button>
-            <button class="cd-btn cd-btn--primary" type="submit" :disabled="!valid">保存</button>
-          </div>
-        </form>
-
-        <!-- 事件详情 -->
-        <template v-else-if="current">
-          <button class="cd-detail-back" type="button" @click="backToList">
-            <ChevronLeft :size="18" :stroke-width="2" />返回
-          </button>
-          <div class="cd-detail-head" :style="{ backgroundImage: coverStyleOf(current.event, 'head') }" />
-          <div class="cd-detail-body cd-scroll">
-            <h2 class="cd-detail-title">
-              {{ current.event.title }}<span class="cd-detail-prefix">{{ current.prefix }}</span>
-            </h2>
-            <p class="cd-detail-days"><b>{{ current.value }}</b><span>{{ current.unit }}</span></p>
-            <p class="cd-detail-date">{{ current.dateText }}</p>
-            <Segmented v-model="unit" :options="UNITS" class="cd-unit-tabs" />
-            <div class="cd-meta">
-              <div class="cd-meta-row">
-                <span class="cd-meta-key">目标日</span>
-                <span class="cd-meta-val">{{ current.dateText }}</span>
-              </div>
-              <div class="cd-meta-row">
-                <span class="cd-meta-key">重复</span>
-                <span class="cd-meta-val">{{ repeatText(current.event) }}</span>
-              </div>
-              <div class="cd-meta-row">
-                <span class="cd-meta-key">置顶</span>
-                <button
-                  class="cd-switch"
-                  :class="{ 'is-on': current.event.pinned }"
-                  type="button"
-                  role="switch"
-                  :aria-checked="current.event.pinned"
-                  @click="togglePinned(current.event.id)"
-                >
-                  <span class="cd-switch-knob" />
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="cd-foot">
-            <button class="cd-btn cd-btn--primary cd-btn--grow" type="button" @click="startEdit(current.event.id)">
-              <Pencil :size="15" :stroke-width="2" />编辑
-            </button>
-            <button class="cd-btn cd-btn--danger" type="button" aria-label="删除" @click="removeSelected">
-              <Trash2 :size="16" :stroke-width="2" />
-            </button>
-          </div>
-        </template>
-
-        <div v-else class="cd-detail-empty">
-          <CalendarDays :size="28" :stroke-width="1.6" />
-          <p>选择事件查看详情</p>
-        </div>
-      </aside>
+      <CountdownDetail
+        :current="current"
+        :editing="editing"
+        v-model:draft="draft"
+        :valid="valid"
+        v-model:unit="unit"
+        @save="save"
+        @back="backToList"
+        @cancel="cancelEdit"
+        @edit="startEdit"
+        @remove="removeSelected"
+        @pin="togglePinned"
+      />
     </div>
   </div>
 </template>
@@ -218,6 +125,7 @@ import {
   updateCountdownEvent,
   type CountdownCategory,
 } from "@/core/store"
+import CountdownDetail from "./CountdownDetail.vue"
 import {
   blankDraft,
   CATEGORIES,
@@ -726,121 +634,39 @@ function backToList() {
 }
 
 /* ── 右：详情 ──────────────────────────────────────────── */
-.cd-detail {
-  flex: 0 0 300px;
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-}
 
-.cd-detail-head {
-  flex: none;
-  height: 128px;
-  background-color: color-mix(in srgb, var(--desk-accent) 10%, transparent);
-  background-size: cover;
-  background-position: center;
-}
+
+
 
 /* 返回：只有窄屏（详情盖在列表上时）才出现 */
-.cd-detail-back {
-  display: none;
-  align-items: center;
-  gap: var(--desk-sp-1);
-  height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-bottom: 1px solid var(--desk-stroke);
-  background: transparent;
-  color: var(--desk-text);
-  font: inherit;
-  font-size: var(--desk-fs-lg);
-  cursor: pointer;
-}
 
-.cd-detail-body {
-  flex: 1 1 auto;
-  padding: var(--desk-sp-3) 16px;
-}
 
-.cd-detail-title {
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-2);
-  margin: 0 0 4px;
-  font-size: 16px;
-  font-weight: 700;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-.cd-detail-prefix {
-  flex: none;
-  font-size: var(--desk-fs-sm);
-  font-weight: 400;
-  color: var(--desk-text-2);
-}
 
-.cd-detail-days {
-  display: flex;
-  align-items: baseline;
-  gap: var(--desk-sp-0);
-  margin: 0 0 4px;
-  line-height: 1;
-  color: var(--desk-accent);
-}
 
-.cd-detail-days b {
-  font-size: 40px;
-  font-weight: 700;
-}
 
-.cd-detail-days span {
-  margin: 0 8px 0 2px;
-  font-size: 16px;
-  font-weight: 500;
-}
 
-.cd-detail-date {
-  margin: 0 0 12px;
-  font-size: var(--desk-fs-sm);
-  color: var(--desk-text-2);
-}
 
-.cd-unit-tabs {
-  margin-bottom: var(--desk-sp-4);
-}
 
-.cd-meta {
-  font-size: var(--desk-fs-sm);
-}
 
-.cd-meta-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--desk-sp-3);
-  padding: var(--desk-sp-1h) 0;
-  border-bottom: 1px solid var(--desk-stroke);
-}
 
-.cd-meta-key {
-  color: var(--desk-text-2);
-}
 
-.cd-meta-val {
-  color: var(--desk-text);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* 底部动作条（.dma-detail 的 p-3 border-t） */
-.cd-foot {
-  flex: none;
-  display: flex;
-  gap: var(--desk-sp-2);
-  padding: var(--desk-sp-3);
-  border-top: 1px solid var(--desk-stroke);
-}
+
 
 .cd-btn {
   display: inline-flex;
@@ -887,79 +713,24 @@ function backToList() {
   color: var(--desk-danger);
 }
 
-.cd-detail-empty {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--desk-sp-3);
-  padding: 0 24px;
-  text-align: center;
-  color: var(--desk-text-2);
-  opacity: 0.8;
-}
 
-.cd-detail-empty p {
-  margin: 0;
-  font-size: var(--desk-fs-lg);
-}
+
+
 
 /* ── 编辑表单 ─────────────────────────────────────────── */
-.cd-form {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
 
-.cd-back {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--desk-sp-1);
-  height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-bottom: 1px solid var(--desk-stroke);
-  background: transparent;
-  color: var(--desk-text);
-  font: inherit;
-  font-size: var(--desk-fs-lg);
-  cursor: pointer;
-}
 
-.cd-form-body {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 14px 16px;
-}
 
-.cd-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--desk-sp-1h);
-}
 
-.cd-field-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--desk-sp-3);
-}
 
-.cd-field-label {
-  font-size: var(--desk-fs-body);
-  color: var(--desk-text-2);
-}
 
-.cd-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--desk-sp-1h);
-}
+
+
+
+
+
+
+
 
 .cd-chip {
   display: inline-flex;
@@ -983,38 +754,13 @@ function backToList() {
 }
 
 /* 开关（对齐 el-switch：40×22 药丸） */
-.cd-switch {
-  flex: none;
-  position: relative;
-  width: 40px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--desk-text) 20%, transparent);
-  cursor: pointer;
-  transition: background var(--desk-dur-fast) var(--desk-ease);
-}
 
-.cd-switch.is-on {
-  background: var(--desk-accent);
-}
 
-.cd-switch-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
-  transition: transform var(--desk-dur-fast) var(--desk-ease);
-}
 
-.cd-switch.is-on .cd-switch-knob {
-  transform: translateX(18px);
-}
+
+
+
+
 
 /* ── 窄屏（<760px）：分类收进胶囊行，详情盖在列表上 ────── */
 @container (max-width: 720px) {
@@ -1030,9 +776,7 @@ function backToList() {
     display: none;
   }
 
-  .cd-detail {
-    display: none;
-  }
+
 
   .cd-panel.is-detail .cd-detail {
     display: flex;
@@ -1042,8 +786,6 @@ function backToList() {
     width: auto;
   }
 
-  .cd-detail-back {
-    display: inline-flex;
-  }
+
 }
 </style>

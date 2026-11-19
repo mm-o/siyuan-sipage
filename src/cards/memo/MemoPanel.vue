@@ -1,5 +1,5 @@
 <template>
-  <div class="mm-panel desk-seq">
+  <div class="mm-panel desk-seq desk-panel-row">
     <div class="mm-pane desk-pane is-left">
       <header class="mm-bar">
         <span class="mm-tab" :class="{ 'is-on': memo.filter === 'all' }" @click="memo.filter = 'all'">全部</span>
@@ -12,7 +12,7 @@
       <ul class="mm-list">
         <li v-for="item in visible" :key="item.id" class="mm-row" :class="{ 'is-done': item.done, 'is-active': item.id === activeId }" @click="activeId = item.id">
           <button class="mm-dot" type="button" :aria-label="item.done ? '标记未完成' : '标记完成'" @click.stop="toggle(item.id)" />
-          <span class="mm-text">{{ item.text }}</span>
+          <span class="mm-text desk-ellipsis">{{ item.text }}</span>
           <button class="mm-del" type="button" aria-label="删除" @click.stop="remove(item.id)">
             <X :size="14" :stroke-width="1.8" />
           </button>
@@ -25,7 +25,7 @@
       <template v-if="active">
         <textarea v-model="draft" class="mm-edit" placeholder="写点什么…" @input="update(active.id, draft)" />
         <footer class="mm-foot">
-          <span class="mm-time">{{ new Date(active.at).toLocaleString("zh-CN", { hour12: false }) }}</span>
+          <span class="mm-time desk-note">{{ new Date(active.at).toLocaleString("zh-CN", { hour12: false }) }}</span>
           <GlassButton :icon="Check" label="标记完成" @click="toggle(active.id)" />
         </footer>
       </template>
@@ -67,14 +67,7 @@ function create() {
 </script>
 
 <style scoped>
-.mm-panel {
-  display: flex;
-  gap: var(--desk-detail-gap);
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  color: var(--desk-text);
-}
+
 
 .mm-pane {
   display: flex;
@@ -156,13 +149,7 @@ function create() {
   border-color: var(--desk-accent);
 }
 
-.mm-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 
 .mm-row.is-done .mm-text {
   color: var(--desk-text-3);
@@ -202,10 +189,7 @@ function create() {
   gap: var(--desk-sp-2);
 }
 
-.mm-time {
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
+
 
 .mm-new {
   display: flex;

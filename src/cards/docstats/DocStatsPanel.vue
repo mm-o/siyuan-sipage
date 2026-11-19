@@ -1,5 +1,5 @@
 <template>
-  <div class="ds-panel desk-seq">
+  <div class="ds-panel desk-seq desk-panel-row">
     <section class="ds-col desk-pane is-left">
       <h4 class="ds-sub">五维雷达</h4>
       <svg class="ds-radar desk-seq" viewBox="0 0 100 100" role="img" aria-label="文档规模雷达">
@@ -26,7 +26,7 @@
           <title>{{ a.title }}</title>
         </path>
       </svg>
-      <ul class="ds-legend">
+      <ul class="ds-legend desk-ellipsis">
         <li v-for="(t, i) in d?.tree || []" :key="t.label">
           <i :style="{ background: COLORS[i % COLORS.length] }" />
           <span>{{ t.label }}</span>
@@ -152,14 +152,7 @@ onMounted(refresh)
 </script>
 
 <style scoped>
-.ds-panel {
-  display: flex;
-  gap: var(--desk-detail-gap);
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  color: var(--desk-text);
-}
+
 
 .ds-col {
   display: flex;
@@ -272,16 +265,7 @@ onMounted(refresh)
   opacity: 0.75;
 }
 
-.ds-legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--desk-sp-0) 10px;
-  font-size: var(--desk-fs-2xs);
-  color: var(--desk-text-3);
-}
+
 
 .ds-legend li {
   display: flex;

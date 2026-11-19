@@ -65,19 +65,19 @@
       <ul class="hm-figures">
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.active }}</span>
-          <span class="hm-figure-label">天有写</span>
+          <span class="hm-figure-label desk-note">天有写</span>
         </li>
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.current }}</span>
-          <span class="hm-figure-label">天连续</span>
+          <span class="hm-figure-label desk-note">天连续</span>
         </li>
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.longest }}</span>
-          <span class="hm-figure-label">最长连续</span>
+          <span class="hm-figure-label desk-note">最长连续</span>
         </li>
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.total }}</span>
-          <span class="hm-figure-label">块合计</span>
+          <span class="hm-figure-label desk-note">块合计</span>
         </li>
       </ul>
 
@@ -90,7 +90,7 @@
             <span class="hm-recent-num">{{ item.count }}</span>
           </li>
         </ul>
-        <p v-else class="hm-recent-empty">还没有记录</p>
+        <p v-else class="hm-recent-empty desk-note">还没有记录</p>
       </section>
     </aside>
     </div>
@@ -314,10 +314,7 @@ const rangeText = computed(() => {
   font-variant-numeric: tabular-nums;
 }
 
-.hm-figure-label {
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
+
 
 .hm-recent {
   display: flex;
@@ -377,11 +374,7 @@ const rangeText = computed(() => {
   text-align: right;
 }
 
-.hm-recent-empty {
-  margin: 0;
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
+
 
 /* ── 窄屏（<720px）：上下两段，统计挤到下面 ───────────── */
 @container (max-width: 720px) {

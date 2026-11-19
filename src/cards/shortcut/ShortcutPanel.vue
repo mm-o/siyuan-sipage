@@ -1,14 +1,14 @@
 <template>
-  <div class="sc-panel desk-seq">
+  <div class="sc-panel desk-seq desk-panel-row">
     <!-- 左：分类 -->
     <section class="sc-col desk-pane is-left">
-      <h4 class="sc-sub">分类</h4>
+      <h4 class="sc-sub desk-note">分类</h4>
       <ul class="sc-list">
         <li v-for="g in GROUPS" :key="g" class="row" :class="{ 'is-on': g === active }" @click="active = g">
           <span class="tile" :style="{ background: GROUP_STYLE[g].soft, color: GROUP_STYLE[g].color }">
             <component :is="GROUP_STYLE[g].icon" :size="14" :stroke-width="1.9" />
           </span>
-          <span class="name">{{ g }}</span>
+          <span class="name desk-ellipsis">{{ g }}</span>
           <em class="num">{{ countOf(g) }}</em>
         </li>
       </ul>
@@ -16,14 +16,14 @@
 
     <!-- 中：点一下执行，＋ 加入右栏（不设上限） -->
     <section class="sc-col desk-pane is-mid">
-      <h4 class="sc-sub">{{ active }} · 点一下执行，＋ 加入</h4>
+      <h4 class="sc-sub desk-note">{{ active }} · 点一下执行，＋ 加入</h4>
       <ul class="sc-list">
         <li v-for="s in byGroup(active)" :key="s.id" class="row" @click="runShortcut(s)">
           <span class="tile" :style="{ background: GROUP_STYLE[s.group].soft, color: GROUP_STYLE[s.group].color }">
             <svg v-if="sprite" aria-hidden="true"><use :xlink:href="'#' + s.icon" /></svg>
             <component :is="s.fallback" v-else :size="13" :stroke-width="1.9" />
           </span>
-          <span class="name">{{ s.label }}</span>
+          <span class="name desk-ellipsis">{{ s.label }}</span>
           <button v-if="!isOn(s.id)" class="btn" type="button" aria-label="加入" @click.stop="addShortcut(s.id)">
             <Plus :size="13" :stroke-width="2.4" />
           </button>
@@ -34,7 +34,7 @@
 
     <!-- 右：已启用（拖动排序 / 垃圾桶移除） -->
     <section class="sc-col desk-pane is-right">
-      <h4 class="sc-sub">已启用 {{ enabled.length }}</h4>
+      <h4 class="sc-sub desk-note">已启用 {{ enabled.length }}</h4>
       <ul class="sc-list">
         <li
           v-for="(s, i) in enabled"
@@ -52,12 +52,12 @@
             <svg v-if="sprite" aria-hidden="true"><use :xlink:href="'#' + s.icon" /></svg>
             <component :is="s.fallback" v-else :size="13" :stroke-width="2" />
           </span>
-          <span class="name">{{ s.label }}</span>
+          <span class="name desk-ellipsis">{{ s.label }}</span>
           <button class="btn" type="button" aria-label="移除" @click="toggleShortcut(s.id)">
             <Trash2 :size="13" :stroke-width="1.9" />
           </button>
         </li>
-        <li v-if="!enabled.length" class="sc-sub">空</li>
+        <li v-if="!enabled.length" class="sc-sub desk-note">空</li>
       </ul>
     </section>
   </div>
@@ -95,14 +95,7 @@ function drop(to: number) {
 
 <style scoped>
 /* 三栏同构：分类 / 可选 / 已启用共用一套行、图标块与按钮 */
-.sc-panel {
-  display: flex;
-  gap: var(--desk-detail-gap);
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  color: var(--desk-text);
-}
+
 
 .sc-col {
   display: flex;
@@ -118,11 +111,7 @@ function drop(to: number) {
 .sc-col.is-mid { flex: 1 1 auto; }
 .sc-col.is-right { flex: 0 0 208px; }
 
-.sc-sub {
-  margin: 0;
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
+
 
 .sc-list {
   list-style: none;
@@ -162,13 +151,7 @@ function drop(to: number) {
 
 .tile svg { width: 14px; height: 14px; fill: currentColor; }
 
-.name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 
 .num {
   font-style: normal;

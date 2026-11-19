@@ -1,5 +1,5 @@
 <template>
-  <div class="pm-panel desk-seq">
+  <div class="pm-panel desk-seq desk-panel-row">
     <div
       class="pm-pane desk-pane is-left"
       :class="{ 'is-cover': !!pomodoro.cover }"
@@ -49,7 +49,7 @@
           <span>{{ new Date(r.at).toLocaleString("zh-CN", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) }}</span>
           <b>{{ r.minutes }} 分钟</b>
         </li>
-        <li v-if="!records.length" class="pm-empty">还没有记录，完成一个番茄就会出现在这里</li>
+        <li v-if="!records.length" class="pm-empty desk-note">还没有记录，完成一个番茄就会出现在这里</li>
       </ul>
     </div>
   </div>
@@ -66,14 +66,7 @@ const { running, left, percent } = usePomodoro()
 </script>
 
 <style scoped>
-.pm-panel {
-  display: flex;
-  gap: var(--desk-detail-gap);
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  color: var(--desk-text);
-}
+
 
 .pm-pane {
   display: flex;
@@ -179,8 +172,5 @@ const { running, left, percent } = usePomodoro()
   gap: var(--desk-sp-2);
 }
 
-.pm-empty {
-  color: var(--desk-text-3);
-  font-size: var(--desk-fs-caption);
-}
+
 </style>

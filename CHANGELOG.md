@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.6.5 — 卡片样式去重 + 倒计日右栏拆组件（第 8、9 步）
+
+**卡片样式（4760 行）去重**：把跨卡真正同构的部分提成 4 个语义工具类（`styles/index.css`）
+- `.desk-panel-row`：5 个三栏详情面板的根骨架（DocStats / Memo / Pomodoro / QuickPick / Shortcut）
+- `.desk-ellipsis`：5 处单行省略（导航名、图例、正文摘句、快捷名）
+- `.desk-note`：8 处次级说明（时间戳、空态、副标题）
+- `.desk-chip-row`：标签行
+  实测五张面板 `display:flex / gap:8px / 高度正常`，没有版式回退。
+  **说明**：原先估的 800~1200 行高估了——逐条比对后，15 张卡之间"完全相同"的声明块只有 12 组，
+  实际可省约 1.1KB；其余 4600 行是各卡真实版式，不是复制粘贴。
+
+**CountdownPanel 拆组件**：`CountdownPanel.vue` 1043 → **792 行**
+- 新增 `CountdownDetail.vue`(394)：右栏「新建/编辑表单 + 事件详情」自成一体
+- draft 用 `reactive` 本地副本 + 双向 `update:draft` 同步，`valid` 才能跟着重算
+- 31 条右栏样式随组件搬走
+- 实测：新建「测试事件」→ 保存 → 列表出现 1 条、详情标题正确
+
 ## v0.6.4 — 天气模块合成一个文件（并评估了开源库）
 
 - `cards/weather/` 的 6 个 TS 模块（types 39 + codes 132 + net 187 + locate 138 + hooks 75 + 汇总 15）

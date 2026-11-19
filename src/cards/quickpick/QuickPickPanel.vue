@@ -1,8 +1,8 @@
 <template>
-  <div class="qp-panel desk-seq">
+  <div class="qp-panel desk-seq desk-panel-row">
     <!-- 左：已添加（拖动排序 + 垃圾桶） -->
     <section class="qp-col desk-pane is-left">
-      <h4 class="qp-sub">已添加 {{ docs.length }}/8 · 拖动排序</h4>
+      <h4 class="qp-sub desk-note">已添加 {{ docs.length }}/8 · 拖动排序</h4>
       <ul class="qp-list">
         <li
           v-for="(d, i) in docs"
@@ -19,12 +19,12 @@
           <span class="qp-ic" :style="{ background: tint(d.title).soft, color: tint(d.title).color }">
             <FileText :size="13" :stroke-width="2" />
           </span>
-          <span class="qp-name">{{ d.title }}</span>
+          <span class="qp-name desk-ellipsis">{{ d.title }}</span>
           <button class="qp-act" type="button" aria-label="移除" @click="removeDoc(d.id)">
             <Trash2 :size="13" :stroke-width="1.9" />
           </button>
         </li>
-        <li v-if="!docs.length" class="qp-empty">右栏点一下文档加入</li>
+        <li v-if="!docs.length" class="qp-empty desk-note">右栏点一下文档加入</li>
       </ul>
     </section>
 
@@ -40,11 +40,11 @@
           <span class="qp-ic" :style="{ background: tint(d.title).soft, color: tint(d.title).color }">
             <FileText :size="13" :stroke-width="2" />
           </span>
-          <span class="qp-name">{{ d.title }}</span>
+          <span class="qp-name desk-ellipsis">{{ d.title }}</span>
           <Plus v-if="!has(d.id)" :size="12" :stroke-width="2.4" class="qp-add" />
           <Check v-else :size="12" :stroke-width="2.4" class="qp-add" />
         </li>
-        <li v-if="!hits.length && !recent.length" class="qp-empty">没有可添加的文档</li>
+        <li v-if="!hits.length && !recent.length" class="qp-empty desk-note">没有可添加的文档</li>
       </ul>
     </section>
   </div>
@@ -95,14 +95,7 @@ void quickpick
 </script>
 
 <style scoped>
-.qp-panel {
-  display: flex;
-  gap: var(--desk-detail-gap);
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  color: var(--desk-text);
-}
+
 
 .qp-col {
   display: flex;
@@ -122,11 +115,7 @@ void quickpick
   flex: 1 1 auto;
 }
 
-.qp-sub {
-  margin: 0;
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
+
 
 .qp-list {
   list-style: none;
@@ -176,13 +165,7 @@ void quickpick
   border-radius: var(--desk-r-sm);
 }
 
-.qp-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 
 .qp-add {
   flex: none;
@@ -223,8 +206,5 @@ void quickpick
   font-size: var(--desk-fs-sm);
 }
 
-.qp-empty {
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
+
 </style>
