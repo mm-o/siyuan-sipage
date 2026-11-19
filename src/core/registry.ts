@@ -40,6 +40,9 @@ import YiyanCard from "@/cards/yiyan/YiyanCard.vue"
 /** 尺寸标识：桌面壳按实际格数算出来（如 "4x2"、"12x6"），卡片据此切版式 */
 export type CardSize = `${number}x${number}`
 
+/** 尺寸约束（注册表里每张卡可选声明一次；拖动、整理、补位都过同一套实现） */
+export type CardConstrain = { square?: boolean; ratios?: number[]; step?: number; min?: number; max?: number }
+
 interface CardDef {
 /** 唯一 id，同时用于文档内嵌属性 data-desk-card */
   id: string
@@ -64,9 +67,13 @@ interface CardDef {
    */
   controls?: { expand?: boolean; menu?: boolean; full?: boolean }
   /**
-   * 尺寸约束（可选）：square 拖动任一边保持正方形；min/max 边长范围（格）
+   * 尺寸约束（可选，唯一入口）：拖到哪里都先过这一套
+   *   ratios 固定比例（天气/日历 2:1）
+   *   square 保持正方形
+   *   step   段落式步长：尺寸只落在 step 的倍数上（如拼图 3 的倍数，5×5 直接跳成 6×6）
+   *   min/max 边长范围（格）
    */
-  constrain?: { square?: boolean; ratios?: number[]; min?: number; max?: number }
+  constrain?: CardConstrain
   /** 详情弹窗里用的组件（可选；没有则用 component 本身放大显示） */
   detail?: Component
   /**
@@ -75,6 +82,9 @@ interface CardDef {
    */
   detailSize?: { width: string; height: string }
 }
+
+/** 段落式尺寸的基准：一块内容占几格（文档统计的拼图、快捷方式的图标都用它） */
+export const TILE = 3
 
 export const CARDS: CardDef[] = [
   {
@@ -180,7 +190,7 @@ export const CARDS: CardDef[] = [
     icon: BarChart3,
     detail: DocStatsPanel,
     detailSize: { width: "min(980px, 93vw)", height: "min(560px, 84vh)" },
-    constrain: { min: 3, max: 12 },
+    constrain: { step: TILE, min: TILE, max: 12 },
     surface: "solid",
   },
   {

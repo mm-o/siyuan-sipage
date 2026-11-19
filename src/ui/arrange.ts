@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from "vue"
-import { getCard } from "@/core/registry"
+import { getCard, type CardConstrain } from "@/core/registry"
 import { appearance, computeGrid, desk, setDeskDims } from "@/core/store"
 
 type Edge = "n" | "s" | "e" | "w"
@@ -18,24 +18,54 @@ interface Drag {
 }
 
 /**
+ * 尺寸约束的唯一实现：谁改尺寸都过这一关（拖动 / 整理 / 补位）
+ *
+ *   ratios → 取最接近的固定比例，宽高同步
+ *   square → 取较长边做正方形
+ *   step   → 段落式：落到 step 的倍数上（5×5 直接跳成 6×6）
+ *   min/max→ 边长夹取
+ */
+export function fitDims(lim: CardConstrain | undefined, w: number, h: number, from = { w, h }) {
+  const min = lim?.min ?? 1
+  const max = lim?.max ?? 16
+  const clamp = (n: number) => Math.min(max, Math.max(min, Math.round(n)))
+
+  if (lim?.ratios?.length) {
+    const start = from.w / from.h
+    const ratio = lim.ratios.reduce((a, r) => (Math.abs(r - start) < Math.abs(a - start) ? r : a), lim.ratios[0])
+    /* 变化更大的那一维做主，另一维由比例反推回来（保证严格等于比例） */
+    const byW = Math.abs(w - from.w) >= Math.abs(h - from.h)
+    if (byW) {
+      const nw = clamp(w)
+      const nh = Math.max(1, Math.round(nw / ratio))
+      return { w: clamp(nh * ratio), h: nh }
+    }
+    const nh = clamp(h)
+    const nw = Math.max(1, Math.round(nh * ratio))
+    return { w: nw, h: clamp(nw / ratio) }
+  }
+
+  if (lim?.square) {
+    const n = clamp(Math.abs(w - from.w) >= Math.abs(h - from.h) ? w : h)
+    return { w: n, h: n }
+  }
+
+  const snap = (n: number) => (lim?.step ? Math.round(n / lim.step) * lim.step : n)
+  const keep = (n: number, was: number) => (lim?.step ? clamp(Math.max(lim.step, snap(n))) : clamp(n))
+  return { w: keep(snap(w), from.w), h: keep(snap(h), from.h) }
+}
+
+/**
  * 把带固定比例的卡片拉回比例（整理时调用，顺手修好历史遗留的变形尺寸）。
  */
 export function normalizeRatios() {
   for (const card of desk.cards) {
     const lim = getCard(card.cardId)?.constrain
-    if (!lim?.ratios?.length) continue
-    const ratio = lim.ratios.reduce(
-      (a, r) => (Math.abs(r - card.w / card.h) < Math.abs(a - card.w / card.h) ? r : a),
-      lim.ratios[0],
-    )
-    const max = lim.max ?? 16
-    const min = lim.min ?? 2
-    if (ratio >= 1) {
-      card.w = Math.min(max, Math.max(min, card.w))
-      card.h = Math.max(min, Math.round(card.w / ratio))
-    } else {
-      card.h = Math.min(max, Math.max(min, card.h))
-      card.w = Math.max(min, Math.round(card.h * ratio))
+    if (!lim) continue
+    const next = fitDims(lim, card.w, card.h)
+    if (next.w !== card.w || next.h !== card.h) {
+      card.w = next.w
+      card.h = next.h
     }
   }
 }
@@ -88,31 +118,11 @@ export function useDeskGrid(viewport: Ref<number>) {
       let w = left ? d.bw - dx : right ? d.bw + dx : d.bw
       let h = top ? d.bh - dy : bottom ? d.bh + dy : d.bh
 
-      /* constrain：固定比例（大卡不变形）/ 正方形 / 普通夹 min-max */
       const lim = getCard(card.cardId)?.constrain
-      if (lim?.ratios?.length) {
-        /* 比例取起始尺寸最接近的那个，拖动中锁死，宽高同步 */
-        const ratio = lim.ratios.reduce(
-          (a, r) => (Math.abs(r - d.bw / d.bh) < Math.abs(a - d.bw / d.bh) ? r : a),
-          lim.ratios[0],
-        )
-        const grow = Math.abs(w - d.bw) >= Math.abs(h - d.bh)
-        const clamp = (n: number) => Math.min(lim.max ?? 16, Math.max(lim.min ?? 2, n))
-        if (ratio >= 1) {
-          w = clamp(grow ? w : Math.round(h * ratio))
-          h = Math.round(w / ratio)
-        } else {
-          h = clamp(grow ? Math.round(w / ratio) : h)
-          w = Math.round(h * ratio)
-        }
-      } else if (lim?.square) {
-        const span = Math.abs(w - d.bw) >= Math.abs(h - d.bh) ? w : h
-        const n = Math.min(lim.max ?? 16, Math.max(lim.min ?? 1, span))
-        w = n
-        h = n
-      } else if (lim) {
-        w = Math.min(lim.max ?? 16, Math.max(lim.min ?? 1, w))
-        h = Math.min(lim.max ?? 16, Math.max(lim.min ?? 1, h))
+      if (lim) {
+        const fit = fitDims(lim, w, h, { w: d.bw, h: d.bh })
+        w = fit.w
+        h = fit.h
       }
 
       const nx = left ? d.bx + (d.bw - w) : d.bx
