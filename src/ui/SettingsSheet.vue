@@ -62,8 +62,8 @@
           <div v-if="picked" class="set-card-preview">
             <!-- 真卡片：同一份组件、同一个外框，只是这里不响应点击 -->
             <div class="set-card-live">
-              <CardFrame :card-id="picked.id" :size="'4x2'" :w="4" :h="2" preview>
-                <component :is="picked.component" size="4x2" :w="4" :h="2" />
+              <CardFrame :card-id="picked.id" :size="`${pv.w}x${pv.h}`" :w="pv.w" :h="pv.h" preview>
+                <component :is="picked.component" :size="`${pv.w}x${pv.h}`" :w="pv.w" :h="pv.h" />
               </CardFrame>
             </div>
             <b class="set-card-name">{{ picked.name }}</b>
@@ -156,6 +156,23 @@ const previewCard = computed(() => ({
 const tag = computed(
   () => `圆角 ${appearance.radius} · 模糊 ${appearance.blur} · 玻璃 ${Math.round(appearance.opacity * 100)}%`,
 )
+
+/**
+ * 预览尺寸：用注册表的约束推出来，不另写一套。
+ *   step  → 两段（6×3），拼图正好两块
+ *   ratios→ 按比例给 6 宽（2:1 → 6×3）
+ *   其它  → 4×2
+ */
+const pv = computed(() => {
+  const c = picked.value?.constrain
+  const w = c?.step ? c.step * 2 : 6
+  if (c?.ratios?.length) {
+    const ratio = c.ratios[0]
+    return { w, h: Math.max(1, Math.round(w / ratio)) }
+  }
+  if (c?.step) return { w, h: c.step }
+  return { w: 4, h: 2 }
+})
 
 /* 卡片库：选中一张卡，右栏预览并添加 */
 const selected = ref("")

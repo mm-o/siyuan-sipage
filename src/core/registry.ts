@@ -223,6 +223,7 @@ export const CARDS: CardDef[] = [
     icon: Zap,
     detail: ShortcutPanel,
     controls: { menu: false, full: false },
+    constrain: { step: TILE, min: TILE, max: 12 },
     detailSize: { width: "min(720px, 92vw)", height: "min(520px, 82vh)" },
     surface: "solid",
   },

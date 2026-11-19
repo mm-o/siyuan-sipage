@@ -31,7 +31,8 @@
 /**
  * 快捷方式卡
  *
- * 自由尺寸：每 2×2 格一个图标（slotGrid），放大 2 格自动多一个。
+ * 段落式尺寸：每 TILE×TILE 格一个图标（slotGrid 与拼图、尺寸约束共用 TILE），
+ * 因此 3×3 一个、6×3 两个、6×9 六个，尺寸永远落在 3 的倍数上。
  * 纯图标，名称走思源 tooltip（ariaLabel，方向向上）—— 不占版面，图标吃满槽位。
  */
 import { computed, onMounted, ref } from "vue"
@@ -58,19 +59,7 @@ const blanks = computed(() => Math.max(0, g.value.count - items.value.length - 1
 
 <style scoped>
 /* 卡片：照片底 + 一层压暗，图标本身自带彩色底，所以不再需要额外渐变 */
-/* 槽位：自己做尺寸参照（cqmin），内边距形成图标之间的缝隙 */
-.slot {
-  container-type: size;
-  display: grid;
-  place-items: center;
-  min-width: 0;
-  min-height: 0;
-  padding: clamp(2px, 7%, 6px);
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  overflow: hidden;
-}
+/* 槽位：外观全部来自全局 .slot（与工具按钮同源），这里不再覆盖间距 */
 
 .slot:disabled { cursor: default; }
 

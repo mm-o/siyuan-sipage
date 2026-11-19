@@ -5,6 +5,7 @@
  * 图标一律 lucide（stroke 1.7），不自绘 SVG。
  */
 import { computed, h, onBeforeUnmount, onMounted, ref, type Component, type Ref } from "vue"
+import { TILE } from "@/core/registry"
 import { ChevronLeft, ChevronRight } from "lucide-vue-next"
 
 /* ── 圆形毛玻璃按钮（全项目唯一的圆形控件，只有 28 一档） ── */
@@ -134,13 +135,12 @@ export function useTheme(): Ref<Theme> {
  *   2×2 → 1 个；4×4 → 4 个；6×6 → 9 个；任意尺寸按 floor(w/2) × floor(h/2)。
  */
 /**
- * 槽位网格：**一个图标至少占 2×2 格**（再小就点不准也看不清）。
- *   8×4 → 4 列 × 2 行 = 8 个；4×2 → 2 列 × 1 行 = 2 个；2×2 → 1 个。
- * 上限 12 个。
+ * 槽位网格：一个槽位占 TILE×TILE 格，与拼图、尺寸约束共用同一个令牌。
+ *   3×3 → 1 个；6×2 → 2 个；6×9 → 6 个；12×12 → 16 个（上限 12）
  */
-export function slotGrid(w = 2, h = 2) {
-  const cols = Math.max(1, Math.floor(w / 2))
-  const rows = Math.max(1, Math.floor(h / 2))
+export function slotGrid(w = TILE, h = TILE) {
+  const cols = Math.max(1, Math.floor(w / TILE))
+  const rows = Math.max(1, Math.floor(h / TILE))
   return { cols, rows, count: Math.min(12, cols * rows) }
 }
 

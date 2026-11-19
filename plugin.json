@@ -2,7 +2,7 @@
   "name": "desk-cards",
   "author": "mm-o",
   "url": "https://github.com/mm-o/desk-cards",
-  "version": "0.7.9",
+  "version": "0.8.0",
   "minAppVersion": "2.10.14",
   "disabledInPublish": true,
   "backends": [
