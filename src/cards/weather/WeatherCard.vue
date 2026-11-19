@@ -103,6 +103,19 @@ function weekOf(date: string, i: number) {
   min-width: 0;
 }
 
+/* 左栏（地名 + 温度）优先占宽，右栏只拿它需要的宽度 */
+.left {
+  flex: 1 1 auto;
+}
+
+.right {
+  flex: 0 0 auto;
+}
+
+.temp {
+  flex: none;
+}
+
 .right {
   align-items: flex-end;
   text-align: right;
@@ -151,6 +164,7 @@ function weekOf(date: string, i: number) {
 }
 
 .range {
+  display: none;
   font-size: min(9.5cqmin, 6cqh);
   opacity: 0.86;
 }
@@ -222,10 +236,15 @@ function weekOf(date: string, i: number) {
   font-variant-numeric: tabular-nums;
 }
 
-/* 小尺寸只给温度，够宽再长出地名/高低温/预报 */
+/* 形态：窄卡只给温度 → 够宽加地名与天气 → 再宽才加高低温与预报 */
 @container (min-width: 120px) {
   .place,
-  .desc,
+  .desc {
+    display: inline-flex;
+  }
+}
+
+@container (min-width: 200px) {
   .range {
     display: inline-flex;
   }
@@ -234,6 +253,22 @@ function weekOf(date: string, i: number) {
 @container (min-width: 200px) {
   .days {
     display: grid;
+  }
+}
+
+/* 再高一档（≥460px）：逐时改竖排，一条一行，把高度用起来 */
+@container (min-height: 460px) {
+  .hours {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    gap: 0.8cqmin;
+  }
+
+  .hours li {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1cqmin;
+    padding-inline: 2cqmin;
   }
 }
 
