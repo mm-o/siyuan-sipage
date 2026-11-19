@@ -1,0 +1,75 @@
+/**
+ * Vue 侧取数钩子（卡片与详情共用；切地点、失败重试、卸载后不写状态都在这里）
+ */
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue"
+import { weather } from "@/core/store"
+import { shortError } from "./net"
+import { loadWeather } from "./net"
+import type { WeatherData } from "./types"
+
+export function useWeather() {
+  const place = computed(() => weather.locations.find((p) => p.id === weather.activeId) || weather.locations[0])
+  const data = ref<WeatherData | null>(null)
+  const error = ref("")
+  const loading = ref(false)
+
+  /** 请求代号：切地点时旧请求回来直接丢弃；卸载后 +1，任何迟到的结果都不再写状态 */
+  let token = 0
+
+  async function load() {
+    const target = place.value
+    if (!target) return
+    const mine = ++token
+    loading.value = true
+    error.value = ""
+    try {
+      const next = await loadWeather(target)
+      if (mine === token) data.value = next
+    } catch (e) {
+      if (mine === token) error.value = shortError(e)
+    } finally {
+      if (mine === token) loading.value = false
+    }
+  }
+
+  watch(() => place.value?.id, () => void load(), { immediate: true })
+  onBeforeUnmount(() => {
+    token += 1
+  })
+
+  return { place, data, error, loading, reload: load }
+}
+
+/**
+ * 每个已存地点的天气快照（详情右侧地点列表要显示各自的温度与最值）
+ *
+ * 命中 10 分钟缓存就不发请求；新加一个地点才补一次。
+ */
+export function usePlaceWeather() {
+  const map = reactive<Record<string, WeatherData>>({})
+  let alive = true
+
+  async function fill() {
+    // 并行取：命中缓存的那个地点当帧就能显示，不会被另一个地点的冷启动请求堵在后面
+    await Promise.all(
+      weather.locations.map(async (loc) => {
+        if (map[loc.id]) return
+        try {
+          const data = await loadWeather(loc)
+          if (alive) map[loc.id] = data
+        } catch {}
+      }),
+    )
+  }
+
+  watch(
+    () => weather.locations.map((p) => p.id).join(","),
+    () => void fill(),
+    { immediate: true },
+  )
+  onBeforeUnmount(() => {
+    alive = false
+  })
+
+  return map
+}

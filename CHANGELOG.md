@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.8 — 天气模块分层 + 缓存收口（第 4、5 步）
+
+- `weather.ts`(601) 按职责拆成五个模块，对外仍只有一个汇总出口（import 路径不变）：
+  `types.ts`(40) / `codes.ts`(133) / `net.ts`(203) / `locate.ts`(156) / `hooks.ts`(76) / `weather.ts`(16 汇总)
+- 新增 `core/cache.ts`：localStorage 的唯一入口，命名空间 `desk-cache:` + TTL + 失败静默
+- `net.ts` / `locate.ts` 里 6 处裸 `localStorage` 全部改走 `core/cache`（实测键变成 `desk-cache:weather:36.56,105.65`，无残留旧键）
+- 文档约定回到「用户状态存 petal，只有派生缓存可落 localStorage」
+
 ## v0.5.7 — 断点收敛（重构第 3 步）
 
 - 9 个文件的 `@container` 断点统一到五个刻度：120 / 200 / 260 / 460 / 720

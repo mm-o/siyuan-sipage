@@ -1,0 +1,68 @@
+/**
+ * 天气取数（卡片与详情共用）
+ *
+ * 三条约定：
+ *   1. 两个接口都走 `core/image.ts` 的 `forwardProxy` —— 渲染进程直连会被 CORS 挡掉。
+ *   2. 每个地点缓存 10 分钟（内存 Map，不写盘）；飞行中的请求共享同一个 Promise，
+ *      卡片和详情同时打开也只发一次。
+ *   3. 切地点时**保留旧数据**到新数据到（不闪白）；失败只留给用户手动重试，不自动重试。
+ */
+import { computed, onBeforeUnmount, reactive, ref, watch, type Component } from "vue"
+import {
+  Cloud,
+  CloudDrizzle,
+  CloudFog,
+  CloudLightning,
+  CloudMoon,
+  CloudRain,
+  CloudSnow,
+  CloudSun,
+  Cloudy,
+  Moon,
+  Sun,
+} from "lucide-vue-next"
+import { COVERS, forwardProxy } from "@/core/image"
+import { placeId, weather, type WeatherPlace } from "@/core/store"
+
+interface WeatherHour {
+  /** 当地时刻 YYYY-MM-DDTHH:mm */
+  time: string
+  code: number
+  temp: number
+}
+
+interface WeatherDay {
+  /** 当地日期 YYYY-MM-DD */
+  date: string
+  code: number
+  max: number
+  min: number
+  /** 当地时刻 HH:mm */
+  sunrise: string
+  sunset: string
+}
+
+interface WeatherNow {
+  temp: number
+  /** 体感温度 */
+  feels: number
+  humidity: number
+  /** 风速 km/h */
+  wind: number
+  code: number
+  isDay: boolean
+  /** 当地观测时刻 YYYY-MM-DDTHH:mm */
+  time: string
+}
+
+interface WeatherData {
+  now: WeatherNow
+  hours: WeatherHour[]
+  days: WeatherDay[]
+}
+
+/* ── 天气码 → 中文描述 + 图标 ──────────────────────────── */
+/**
+ * WMO 天气码全集（Open-Meteo 只发这些码）。
+ * 只有 0 / 1 / 2 分昼夜，其余天气不分昼夜，所以 `night` 只写在那三行。
+ */
