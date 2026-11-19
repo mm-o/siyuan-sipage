@@ -1,6 +1,12 @@
 <template>
   <div class="ds">
-    <svg class="pie desk-seq" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="文档统计">
+    <svg
+      class="pie desk-seq"
+      :viewBox="`0 0 ${box.w} ${box.h}`"
+      preserveAspectRatio="xMidYMid meet"
+      role="img"
+      aria-label="文档统计"
+    >
       <defs>
         <linearGradient id="ds-a" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="hsl(212 92% 58%)" />
@@ -22,64 +28,101 @@
 
       <path v-for="q in pieces" :key="q.id" :d="q.d" :fill="`url(#ds-${q.id})`" class="ds-piece" />
 
-      <text v-for="q in pieces" :key="`n-${q.id}`" :x="q.x" :y="q.y" class="ds-num">{{ q.value }}</text>
-      <text v-for="q in pieces" :key="`l-${q.id}`" :x="q.x" :y="q.y + 15" class="ds-lab">{{ q.label }}</text>
+      <template v-for="q in pieces" :key="`t-${q.id}`">
+        <text :x="q.x" :y="q.y" class="ds-num">{{ q.value }}</text>
+        <text :x="q.x" :y="q.y + 15" class="ds-lab">{{ q.label }}</text>
+      </template>
     </svg>
   </div>
 </template>
 
 <script setup lang="ts">
 /**
- * 文档统计：四块拼图（200×200，缝在 x=100 / y=100）。
+ * 文档统计：拼图
  *
- * 每条缝有一个固定的「世界凸起方向」。相邻两块用同一条曲线、遍历方向相反，
- * 于是一块凸、一块凹，拼起来严丝合缝 —— 同一条缝只描述一次。
+ *   ／正方：四块（文档 / 字数 / 今日 / 近 7 天）
+ *   宽卡 2:1：左右两块（纵向缝）
+ *   竖卡 1:2：上下两块（横向缝）
+ *
+ * 每条缝描述一次，相邻两块用同一条曲线、反向遍历，所以一块凸一块凹，拼起来严丝合缝。
+ * 只按比例挑块数，不做别的分支 —— 变换尺寸就是换 viewBox。
  */
 import { computed, onMounted } from "vue"
+import { sizeTier } from "@/ui/sizes"
 import { compact, loadDocStats, stats } from "./docstats"
 
 type P = [number, number]
 
-const K = 12 // 凸起半径
-const C = 100 // 缝坐标
-const E = 200
+const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number }>(), { size: "4x4", w: 4, h: 4 })
 
-/** 带凸起的缝：p1 → p2，凸起朝世界方向 bulge */
-function seam(p1: P, p2: P, bulge: P): string {
+const K = 12
+const F = (p: P) => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`
+
+/** 带凸起的缝：p1 → p2，凸起朝 bulge 方向 */
+function seam(p1: P, p2: P, bulge: P) {
   const dx = p2[0] - p1[0]
   const dy = p2[1] - p1[1]
-  const len = Math.hypot(dx, dy)
+  const len = Math.hypot(dx, dy) || 1
   const ux = dx / len
   const uy = dy / len
   const mx = (p1[0] + p2[0]) / 2
   const my = (p1[1] + p2[1]) / 2
-  const s: P = [mx - ux * K, my - uy * K]
-  const e: P = [mx + ux * K, my + uy * K]
+  const a: P = [mx - ux * K, my - uy * K]
+  const b: P = [mx + ux * K, my + uy * K]
   const sweep = ux * bulge[1] - uy * bulge[0] < 0 ? 1 : 0
-  const f = (p: P) => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`
-  return `L ${f(s)} A ${K} ${K} 0 1 ${sweep} ${f(e)} L ${f(p2)}`
+  return `L ${F(a)} A ${K} ${K} 0 1 ${sweep} ${F(b)} L ${F(p2)}`
 }
 
-const L = (p: P) => `L ${p[0]} ${p[1]}`
+const tier = computed(() => sizeTier(props.w ?? 4, props.h ?? 4))
+const wide = computed(() => tier.value === "wide")
+const tall = computed(() => tier.value === "tall")
+const box = computed(() => (wide.value ? { w: 200, h: 100 } : tall.value ? { w: 100, h: 200 } : { w: 200, h: 200 }))
 
 const pieces = computed(() => {
   const v = stats.value
-  /* 四条缝各描述一次，相邻两块用「反向遍历 + 同一凸起方向」共用 */
-  const vDown = seam([C, 0], [C, C], [1, 0]) // 上纵缝向右
-  const vUp = seam([C, C], [C, 0], [1, 0])
-  const hToLeft = seam([C, C], [0, C], [0, -1]) // 左横缝向上
-  const hFromLeft = seam([0, C], [C, C], [0, -1])
-  const hToMid = seam([E, C], [C, C], [0, -1]) // 右横缝向上
-  const hFromMid = seam([C, C], [E, C], [0, -1])
-  const vBotDown = seam([C, C], [C, E], [-1, 0]) // 下纵缝向左
-  const vBotUp = seam([C, E], [C, C], [-1, 0])
-  const [docs, words, today, week] = [v?.docs ?? 0, v?.words ?? 0, v?.today ?? 0, v?.week ?? 0]
+  const { w: W, h: H } = box.value
+  const cx = W / 2
+  const cy = H / 2
+  const docs = compact(v?.docs ?? 0)
+  const words = compact(v?.words ?? 0)
+  const today = compact(v?.today ?? 0)
+  const week = compact(v?.week ?? 0)
+
+  /* 宽卡：一条纵缝，左右两块 */
+  if (wide.value) {
+    const down = seam([cx, 0], [cx, H], [1, 0])
+    const up = seam([cx, H], [cx, 0], [1, 0])
+    return [
+      { id: "a", d: `M 0 0 L ${cx} 0 ${down} L 0 ${H} Z`, value: docs, label: "文档", x: cx / 2, y: cy + 4 },
+      { id: "b", d: `M ${W} 0 L ${W} ${H} L ${cx} ${H} ${up} Z`, value: words, label: "字数", x: cx + cx / 2, y: cy + 4 },
+    ]
+  }
+
+  /* 竖卡：一条横缝，上下两块 */
+  if (tall.value) {
+    const left = seam([cx, cy], [0, cy], [0, -1])
+    const right = seam([0, cy], [cx, cy], [0, -1])
+    return [
+      { id: "c", d: `M 0 0 L ${W} 0 L ${W} ${cy} L ${cx} ${cy} ${left} L 0 ${cy} Z`, value: today, label: "今日", x: cx, y: cy / 2 + 4 },
+      { id: "d", d: `M 0 ${H} L 0 ${cy} ${right} L ${W} ${cy} L ${W} ${H} Z`, value: week, label: "近 7 天", x: cx, y: cy + cy / 2 + 4 },
+    ]
+  }
+
+  /* 正方：四块 */
+  const vDown = seam([cx, 0], [cx, cy], [1, 0])
+  const vUp = seam([cx, cy], [cx, 0], [1, 0])
+  const hToLeft = seam([cx, cy], [0, cy], [0, -1])
+  const hFromLeft = seam([0, cy], [cx, cy], [0, -1])
+  const hToMid = seam([W, cy], [cx, cy], [0, -1])
+  const hFromMid = seam([cx, cy], [W, cy], [0, -1])
+  const vBotDown = seam([cx, cy], [cx, H], [-1, 0])
+  const vBotUp = seam([cx, H], [cx, cy], [-1, 0])
 
   return [
-    { id: "a", d: `M 0 0 ${L([C, 0])}${vDown}${hToLeft} Z`, value: compact(docs), label: "文档", x: 50, y: 44 },
-    { id: "b", d: `M ${E} 0 ${L([E, C])}${hToMid}${vUp} Z`, value: compact(words), label: "字数", x: 150, y: 44 },
-    { id: "c", d: `M 0 ${E} ${L([0, C])}${hFromLeft}${vBotDown} Z`, value: compact(today), label: "今日", x: 50, y: 150 },
-    { id: "d", d: `M ${E} ${E} ${L([C, E])}${vBotUp}${hFromMid} Z`, value: compact(week), label: "近 7 天", x: 150, y: 150 },
+    { id: "a", d: `M 0 0 L ${cx} 0 ${vDown} ${hToLeft} Z`, value: docs, label: "文档", x: cx / 2, y: cy / 2 + 4 },
+    { id: "b", d: `M ${W} 0 L ${W} ${cy} ${hToMid} ${vUp} Z`, value: words, label: "字数", x: cx + cx / 2, y: cy / 2 + 4 },
+    { id: "c", d: `M 0 ${H} L 0 ${cy} ${hFromLeft} ${vBotDown} Z`, value: today, label: "今日", x: cx / 2, y: cy + cy / 2 + 4 },
+    { id: "d", d: `M ${W} ${H} L ${cx} ${H} ${vBotUp} ${hFromMid} Z`, value: week, label: "近 7 天", x: cx + cx / 2, y: cy + cy / 2 + 4 },
   ]
 })
 
@@ -95,11 +138,8 @@ onMounted(() => {
   overflow: hidden;
 }
 
+/* 缩放交给 viewBox 与 aspect-ratio，不做任何横向拉扯 */
 .pie {
-  aspect-ratio: 1;
-  height: 100%;
-  max-height: 100%;
-  margin: 0 auto;
   display: block;
   width: 100%;
   height: 100%;

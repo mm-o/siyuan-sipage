@@ -134,14 +134,14 @@ export function useTheme(): Ref<Theme> {
  *   2×2 → 1 个；4×4 → 4 个；6×6 → 9 个；任意尺寸按 floor(w/2) × floor(h/2)。
  */
 /**
- * 槽位网格：每个图标占 2×2 格；宽卡（2:1）按宽度多给列，
- * 但最多 4 列 × 2 行 = 8 个，再多图标就太小了。
+ * 槽位网格：**一个图标至少占 2×2 格**（再小就点不准也看不清）。
+ *   8×4 → 4 列 × 2 行 = 8 个；4×2 → 2 列 × 1 行 = 2 个；2×2 → 1 个。
+ * 上限 12 个。
  */
 export function slotGrid(w = 2, h = 2) {
-  /* 2×2 卡给 2×2=4 个；2:1（4×2）给 4×2=8 个；再大最多 4 列 2 行 */
-  const cols = Math.min(4, Math.max(1, Math.floor(w)))
-  const rows = Math.min(2, Math.max(1, Math.floor(h)))
-  return { cols, rows, count: cols * rows }
+  const cols = Math.max(1, Math.floor(w / 2))
+  const rows = Math.max(1, Math.floor(h / 2))
+  return { cols, rows, count: Math.min(12, cols * rows) }
 }
 
 /* ── 文档列表配色（移植 Neo 1.8.3 的「彩色」取色法）────────────
