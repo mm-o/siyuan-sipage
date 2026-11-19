@@ -13,6 +13,15 @@
         </div>
       </div>
 
+      <!-- 中：逐时（卡片够高才出现，形态分界点，不另写一套逻辑） -->
+      <ul class="hours">
+        <li v-for="h in hours" :key="h.time">
+          <span class="h-time">{{ h.time.slice(11, 16) }}</span>
+          <component :is="describe(h.code).icon" class="h-icon" :stroke-width="1.6" />
+          <span class="h-temp">{{ h.temp }}°</span>
+        </li>
+      </ul>
+
       <!-- 下：未来 6 天 -->
       <ul class="days">
         <li v-for="(day, i) in forecast" :key="day.date">
@@ -45,6 +54,9 @@ const cond = computed(() => describe(data.value?.now.code ?? 0, false))
 const sky = computed(() => skyBackdrop(data.value?.now.code ?? 0, data.value?.now.isDay ?? true))
 
 const today = computed(() => data.value?.days?.[0] ?? { max: 0, min: 0 })
+/** 接下来 4 个整点（够高的卡片才显示） */
+const hours = computed(() => (data.value?.hours ?? []).slice(1, 5))
+
 const forecast = computed(() => (data.value?.days ?? []).slice(1, 7))
 
 const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
@@ -61,7 +73,6 @@ function weekOf(date: string, i: number) {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 2cqmin;
   width: 100%;
   height: 100%;
@@ -76,10 +87,12 @@ function weekOf(date: string, i: number) {
 /* 上半：左右两栏 */
 .top {
   display: flex;
-  align-items: flex-start;
+  flex: 1 1 auto;
+  align-items: center;
   justify-content: space-between;
   gap: 3cqmin;
   min-width: 0;
+  min-height: 0;
 }
 
 .left,
@@ -112,12 +125,12 @@ function weekOf(date: string, i: number) {
   display: inline-flex;
   align-items: center;
   gap: 0.5cqmin;
-  font-size: 11cqmin;
+  font-size: min(11cqmin, 7cqh);
   font-weight: 500;
 }
 
 .temp {
-  font-size: 34cqmin;
+  font-size: min(34cqmin, 26cqh);
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -128,7 +141,7 @@ function weekOf(date: string, i: number) {
   display: inline-flex;
   align-items: center;
   gap: 0.4cqmin;
-  font-size: 11cqmin;
+  font-size: min(11cqmin, 7cqh);
 }
 
 .icon {
@@ -138,8 +151,39 @@ function weekOf(date: string, i: number) {
 }
 
 .range {
-  font-size: 9.5cqmin;
+  font-size: min(9.5cqmin, 6cqh);
   opacity: 0.86;
+}
+
+/* 逐时：默认不显示，卡片够高才长出来 */
+.hours {
+  display: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 1cqmin;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hours li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4cqmin;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.h-time,
+.h-temp {
+  font-size: min(8.5cqmin, 5.5cqh);
+  font-variant-numeric: tabular-nums;
+}
+
+.h-icon {
+  width: min(9cqmin, 9cqh);
+  height: min(9cqmin, 9cqh);
 }
 
 /* 下半：未来 6 天等分列 */
@@ -164,16 +208,16 @@ function weekOf(date: string, i: number) {
 }
 
 .d-week {
-  font-size: 8.5cqmin;
+  font-size: min(8.5cqmin, 5.5cqh);
 }
 
 .d-icon {
-  width: 9cqmin;
-  height: 9cqmin;
+  width: min(9cqmin, 9cqh);
+  height: min(9cqmin, 9cqh);
 }
 
 .d-temp {
-  font-size: 8.5cqmin;
+  font-size: min(8.5cqmin, 5.5cqh);
   opacity: 0.9;
   font-variant-numeric: tabular-nums;
 }
@@ -189,6 +233,13 @@ function weekOf(date: string, i: number) {
 
 @container (min-width: 200px) {
   .days {
+    display: grid;
+  }
+}
+
+/* 形态分界点：够高（≥250px）才长逐时那一行，保证上/中/下三块都放得下 */
+@container (min-height: 250px) {
+  .hours {
     display: grid;
   }
 }

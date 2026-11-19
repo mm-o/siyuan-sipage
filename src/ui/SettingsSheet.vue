@@ -164,12 +164,9 @@ const tag = computed(
  *   其它  → 4×2
  */
 const pv = computed(() => {
-  const c = picked.value?.constrain
-  /* 段落卡：两段（快捷方式 2 → 4×2；统计 3 → 6×3）*/
-  if (c?.step && c.step > 1) return { w: c.step * 2, h: c.step }
-  /* 比例卡：6 宽按比例（2:1 → 6×3）*/
-  if (c?.ratios?.length) return { w: 6, h: Math.max(1, Math.round(6 / c.ratios[0])) }
-  return { w: 4, h: 2 }
+  const step = picked.value?.constrain?.step ?? 1
+  /* 有段落的卡：给两段（快捷方式 4×2、统计 6×3），正好一眼看出它的颗粒度 */
+  return step > 1 ? { w: step * 2, h: step } : { w: 4, h: 2 }
 })
 
 /* 卡片库：选中一张卡，右栏预览并添加 */

@@ -41,7 +41,7 @@ import YiyanCard from "@/cards/yiyan/YiyanCard.vue"
 export type CardSize = `${number}x${number}`
 
 /** 尺寸约束（注册表里每张卡可选声明一次；拖动、整理、补位都过同一套实现） */
-export type CardConstrain = { square?: boolean; ratios?: number[]; step?: number; min?: number; max?: number }
+export type CardConstrain = { square?: boolean; step?: number; min?: number; max?: number }
 
 interface CardDef {
 /** 唯一 id，同时用于文档内嵌属性 data-desk-card */
@@ -68,7 +68,6 @@ interface CardDef {
   controls?: { expand?: boolean; menu?: boolean; full?: boolean }
   /**
    * 尺寸约束（可选，唯一入口）：拖到哪里都先过这一套
-   *   ratios 固定比例（天气/日历 2:1）
    *   square 保持正方形
    *   step   段落式步长：尺寸只落在 step 的倍数上（如拼图 3 的倍数，5×5 直接跳成 6×6）
    *   min/max 边长范围（格）
@@ -101,7 +100,7 @@ export const CARDS: CardDef[] = [
     component: CalendarCard,
     icon: CalendarDays,
     detail: CalendarPanel,
-    constrain: { ratios: [2, 1], step: 1, min: 2, max: 16 },
+    constrain: { step: 1, min: 2, max: 16 },
     // 参考实现 的日历是白卡（--bg-card: #fff / #222），不是玻璃
     surface: "solid",
   },
@@ -133,7 +132,7 @@ export const CARDS: CardDef[] = [
     component: WeatherCard,
     icon: CloudSun,
     detail: WeatherPanel,
-    constrain: { ratios: [2, 1], step: 1, min: 2, max: 16 },
+    constrain: { step: 1, min: 2, max: 16 },
   },
   {
     id: "countdown",

@@ -150,7 +150,7 @@ import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVert
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
 import { PANEL_CLOCK, desk, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
-import { useDeskGrid, normalizeRatios } from "./arrange"
+import { useDeskGrid, normalizeSizes } from "./arrange"
 import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
 import SettingsSheet from "./SettingsSheet.vue"
@@ -266,7 +266,7 @@ function deskMenu(e: MouseEvent) {
     icon: "iconLayoutGrid",
     label: "一键整理",
     click: () => {
-      normalizeRatios()
+      normalizeSizes()
       flowDesk(grid.value.cols)
     },
   })
@@ -324,7 +324,7 @@ function measure() {
   if (grid.value.cols !== lastCols) {
     lastCols = grid.value.cols
     /* 列数变了（开关侧栏、改窗口宽）→ 自动补位：卡片保持尺寸、按行重排 */
-    normalizeRatios()
+    normalizeSizes()
     flowDesk(lastCols)
   }
 }

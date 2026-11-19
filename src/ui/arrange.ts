@@ -20,7 +20,6 @@ interface Drag {
 /**
  * 尺寸约束的唯一实现：谁改尺寸都过这一关（拖动 / 整理 / 补位）
  *
- *   ratios → 取最接近的固定比例，宽高同步
  *   square → 取较长边做正方形
  *   step   → 段落式：落到 step 的倍数上（5×5 直接跳成 6×6）
  *   min/max→ 边长夹取
@@ -29,21 +28,6 @@ export function fitDims(lim: CardConstrain | undefined, w: number, h: number, fr
   const min = lim?.min ?? 1
   const max = lim?.max ?? 16
   const clamp = (n: number) => Math.min(max, Math.max(min, Math.round(n)))
-
-  if (lim?.ratios?.length) {
-    const start = from.w / from.h
-    const ratio = lim.ratios.reduce((a, r) => (Math.abs(r - start) < Math.abs(a - start) ? r : a), lim.ratios[0])
-    /* 变化更大的那一维做主，另一维由比例反推回来（保证严格等于比例） */
-    const byW = Math.abs(w - from.w) >= Math.abs(h - from.h)
-    if (byW) {
-      const nw = clamp(w)
-      const nh = Math.max(1, Math.round(nw / ratio))
-      return { w: clamp(nh * ratio), h: nh }
-    }
-    const nh = clamp(h)
-    const nw = Math.max(1, Math.round(nh * ratio))
-    return { w: nw, h: clamp(nw / ratio) }
-  }
 
   if (lim?.square) {
     const n = clamp(Math.abs(w - from.w) >= Math.abs(h - from.h) ? w : h)
@@ -56,9 +40,9 @@ export function fitDims(lim: CardConstrain | undefined, w: number, h: number, fr
 }
 
 /**
- * 把带固定比例的卡片拉回比例（整理时调用，顺手修好历史遗留的变形尺寸）。
+ * 整理时把每张卡按它自己的段落/范围归位（修好历史遗留的越界或半格尺寸）。
  */
-export function normalizeRatios() {
+export function normalizeSizes() {
   for (const card of desk.cards) {
     const lim = getCard(card.cardId)?.constrain
     if (!lim) continue
