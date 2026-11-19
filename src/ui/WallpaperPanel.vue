@@ -1,9 +1,9 @@
 <template>
-  <div class="desk-panel">
+  <div class="desk-panel set-page">
+    <h2 class="set-h2">壁纸</h2>
+    <p class="set-p">换一张底片；模糊与遮罩在「组件设置 → 壁纸」里调。</p>
     <!-- 当前壁纸预览：先看结果，再改（HIG） -->
-    <div class="desk-preview" :style="previewStyle">
-      <span class="desk-preview-tag">{{ currentLabel }}</span>
-    </div>
+    
 
     <!-- 来源：单一单选列表，避免两级控件造成割裂 -->
     <div class="sources">
@@ -342,4 +342,23 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
 }
 
 
+.set-h2 {
+  margin: 0;
+  font-size: var(--desk-fs-title);
+  font-weight: 600;
+}
+
+.set-p {
+  margin: calc(var(--desk-sp-3) * -1 + 2px) 0 0;
+  font-size: var(--desk-fs-body);
+  color: var(--desk-text-2);
+}
+
+/* 分组：标题 + 若干行，行间细线 */
+
+.set-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-3);
+}
 </style>

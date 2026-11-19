@@ -254,7 +254,7 @@ function deskMenu(e: MouseEvent) {
   menu.addItem({
     icon: "iconAdd",
     label: "添加卡片",
-    click: () => openSettings("library"),
+    click: () => openSettings("cards"),
   })
   menu.addItem({
     icon: "iconSettings",
@@ -263,7 +263,7 @@ function deskMenu(e: MouseEvent) {
   })
   menu.addSeparator()
   menu.addItem({
-    icon: "iconGrid",
+    icon: "iconLayoutGrid",
     label: "一键整理",
     click: () => {
       normalizeRatios()
@@ -278,9 +278,11 @@ function deskMenu(e: MouseEvent) {
   menu.open({ x: e.clientX, y: e.clientY })
 }
 
-function openSettings(tab: "wallpaper" | "cards" | "library" | "about", e?: MouseEvent) {
+function openSettings(tab: "wallpaper" | "cards" | "like" | "about" | "library", e?: MouseEvent) {
+  /* library 分区已并入「组件设置」，旧入口统一落到 cards */
+  const target = tab === "library" || tab === "like" ? "cards" : tab
   settingsOrigin.value = (e?.currentTarget as HTMLElement | null)?.getBoundingClientRect() ?? null
-  settingsTab.value = tab
+  settingsTab.value = target
   settingsOpen.value = true
 }
 
