@@ -1,26 +1,23 @@
 <template>
   <section class="lib">
     <h2 class="set-h2">卡片库</h2>
-    <p class="set-p">点「添加」放到桌面；同一张卡可以放多张。</p>
+    <p class="set-p">点一行选中，右侧预览并添加。</p>
 
     <ul class="lib-list">
-      <li v-for="def in CARDS" :key="def.id" class="lib-row">
-        <span class="lib-icon"><component :is="def.icon" :size="16" :stroke-width="1.7" /></span>
-        <span class="lib-main">
-          <b>{{ def.name }}</b>
-          <small>{{ def.desc }}</small>
-        </span>
-        <span v-if="countOf(def.id)" class="lib-count">×{{ countOf(def.id) }}</span>
+      <li v-for="def in CARDS" :key="def.id">
         <button
-          v-if="countOf(def.id)"
-          class="lib-btn is-quiet"
+          class="lib-row"
+          :class="{ 'is-active': def.id === selected }"
           type="button"
-          aria-label="移除一个"
-          @click="removeOne(def.id)"
+          @click="emit('select', def.id)"
         >
-          −
+          <span class="lib-icon"><component :is="def.icon" :size="16" :stroke-width="1.7" /></span>
+          <span class="lib-main">
+            <b>{{ def.name }}</b>
+            <small>{{ def.desc }}</small>
+          </span>
+          <span v-if="countOf(def.id)" class="lib-count">×{{ countOf(def.id) }}</span>
         </button>
-        <button class="lib-btn" type="button" @click="add(def.id)">添加</button>
       </li>
     </ul>
   </section>
@@ -28,33 +25,25 @@
 
 <script setup lang="ts">
 /**
- * 卡片库（设置第三栏，独立分区）
+ * 卡片库（设置第三栏的中间列表）
  *
- * 之前并进「组件设置」里，和滑轨混在一页，确实是两件事：这里是"往桌面上放卡"，那边是"调外观"。
+ * 只负责「选哪张卡」：点一行 → 右侧栏显示预览、已放张数与添加/移除按钮，
+ * 添加动作统一在右栏完成，列表本身不再塞两个按钮。
  */
-import { addToDesk, countOnDesk, desk, removeFromDesk } from "@/core/store"
 import { CARDS } from "@/core/registry"
+import { countOnDesk } from "@/core/store"
+
+defineProps<{ selected: string }>()
+const emit = defineEmits<{ select: [string] }>()
 
 const countOf = (id: string) => countOnDesk(id)
-
-function add(id: string) {
-  addToDesk(id)
-}
-
-function removeOne(id: string) {
-  for (let i = desk.cards.length - 1; i >= 0; i -= 1) {
-    if (desk.cards[i].cardId === id) {
-      removeFromDesk(desk.cards[i].uid)
-      return
-    }
-  }
-}
 </script>
 
 <style scoped>
 .lib-list {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   margin: var(--desk-sp-2) 0 0;
   padding: 0;
   list-style: none;
@@ -64,9 +53,23 @@ function removeOne(id: string) {
   display: flex;
   align-items: center;
   gap: var(--desk-sp-2h);
-  min-height: 46px;
-  padding: var(--desk-sp-1) 0;
-  border-bottom: 1px solid var(--desk-stroke);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--desk-sp-0) var(--desk-sp-2);
+  border: 0;
+  border-radius: var(--desk-r-control);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lib-row:hover {
+  background: color-mix(in srgb, var(--desk-text) 6%, transparent);
+}
+
+.lib-row.is-active {
+  background: color-mix(in srgb, var(--desk-accent) 14%, transparent);
 }
 
 .lib-icon {
@@ -77,6 +80,10 @@ function removeOne(id: string) {
   border-radius: var(--desk-r-sm);
   background: color-mix(in srgb, var(--desk-text) 7%, transparent);
   color: var(--desk-text-2);
+}
+
+.lib-row.is-active .lib-icon {
+  color: var(--desk-accent);
 }
 
 .lib-main {
@@ -105,34 +112,7 @@ function removeOne(id: string) {
   font-variant-numeric: tabular-nums;
 }
 
-.lib-btn {
-  height: 26px;
-  padding: 0 var(--desk-sp-2h);
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-accent) 12%, transparent);
-  color: var(--desk-accent);
-  font-size: var(--desk-fs-caption);
-  cursor: pointer;
-}
-
-.lib-btn:hover {
-  background: color-mix(in srgb, var(--desk-accent) 22%, transparent);
-}
-
-.lib-btn.is-quiet {
-  width: 26px;
-  padding: 0;
-  background: transparent;
-  color: var(--desk-text-3);
-}
-
-.lib-btn.is-quiet:hover {
-  background: color-mix(in srgb, var(--desk-text) 8%, transparent);
-  color: var(--desk-text);
-}
-
-/* 标题/说明与「关于」同款 */
+/* 标题/说明与其它分区一致 */
 .set-h2 {
   margin: 0 0 var(--desk-sp-1);
   font-size: var(--desk-fs-title);

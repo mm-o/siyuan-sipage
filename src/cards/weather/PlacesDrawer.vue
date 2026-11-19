@@ -1,5 +1,5 @@
 <template>
-  <aside class="wx-places desk-pane is-right" :style="{ backgroundImage: sky }">
+  <aside class="wx-places desk-pane is-right" :class="{ 'is-open': open }" :style="{ backgroundImage: sky }">
         <h2 class="wx-places-title">天气列表</h2>
 
         <input v-model="keyword" class="wx-search" placeholder="输入城市、区县、乡镇" @input="onInput" />
@@ -84,6 +84,7 @@ import { preciseLocate, searchPlaces } from "./weather"
 import type { WeatherData } from "./weather"
 
 const props = defineProps<{
+  open?: boolean
   places: WeatherPlace[]
   activeId: string
   metas: Record<string, WeatherData>
@@ -296,4 +297,107 @@ const locations = computed(() => props.places)
 .wx-loc-act.is-del:hover {
   background: var(--desk-danger);
 }
+  .wx-locate {
+  width: 100%;
+  height: 26px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 14%);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  }
+
+  .wx-locate:disabled { opacity: 0.6; cursor: default; }
+
+  .wx-loc {
+  position: relative;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: rgb(21 66 128 / 58%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  }
+
+  .wx-loc.is-active {
+  background: rgb(21 66 128 / 82%);
+  border-color: rgb(255 255 255 / 55%);
+  }
+
+  .wx-loc-pick {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: var(--desk-sp-2);
+  width: 100%;
+  padding: var(--desk-sp-0) 12px 10px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: #d5d5d5;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  }
+
+  .wx-loc-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-0);
+  min-width: 0;
+  }
+
+  .wx-loc-name {
+  font-size: var(--desk-fs-lg);
+  line-height: 35px;
+  color: #efefef;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  }
+
+  .wx-loc-cond {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1);
+  font-size: var(--desk-fs-sm);
+  }
+
+  .wx-loc-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--desk-sp-0);
+  flex: 0 0 auto;
+  }
+
+  .wx-loc-deg {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 35px;
+  }
+
+  .wx-loc-range {
+  font-size: var(--desk-fs-caption);
+  white-space: nowrap;
+  }
+
+/* 窄屏（<720px）收进抽屉，由「管理地点」按钮切换 */
+  @container (max-width: 720px) {
+    .wx-places {
+      display: none;
+      flex: 0 0 auto;
+      width: auto;
+      background: rgb(255 255 255 / 7%);
+    }
+
+    .wx-places.is-open {
+      display: flex;
+    }
+  }
+
+  .wx-locs {
+  flex: 0 0 auto;
+  }
 </style>

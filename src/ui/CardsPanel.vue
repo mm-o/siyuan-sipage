@@ -5,16 +5,13 @@
 
     <div class="set-group">
       <h4 class="set-group-title">布局</h4>
-      <Slider v-model="a.cell" label="单格边长" hint="网格密度的基准" :min="48" :max="72" :step="4" suffix="px" :default-value="D.cell" />
+      <Slider v-model="a.cell" label="单格边长" :min="48" :max="72" :step="4" suffix="px" :default-value="D.cell" />
     </div>
 
     <div class="set-group">
       <h4 class="set-group-title">动效</h4>
       <div class="set-row">
-        <div class="set-label">
-          <b>入场动效</b>
-          <small>卡片与内容依次浮现</small>
-        </div>
+        <div class="set-label"><b>入场动效</b></div>
         <button class="set-switch" :class="{ 'is-on': a.motion }" type="button" role="switch" :aria-checked="a.motion" @click="a.motion = !a.motion">
           <span class="set-switch-knob" />
         </button>
@@ -126,10 +123,10 @@ function removeOne(id: string) {
 
 .set-group-title {
   margin: 0 0 var(--desk-sp-1);
-  font-size: var(--desk-fs-caption);
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  color: var(--desk-text-3);
+  font-size: var(--desk-fs-body);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--desk-text);
 }
 
 /* 开关行：左标题 + 右开关，与滑轨行同高 */
@@ -138,7 +135,7 @@ function removeOne(id: string) {
   align-items: center;
   justify-content: space-between;
   gap: var(--desk-sp-3);
-  min-height: 34px;
+  min-height: 32px;
 }
 
 .set-label {
@@ -150,11 +147,7 @@ function removeOne(id: string) {
 .set-label b {
   font-size: var(--desk-fs-body);
   font-weight: 400;
-}
-
-.set-label small {
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
+  color: var(--desk-text-2);
 }
 
 .set-switch {

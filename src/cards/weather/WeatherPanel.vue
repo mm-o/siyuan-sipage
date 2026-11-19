@@ -77,6 +77,7 @@
 
       <!-- 右：天气列表（对齐 参考实现 的 weather-list.vue：240px 竖栏，当前项高亮，hover 出删除） -->
               <PlacesDrawer
+          :open="showPlaces"
           :places="locations"
           :active-id="activeId"
           :metas="metas"
@@ -295,19 +296,6 @@ function dayLabel(date: string, index: number) {
 }
 
 /* 只有窄屏才出现（容器查询里放开） */
-.wx-locate {
-  width: 100%;
-  height: 26px;
-  margin-top: 6px;
-  border: 0;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 14%);
-  color: #fff;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.wx-locate:disabled { opacity: 0.6; cursor: default; }
 
 .wx-manage {
   display: none;
@@ -502,79 +490,6 @@ function dayLabel(date: string, index: number) {
 /* ── 右：天气列表（参考实现在 w-60 / bg-white-7 / p-4 pl-2）──── */
 /* 右侧地点栏：与日历/倒计日一致的双栏结构（统一令牌，不是浮层） */
 
-
-.wx-loc {
-  position: relative;
-  flex: 0 0 auto;
-  border-radius: 12px;
-  background: rgb(21 66 128 / 58%);
-  border: 1px solid rgb(255 255 255 / 10%);
-}
-
-.wx-loc.is-active {
-  background: rgb(21 66 128 / 82%);
-  border-color: rgb(255 255 255 / 55%);
-}
-
-.wx-loc-pick {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: var(--desk-sp-2);
-  width: 100%;
-  padding: var(--desk-sp-0) 12px 10px;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  color: #d5d5d5;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.wx-loc-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--desk-sp-0);
-  min-width: 0;
-}
-
-.wx-loc-name {
-  font-size: var(--desk-fs-lg);
-  line-height: 35px;
-  color: #efefef;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.wx-loc-cond {
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-1);
-  font-size: var(--desk-fs-sm);
-}
-
-.wx-loc-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--desk-sp-0);
-  flex: 0 0 auto;
-}
-
-.wx-loc-deg {
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 35px;
-}
-
-.wx-loc-range {
-  font-size: var(--desk-fs-caption);
-  white-space: nowrap;
-}
-
 @container (max-width: 720px) {
   .wx-panel-inner {
     flex-direction: column;
@@ -602,19 +517,5 @@ function dayLabel(date: string, index: number) {
     margin-left: var(--desk-sp-2);
   }
 
-  .wx-places {
-    flex: 0 0 auto;
-    width: auto;
-    display: none;
-    background: rgb(255 255 255 / 7%);
-  }
-
-  .wx-places.is-open {
-    display: flex;
-  }
-
-  .wx-locs {
-    flex: 0 0 auto;
-  }
 }
 </style>
