@@ -76,69 +76,14 @@
       </section>
 
       <!-- 右：天气列表（对齐 参考实现 的 weather-list.vue：240px 竖栏，当前项高亮，hover 出删除） -->
-      <aside class="wx-places desk-pane is-right" :class="{ 'is-open': showPlaces }" :style="{ backgroundImage: sky }">
-        <h2 class="wx-places-title">天气列表</h2>
+              <PlacesDrawer
+          :places="locations"
+          :active-id="activeId"
+          :metas="metas"
+          :sky="sky"
+          :cond-of="condOf"
+        />
 
-        <input v-model="keyword" class="wx-search" placeholder="输入城市、区县、乡镇" @input="onInput" />
-
-        <button class="wx-locate" type="button" :disabled="locating" @click="locate">
-          {{ locating ? "定位中…" : "使用我的位置" }}
-        </button>
-
-        <p v-if="searching" class="wx-places-hint">搜索中…</p>
-        <p v-else-if="searchError" class="wx-places-hint">{{ searchError }}</p>
-        <ul v-else-if="hits.length" class="wx-hits">
-          <li v-for="hit in hits" :key="hit.id">
-            <button class="wx-hit" type="button" @click="pick(hit)">
-              <span class="wx-hit-name">{{ hit.name }}</span>
-              <span class="wx-hit-region">{{ regionOf(hit) }}</span>
-            </button>
-          
-            </li>
-        </ul>
-
-        <ul class="wx-locs">
-          <li v-for="loc in locations" :key="loc.id" class="wx-loc" :class="{ 'is-active': loc.id === activeId }">
-            <button class="wx-loc-pick" type="button" @click="selectWeatherPlace(loc.id)">
-              <span class="wx-loc-main">
-                <span class="wx-loc-name">{{ loc.name }}</span>
-                <span class="wx-loc-cond">
-                  <component v-if="metas[loc.id]" :is="condOf(loc.id).icon" :size="14" :stroke-width="1.6" />
-                  <span>{{ metas[loc.id] ? condOf(loc.id).label : "—" }}</span>
-                </span>
-              </span>
-              <span class="wx-loc-side">
-                <span class="wx-loc-deg">{{ metas[loc.id] ? `${metas[loc.id].now.temp}°` : "—" }}</span>
-                <span v-if="metas[loc.id]" class="wx-loc-range">
-                  最高{{ metas[loc.id].days[0].max }}° 最低{{ metas[loc.id].days[0].min }}°
-                </span>
-              </span>
-            </button>
-            <span class="wx-loc-acts">
-              <button
-                v-if="!isFirst(loc)"
-                class="wx-loc-act"
-                type="button"
-                title="置顶"
-                aria-label="置顶"
-                @click.stop="pinWeatherPlace(loc.id)"
-              >
-                <Pin :size="13" :stroke-width="2" />
-              </button>
-              <button
-                v-if="locations.length > 1"
-                class="wx-loc-act is-del"
-                type="button"
-                title="删除"
-                aria-label="删除"
-                @click.stop="removeWeatherPlace(loc.id)"
-              >
-                <Trash2 :size="13" :stroke-width="2" />
-              </button>
-            </span>
-          </li>
-        </ul>
-      </aside>
     </div>
   </div>
 </template>
@@ -162,6 +107,7 @@ import {
   weather,
   type WeatherPlace,
 } from "@/core/store"
+import PlacesDrawer from "./PlacesDrawer.vue"
 import { describe, preciseLocate, searchPlaces, skyBackdrop, usePlaceWeather, useWeather } from "./weather"
 
 const { place, data, error, reload } = useWeather()
@@ -194,77 +140,12 @@ const chart = computed(() => {
 })
 
 /* ── 搜索（防抖 300ms）────────────────────────────────── */
-const keyword = ref("")
-const hits = ref<WeatherPlace[]>([])
-const locating = ref(false)
-const searching = ref(false)
-const searchError = ref("")
 
-let timer: ReturnType<typeof setTimeout> | null = null
 /** 请求代号：只有最后一次搜索的结果能落到界面上 */
-let token = 0
-
-function onInput() {
-  if (timer) clearTimeout(timer)
-  const q = keyword.value.trim()
-  if (!q) {
-    token += 1
-    hits.value = []
-    searching.value = false
-    searchError.value = ""
-    return
-  }
-  timer = setTimeout(() => void run(q), 300)
-}
-
-async function run(q: string) {
-  const mine = ++token
-  searching.value = true
-  searchError.value = ""
-  try {
-    const list = await searchPlaces(q)
-    if (mine !== token) return
-    hits.value = list
-    if (!list.length) searchError.value = "没有找到这个地点"
-  } catch {
-    if (mine !== token) return
-    hits.value = []
-    searchError.value = "搜索失败，请重试"
-  } finally {
-    if (mine === token) searching.value = false
-  }
-}
-
-onBeforeUnmount(() => {
-  token += 1
-  if (timer) clearTimeout(timer)
-})
 
 /** 定位：系统定位优先，拿不到就用 IP 定位（区县级精度靠系统定位） */
-async function locate() {
-  if (locating.value) return
-  locating.value = true
-  searchError.value = ""
-  try {
-    addWeatherPlace(await preciseLocate())
-  } catch {
-    searchError.value = "定位失败，请手动搜索地点"
-  } finally {
-    locating.value = false
-  }
-}
-
 /** 加入并切换到该地点，搜索框与候选清空（避免重复加入） */
-function pick(hit: WeatherPlace) {
-  addWeatherPlace(hit)
-  keyword.value = ""
-  hits.value = []
-  searchError.value = ""
-}
 
-const isFirst = (loc: WeatherPlace) => locations.value[0]?.id === loc.id
-
-const regionOf = (loc: WeatherPlace) => [loc.admin1, loc.country].filter(Boolean).join(" · ")
 
 /* ── 窄屏：右栏收成「管理地点」按钮 ───────────────────── */
 const showPlaces = ref(false)
@@ -620,140 +501,7 @@ function dayLabel(date: string, index: number) {
 
 /* ── 右：天气列表（参考实现在 w-60 / bg-white-7 / p-4 pl-2）──── */
 /* 右侧地点栏：与日历/倒计日一致的双栏结构（统一令牌，不是浮层） */
-.wx-places {
-  flex: 0 0 var(--desk-aside-w);
-  width: var(--desk-aside-w);
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--desk-sp-2h);
-  padding: var(--desk-sp-4) var(--desk-sp-3);
-  /* 与左栏同一套底：同色 + 同背景图定位，深浅只靠一层薄纱拉开层次 */
-  background-color: #184482;
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
-}
 
-.wx-places-title {
-  margin: 0;
-  font-size: var(--desk-fs-lg);
-  font-weight: 400;
-  color: #efefef;
-}
-
-.wx-search {
-  flex: 0 0 auto;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: var(--desk-r-sm);
-  border: 0;
-  background: rgb(255 255 255 / 20%);
-  color: #fff;
-  font: inherit;
-  font-size: var(--desk-fs-sm);
-  outline: none;
-}
-
-.wx-search::placeholder {
-  color: rgb(255 255 255 / 55%);
-}
-
-.wx-search:focus {
-  box-shadow: 0 0 0 2px rgb(255 255 255 / 40%);
-}
-
-.wx-places-hint {
-  margin: 0;
-  font-size: var(--desk-fs-sm);
-  color: rgb(255 255 255 / 65%);
-}
-
-.wx-hits {
-  flex: 0 1 auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.wx-hits::-webkit-scrollbar {
-  display: none;
-}
-
-.wx-hit {
-  display: flex;
-  align-items: baseline;
-  gap: var(--desk-sp-2);
-  width: 100%;
-  padding: 5px 8px;
-  border: 0;
-  border-radius: var(--desk-r-sm);
-  background: transparent;
-  color: #efefef;
-  font: inherit;
-  font-size: var(--desk-fs-sm);
-  text-align: left;
-  cursor: pointer;
-}
-
-.wx-hit:hover {
-  background: rgb(255 255 255 / 14%);
-}
-
-.wx-hit-name {
-  flex: 0 0 auto;
-}
-
-.wx-hit-region {
-  min-width: 0;
-  color: rgb(255 255 255 / 60%);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 地点卡片（参考实现的 section.wx-locs::-webkit-scrollbar {
-  display: none;
-}
-
-.wx-loc-acts {
-  position: absolute;
-  top: var(--desk-sp-1);
-  right: var(--desk-sp-1);
-  display: flex;
-  gap: var(--desk-sp-0);
-  opacity: 0;
-  transition: opacity var(--desk-dur-fast) var(--desk-ease);
-}
-
-/* 只有鼠标悬停才出现（选中态不显示，保持干净） */
-.wx-loc:hover .wx-loc-acts {
-  opacity: 1;
-}
-
-.wx-loc-act {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border: 0;
-  border-radius: var(--desk-r-sm);
-  background: rgb(255 255 255 / 18%);
-  color: #fff;
-  cursor: pointer;
-  transition: background var(--desk-dur-fast) var(--desk-ease);
-}
-
-.wx-loc-act:hover {
-  background: rgb(255 255 255 / 32%);
-}
-
-.wx-loc-act.is-del:hover {
-  background: var(--desk-danger);
-}
 
 .wx-loc {
   position: relative;

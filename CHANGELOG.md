@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.0 — 清理死令牌 + 详情右栏抽组件（第 7 步，重构收尾）
+
+- 删掉 10 个零引用的设计令牌（`--desk-stroke-strong` `--desk-r-icon` `--desk-hit-min`
+  `--desk-shadow-3` `--desk-fade-in` 等），令牌 86 → 76
+- 保留 `--desk-bp-*` 五个断点刻度（@container 吃不到 var，它们只作说明源与守卫基准）
+- `WeatherPanel.vue`(873) 的右栏「天气列表」抽成 `PlacesDrawer.vue`(300)：
+  搜索 / 区县定位 / 候选 / 已存地点（置顶·删除）自成一体，面板只剩天气渲染 → 621 行
+- 实测：详情双栏正常、逐时 20 条、7 日 7 条、右栏定位与搜索都在
+
 ## v0.5.9 — 文档与代码对齐（第 6 步）
 
 - `ARCHITECTURE.md`：目录树按现状重写（含 weather 五模块、sizes/cache、settings 三页、embed 两文件）；

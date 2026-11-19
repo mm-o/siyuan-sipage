@@ -24,7 +24,6 @@
   --desk-glass-fill-strong: rgb(255 255 255 / 92%);
   --desk-glass-clear: rgb(255 255 255 / 40%);
   --desk-stroke: rgb(0 0 0 / 8%);
-  --desk-stroke-strong: rgb(0 0 0 / 16%);
 
   /* 纯色卡片面（对齐 参考实现 的 --bg-card：浅 #fff / 深 #222） */
   --desk-surface: #fff;
@@ -72,12 +71,21 @@
   --desk-r-control: 10px;
   --desk-r-card: 16px;
   /* 卡内图标：与卡片同一曲率（卡片 16px ≈ 其边长的 10%） */
-  --desk-r-icon: 10%;
   --desk-r-sheet: 18px;
   --desk-r-pill: 999px;
 
   /* 间距（4pt 栅格） */
-  --desk-aside-w: 240px;   /* 详情右栏宽度（双栏统一） */
+  --desk-aside-w: 240px;
+
+  /*
+   * 容器断点刻度（@container 不能用 var，这里只作唯一说明源；新代码请只用这五个值）
+   *   short 120 / narrow 200 / mid 260 / wide 460 / panel 720
+   */
+  --desk-bp-short: 120px;
+  --desk-bp-narrow: 200px;
+  --desk-bp-mid: 260px;
+  --desk-bp-wide: 460px;
+  --desk-bp-panel: 720px;   /* 详情右栏宽度（双栏统一） */
 
   /*
    * 容器断点刻度（@container 不能用 var，这里只作唯一说明源；新代码请只用这四个值）
@@ -87,10 +95,6 @@
    *   wide   460px  卡片宽：左右分栏
    *   panel  720px  详情弹窗：单栏 ↔ 双栏
    */
-  --desk-bp-short: 120px;
-  --desk-bp-narrow: 200px;
-  --desk-bp-mid: 260px;
-  --desk-bp-wide: 460px;
   --desk-bp-panel: 720px;   /* 详情右栏宽度（双栏统一） */
   --desk-sp-0: 2px;
   --desk-sp-1: 4px;
@@ -120,12 +124,10 @@
 
   /* 命中区 */
   --desk-hit: 28px;
-  --desk-hit-min: 20px;
 
   /* 阴影 */
   --desk-shadow-1: 0 1px 2px rgb(0 0 0 / 12%);
   --desk-shadow-2: 0 8px 24px rgb(0 0 0 / 16%);
-  --desk-shadow-3: 0 24px 60px rgb(0 0 0 / 28%);
 
   /* 动效 */
   --desk-dur-fast: 0.16s;
@@ -139,7 +141,6 @@
   --desk-hover-shadow: 0 10px 22px rgb(0 0 0 / 22%);
   --desk-enter-dur: 620ms;
   --desk-enter-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --desk-fade-in: var(--desk-enter-dur) var(--desk-enter-ease);
 }
 
 /* 深色外观：fill 换成黑色系 */
