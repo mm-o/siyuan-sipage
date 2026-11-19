@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.6.4 — 天气模块合成一个文件（并评估了开源库）
+
+- `cards/weather/` 的 6 个 TS 模块（types 39 + codes 132 + net 187 + locate 138 + hooks 75 + 汇总 15）
+  → **`weather.ts` 一个文件 559 行**，按 5 段注释分区：形状 / 码表 / 取数 / 定位 / 钩子
+- 目录从 9 个文件降到 **4 个**：`weather.ts` + `WeatherCard.vue` + `WeatherPanel.vue` + `PlacesDrawer.vue`
+- 评估过但**没有引入**的开源库（结论：都是为了换掉我们自己那 90 行解析，代价更大）：
+  | 包 | 体积 | 为什么不用 |
+  | --- | --- | --- |
+  | `openmeteo` | 15KB + `flatbuffers` 288KB | 官方 SDK 走 flatbuffers（实测接口可用/2.1KB 响应），为替代 JSON 解析加一个 300KB 依赖；且只管国际源，国内区县仍要自己写 |
+  | `openweather-apis` | 91KB | 需要 API key，国内区县无覆盖 |
+  | `qweather-icons` | 1.1MB | 只是图标集，我们已用 lucide |
+  | `china-division` | 190MB | 含地名但不含天气，且 AREAID 与天气接口不同源 |
+
 ## v0.6.3 — 样式与 ui 层再压一轮
 
 - **两张样式表合一**：`ui/ui.css`(817) 并入 `styles/index.css`(398) → 唯一一份 1210 行
