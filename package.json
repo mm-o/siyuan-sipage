@@ -1,12 +1,15 @@
 {
   "name": "desk-cards",
-  "version": "5.63.0",
+  "version": "0.5.3",
   "type": "module",
-  "description": "Widget cards for SiYuan: calendar, clock, daily quote, poem and more",
-  "author": "siyuan-plugin-sizhuo",
+  "description": "思源桌面卡片：自适应卡片（日历 / 天气 / 时钟 / 一言 …）+ iTab 式整理补位",
+  "author": "mm-o",
   "license": "MIT",
-  "homepage": "",
-  "repository": "",
+  "homepage": "https://github.com/mm-o/desk-cards",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mm-o/desk-cards.git"
+  },
   "scripts": {
     "dev": "vite build --watch",
     "release": "node ./release.js",
@@ -39,5 +42,8 @@
   },
   "dependencies": {
     "tyme4ts": "^1.5.6"
+  },
+  "bugs": {
+    "url": "https://github.com/mm-o/desk-cards/issues"
   }
 }

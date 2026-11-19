@@ -302,6 +302,70 @@ function dayLabel(date: string, index: number) {
 }
 
 /* ── 左：天气 ──────────────────────────────────────────── */
+.wx-now {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-4);
+  min-width: 0;
+}
+
+.wx-now-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-1);
+  min-width: 0;
+}
+
+.wx-now-cond {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-2);
+  margin: 0;
+  font-size: var(--desk-fs-body);
+  white-space: nowrap;
+}
+
+.wx-now-wind {
+  color: rgb(255 255 255 / 72%);
+}
+
+.wx-now-feel {
+  margin: 0;
+  font-size: var(--desk-fs-sm);
+  color: rgb(255 255 255 / 72%);
+  white-space: nowrap;
+}
+
+.wx-main-temp {
+  font-size: clamp(44px, 9cqh, 80px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 指标：一行铺开，超宽自动换行（不会挤成一列） */
+.wx-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--desk-sp-1) var(--desk-sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--desk-fs-body);
+  color: rgb(255 255 255 / 88%);
+}
+
+.wx-meta li {
+  white-space: nowrap;
+}
+
+.wx-hour-time {
+  font-size: var(--desk-fs-caption);
+  color: rgb(255 255 255 / 72%);
+  white-space: nowrap;
+}
+
 .wx-main {
   flex: 1 1 auto;
   min-width: 0;

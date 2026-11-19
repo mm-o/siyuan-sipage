@@ -585,6 +585,15 @@ function backToList() {
   box-shadow: 0 0 16px color-mix(in srgb, var(--desk-accent) 40%, transparent);
 }
 
+.cd-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-1);
+  min-width: 0;
+}
+
 .cd-hero-title {
   display: flex;
   align-items: baseline;

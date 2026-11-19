@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.3 — 版号归零 + 许可与元数据修正
+
+- 版本号改为语义化的 `0.5.3`（此前沿用了内部迭代号 5.x）
+- `LICENSE` 版权人改为项目作者；`package.json` 补 `author` / `repository` / `homepage` / `bugs`
+- `plugin.json` 修正 `url`（原指向模板仓库）、中文 `displayName` / `description`
+- 修复天气面板指标行被清理误删导致的单列排布（`.wx-meta` / `.wx-now` / `.wx-hour-time` 回归）
+- 收进私有仓库 `mm-o/desk-cards`，每条发版打 tag + Release，可随时回退
+
 ## v3.49.2 — 弹窗结构规则落档（DESIGN.md）
 
 把「壳透明 + 栏是面 + 外 18 内 6 + 卡片裁切/弹窗滚动」四条写成 `docs/DESIGN.md` 的《弹窗结构规则（底层约定）》：
