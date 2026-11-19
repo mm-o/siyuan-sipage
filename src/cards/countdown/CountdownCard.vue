@@ -308,13 +308,13 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 /* ── 按实际像素再降档 ─────────────────────────────────── */
 /* 尺寸档只说明「几格」，像素大小由桌面上的卡片数决定：6~7 张卡时单格只有 ~70px，
    2x2 实际 152×152 —— 再塞两行列表会把标题和数字挤重叠，所以小块只留主事件（等于 1x1 的信息量）。 */
-@container (max-width: 259px) {
+@container (max-width: 260px) {
   .cd-rows {
     display: none;
   }
 }
 
-@container (max-height: 259px) {
+@container (max-height: 260px) {
   .is-square:not(.is-big) .cd-rows,
   .is-wide.is-big .cd-rows {
     display: none;

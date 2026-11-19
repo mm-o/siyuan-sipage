@@ -385,7 +385,7 @@ const rangeText = computed(() => {
 }
 
 /* ── 窄屏（<720px）：上下两段，统计挤到下面 ───────────── */
-@container (max-width: 719px) {
+@container (max-width: 720px) {
   .hm-body {
     flex-direction: column;
     overflow-y: auto;

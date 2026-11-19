@@ -1017,7 +1017,7 @@ function backToList() {
 }
 
 /* ── 窄屏（<760px）：分类收进胶囊行，详情盖在列表上 ────── */
-@container (max-width: 759px) {
+@container (max-width: 720px) {
   .cd-aside {
     display: none;
   }

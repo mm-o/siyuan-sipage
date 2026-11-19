@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.7 — 断点收敛（重构第 3 步）
+
+- 9 个文件的 `@container` 断点统一到五个刻度：120 / 200 / 260 / 460 / 720
+  （此前分散为 110/149/170/180/199/259/719/759 等 13 种随手值）
+- `styles/index.css` 新增刻度表 `--desk-bp-short/narrow/mid/wide/panel`（作为唯一说明源）
+- 新增守卫 `pnpm check:bp`：断点越界即失败，并接入发版门禁
+
 ## v0.5.6 — 文件合并（每层少 4 个碎文件）
 
 - `core/icons.ts`(21) → 并入 `index.ts`

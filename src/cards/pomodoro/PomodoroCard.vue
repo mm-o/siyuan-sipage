@@ -118,7 +118,7 @@ const { running, left, percent } = usePomodoro()
   color: #fff;
 }
 
-@container (max-height: 119px) {
+@container (max-height: 120px) {
   .pm-head,
   .pm-foot {
     display: none;

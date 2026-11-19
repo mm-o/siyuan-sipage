@@ -179,7 +179,7 @@ function weekOf(date: string, i: number) {
 }
 
 /* 小尺寸只给温度，够宽再长出地名/高低温/预报 */
-@container (min-width: 110px) {
+@container (min-width: 120px) {
   .place,
   .desc,
   .range {
@@ -187,7 +187,7 @@ function weekOf(date: string, i: number) {
   }
 }
 
-@container (min-width: 170px) {
+@container (min-width: 260px) {
   .days {
     display: grid;
   }

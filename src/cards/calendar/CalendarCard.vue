@@ -210,7 +210,7 @@ const month = computed(() => {
   color: #fff;
 }
 
-@container (min-width: 180px) {
+@container (min-width: 200px) {
   .day {
     flex: 0 0 34%;
     max-width: 34%;

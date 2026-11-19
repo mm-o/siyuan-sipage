@@ -296,14 +296,14 @@ const stats = computed(() => buildStats(counts.value ?? new Map(), weeks.value))
 /* ── 按实际像素再降档 ─────────────────────────────────── */
 /* 尺寸档只说明「几格」：桌面卡片多的时候单格只有 ~70px，2x2 实际 152×152 ——
    三个数字会被挤成「12… 13…」，所以小块先把数字收掉，再小就只留网格。 */
-@container (max-width: 259px) {
+@container (max-width: 260px) {
   .hm-figures {
     display: none;
   }
 }
 
 /* 矮卡片（2x1 实测 73px 高）：只留网格，统计行放不下；网格改为填满（格子会扁一点，但不撑高） */
-@container (max-height: 119px) {
+@container (max-height: 120px) {
   .hm-foot {
     display: none;
   }
@@ -319,7 +319,7 @@ const stats = computed(() => buildStats(counts.value ?? new Map(), weeks.value))
 }
 
 /* 窄卡片：标题旁的「近 N 周」让位，免得标题被省略号切断 */
-@container (max-width: 199px) {
+@container (max-width: 200px) {
   .hm-range {
     display: none;
   }

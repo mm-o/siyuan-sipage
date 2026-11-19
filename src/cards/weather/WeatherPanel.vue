@@ -827,7 +827,7 @@ function dayLabel(date: string, index: number) {
   white-space: nowrap;
 }
 
-@container (max-width: 719px) {
+@container (max-width: 720px) {
   .wx-panel-inner {
     flex-direction: column;
     overflow-y: auto;

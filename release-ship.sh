@@ -7,6 +7,7 @@ VER=$(node -p "require('./package.json').version")
 pnpm check:types
 pnpm check:dist
 pnpm check:arch
+pnpm check:bp
 pnpm build
 git add -A
 git commit -m "chore(release): v$VER — $MSG" || echo "（无改动）"

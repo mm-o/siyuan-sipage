@@ -145,7 +145,7 @@ function submit() {
   font-size: var(--desk-fs-sm);
 }
 
-@container (max-width: 199px) {
+@container (max-width: 200px) {
   .mm-input,
   .mm-count {
     display: none;
