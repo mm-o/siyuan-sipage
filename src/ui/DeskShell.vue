@@ -88,14 +88,14 @@
             <component :is="cardOf(inst.cardId)" :key="refreshKey" :size="label(inst)" :w="inst.w" :h="inst.h" />
           </CardFrame>
 
-          <!-- 四边缩放：只在整理模式出现；到达尺寸上限/下限的那一侧变灰不可拖 -->
+          <!-- 四边缩放：只在整理模式出现。到边界的手柄只变淡（仍可抓着往回收），夹取在 arrange.ts 里做 -->
           <template v-if="arranging && !panel(inst)">
             <span
               v-for="e in EDGES"
               :key="e.id"
               :class="['edge', `is-${e.id}`, { 'is-off': !canResize(inst, e.id) }]"
               :aria-label="canResize(inst, e.id) ? `向${e.label}拉伸` : `已到尺寸边界`"
-              @pointerdown.stop="canResize(inst, e.id) && grab(i, $event, e.id)"
+              @pointerdown.stop="grab(i, $event, e.id)"
               @pointermove="onMove"
               @pointerup="endMove"
               @pointercancel="endMove"

@@ -180,7 +180,7 @@ export const CARDS: CardDef[] = [
     icon: BarChart3,
     detail: DocStatsPanel,
     detailSize: { width: "min(980px, 93vw)", height: "min(560px, 84vh)" },
-    constrain: { square: true, min: 4, max: 6 },
+    constrain: { min: 3, max: 12 },
     surface: "solid",
   },
   {
