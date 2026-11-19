@@ -25,24 +25,30 @@
 
     <!-- 选择区：随来源切换 -->
     <div class="picker">
-      <!-- 思源资源：笔记本里的图片，内核直给 -->
+      <!-- 思源资源：笔记本里的图片，内核直给；全量列出 + 搜索 -->
       <div v-if="source === 'siyuan'" class="picsum">
+        <div class="picker-search">
+          <input v-model="assetQ" class="desk-input" type="search" placeholder="搜索文件名…" />
+        </div>
         <div class="picsum-bar">
-          <span class="desk-hint">{{ assets.length }} 张 · 取自笔记本 assets</span>
+          <span class="desk-hint">{{ assetShown.length }} / {{ assets.length }} 张 · 取自笔记本 assets</span>
           <button class="desk-btn" type="button" @click="pick('siyuan')">换一张</button>
         </div>
-        <div class="desk-tiles">
+        <div class="desk-tiles asset-grid">
           <button
-            v-for="a in assets.slice(0, 12)"
+            v-for="a in assetShown"
             :key="a.path"
             class="desk-tile"
             :class="{ 'is-active': wallpaper.value === a.url }"
             :style="{ backgroundImage: `url(${a.url})` }"
             :aria-label="a.path"
             @click="assetsPick(a.url)"
-          />
+          >
+            <FavDot :name="favName(a.url)" :value="a.url" />
+          </button>
         </div>
         <p v-if="!assets.length" class="desk-hint">笔记本里还没有图片资源。</p>
+        <p v-else-if="!assetShown.length" class="desk-hint">没有匹配的图片，换个关键词。</p>
       </div>
 
       <!-- 思源头图 -->
@@ -57,7 +63,9 @@
             :style="{ backgroundImage: `url(${coverUrl(c.file)})` }"
             :aria-label="c.photographer ? `${labelOf(c)} · ${c.photographer}` : labelOf(c)"
             @click="useImage(coverUrl(c.file), 'cover')"
-          />
+          >
+            <FavDot :name="favName(coverUrl(c.file))" :value="coverUrl(c.file)" />
+          </button>
         </div>
         <button v-if="coverRest && !expanded" class="desk-btn cover-more" type="button" @click="expanded = true">
           展开全部 {{ visible.length }} 张
@@ -74,16 +82,14 @@
           :style="{ backgroundImage: `url(${b.url})` }"
           :aria-label="b.title"
           @click="useImage(b.url, 'bing')"
-        />
+        >
+          <FavDot :name="favName(b.url)" :value="b.url" />
+        </button>
         <p v-if="!bing.length" class="desk-hint">必应壁纸加载失败，请检查网络。</p>
       </div>
 
       <!-- 国内图源：alcy.cc 一次直出，国内可访问 -->
       <div v-else-if="source === 'gitee'" class="picsum">
-        <div class="picsum-bar">
-          <span class="desk-hint">{{ alcy.length }} 张 · 国内直连，0.7s 出图</span>
-          <button class="desk-btn" type="button" @click="reshuffleAlcy">换一批</button>
-        </div>
         <div class="desk-tiles">
           <button
             v-for="a in alcy"
@@ -93,16 +99,17 @@
             :style="{ backgroundImage: `url(${a.thumb})` }"
             :aria-label="`国内图源 · ${a.seed}`"
             @click="useImage(a.full, 'gitee')"
-          />
+          >
+            <FavDot :name="favName(a.full)" :value="a.full" />
+          </button>
         </div>
+        <button class="desk-btn batch-btn" type="button" :class="{ 'is-busy': busy.gitee }" :disabled="busy.gitee" @click="reshuffleAlcy">
+          {{ busy.gitee ? "取图中…" : `换一批 ${alcy.length}` }}
+        </button>
       </div>
 
       <!-- Picsum：缩略图全部列出，点哪张用哪张 -->
       <div v-else-if="source === 'picsum'" class="picsum">
-        <div class="picsum-bar">
-          <span class="desk-hint">{{ picsum.length }} 张 · 缩略图与原图同一 seed</span>
-          <button class="desk-btn" type="button" @click="reshuffle">换一批</button>
-        </div>
         <div class="desk-tiles">
           <button
             v-for="p in picsum"
@@ -112,8 +119,13 @@
             :style="{ backgroundImage: `url(${p.thumb})` }"
             :aria-label="`Picsum · ${p.seed}`"
             @click="useImage(p.thumb, 'picsum')"
-          />
+          >
+            <FavDot :name="favName(p.thumb)" :value="p.thumb" />
+          </button>
         </div>
+        <button class="desk-btn batch-btn" type="button" :class="{ 'is-busy': busy.picsum }" :disabled="busy.picsum" @click="reshuffle">
+          {{ busy.picsum ? "取图中…" : `换一批 ${picsum.length}` }}
+        </button>
       </div>
 
       <!-- 本地随机 -->
@@ -132,7 +144,9 @@
           :style="{ background: c }"
           :aria-label="c"
           @click="wallpaper.value = c"
-        />
+        >
+          <FavDot :name="favName(c)" :value="c" />
+        </button>
       </div>
 
       <!-- 跟随思源：没有可选项，只说清它跟的是什么 -->
@@ -157,20 +171,23 @@
  * 来源只用可靠通道：思源主题色 / 思源 assets / 思源题头图 / 必应官方接口 / 国内图源 / Picsum / 本地随机。
  */
 import { Chips } from "@/ui/controls"
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, h, onMounted, reactive, ref, watch } from "vue"
 import type { Component } from "vue"
-import { Circle, Database, Globe, Image as ImageIcon, Palette, Shuffle } from "lucide-vue-next"
-import { wallpaper } from "@/core/store"
+import { Circle, Database, Globe, Heart, Image as ImageIcon, Palette, Shuffle } from "lucide-vue-next"
+import { favorites, isFav, wallpaper } from "@/core/store"
 import {
   alcyBatch,
   alcyWallpaper,
   coverUrl,
+  favName,
   loadAssets,
   loadBingImages,
   loadCoverGroups,
   picsumFirst,
   picsumShuffle,
   randomCoverUrl,
+  removeFav,
+  saveFav,
   THEME_BG,
   wallSource,
   type AlcyImage,
@@ -181,6 +198,45 @@ import {
   type PicsumImage,
   type WallSource,
 } from "@/core/image"
+
+/**
+ * 收藏开关：贴在每张可收藏的图右上角。
+ * 落盘顺序 = 先写 public/favorites（文件），成功后再进状态，失败状态不变。
+ */
+const FavDot = (props: { name: string; value: string }) =>
+  h(
+    "span",
+    {
+      class: ["fav-dot", { "is-on": isFav(props.name) }],
+      role: "button",
+      title: isFav(props.name) ? "取消收藏" : "收藏",
+      "aria-label": isFav(props.name) ? "取消收藏" : "收藏",
+      onClick: (e: MouseEvent) => {
+        e.stopPropagation()
+        e.preventDefault()
+        void toggleFav(props.name, props.value)
+      },
+    },
+    [h(Heart, { size: 12, strokeWidth: 2 })],
+  )
+
+const working = ref<string[]>([])
+
+async function toggleFav(name: string, value: string) {
+  if (working.value.includes(name)) return
+  working.value = [...working.value, name]
+  try {
+    if (isFav(name)) {
+      await removeFav(name)
+      favorites.items = favorites.items.filter((f) => f.name !== name)
+    } else {
+      await saveFav(value, name)
+      favorites.items = [{ name, value, source: wallpaper.source }, ...favorites.items]
+    }
+  } finally {
+    working.value = working.value.filter((n) => n !== name)
+  }
+}
 
 /** 八个来源，4 列两行；跟随思源、思源资源都在这一屏里 */
 const SOURCES: { value: WallSource; label: string; desc: string; icon: Component }[] = [
@@ -200,7 +256,20 @@ const picsum = ref<PicsumImage[]>([])
 const alcy = ref<AlcyImage[]>([])
 const assets = ref<AssetImage[]>([])
 const activeCat = ref("")
+const assetQ = ref("")
 const url = ref("")
+/** 换一批的即时反馈：点下就置位，出图后复位 */
+const busy = reactive({ picsum: false, gitee: false })
+
+/** 思源资源搜索：文件名不区分大小写，空格分词全都要命中 */
+const assetShown = computed(() => {
+  const q = assetQ.value.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  if (!q.length) return assets.value
+  return assets.value.filter((a) => {
+    const p = a.path.toLowerCase()
+    return q.every((w) => p.includes(w))
+  })
+})
 
 const total = computed(() => groups.value.reduce((n, g) => n + g.items.length, 0))
 
@@ -297,8 +366,15 @@ async function pick(s: WallSource) {
   }
 }
 
+/** 换一批：先给按钮置忙，取完再换 —— 点击立刻有反馈，不做「点了没反应」 */
 async function reshuffle() {
-  picsum.value = await picsumShuffle()
+  if (busy.picsum) return
+  busy.picsum = true
+  try {
+    picsum.value = await picsumShuffle()
+  } finally {
+    busy.picsum = false
+  }
 }
 
 /** 思源资源：点哪张用哪张，type 固定 siyuan，重开面板还认得回来 */
@@ -308,7 +384,13 @@ function assetsPick(u: string) {
 }
 
 async function reshuffleAlcy() {
-  alcy.value = await alcyBatch()
+  if (busy.gitee) return
+  busy.gitee = true
+  try {
+    alcy.value = await alcyBatch()
+  } finally {
+    busy.gitee = false
+  }
 }
 
 async function shuffle() {
@@ -425,6 +507,83 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+/* 收藏心要绝对定位在图角落 */
+.picker :deep(.desk-tile),
+.swatch-item {
+  position: relative;
+}
+
+/* 分类标签不许挤：单行不折字，撑不住就横向滚 */
+.picker :deep(.chip) {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 12px;
+  font-size: var(--desk-fs-body);
+  white-space: nowrap;
+}
+
+/* 搜索框占满一行，与下方数量行分开 */
+.picker-search .desk-input {
+  width: 100%;
+}
+
+/* 换一批：固定在网格下方，一行占满，与图格不抢位置 */
+.batch-btn {
+  width: 100%;
+  height: 32px;
+}
+
+.batch-btn.is-busy {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* 收藏心：图角落，平时浮一层玻璃，收藏后实心 */
+.fav-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 34%);
+  color: rgb(255 255 255 / 76%);
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity var(--desk-dur-fast) var(--desk-ease),
+    transform var(--desk-dur-fast) var(--desk-ease);
+}
+
+.desk-tile:hover .fav-dot,
+.swatch-item:hover .fav-dot,
+.fav-dot.is-on {
+  opacity: 1;
+}
+
+.fav-dot:hover {
+  transform: scale(1.12);
+}
+
+.fav-dot.is-on {
+  background: var(--desk-accent);
+  color: #fff;
+}
+
+.fav-dot.is-on :deep(svg) {
+  fill: currentColor;
+}
+
+/* 思源资源可能是成百张：固定高度内滚动，不把页面撑长 */
+.asset-grid {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: var(--desk-sp-0);
 }
 
 .cover-more {

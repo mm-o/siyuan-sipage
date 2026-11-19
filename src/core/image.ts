@@ -234,7 +234,8 @@ export async function loadBingImages(): Promise<BingImage[]> {
     return list
   } catch {
     // 官方接口不可用：退回备用单图（图片本身可直接 <img> 加载）
-    return bingCache?.list?.length ? bingCache.list : [{ url: BING_FALLBACK, date: "", title: "必应每日" }]
+    bingCache = null
+    return [{ url: BING_FALLBACK, date: "", title: "必应每日" }]
   }
 }
 
@@ -335,4 +336,92 @@ export async function randomAssetUrl(): Promise<string> {
   const list = await loadAssets()
   if (!list.length) return COVERS[0]
   return list[Math.floor(Math.random() * list.length)].url
+}
+
+/* ── 收藏：文件的唯一形态，状态存在 store，文件落在 public/favorites ── */
+/**
+ * 收藏名的唯一推导：直接取完整文件名，同名天然覆盖同一张图。
+ *   /assets/20240101-abc.png      → 20240101-abc.png
+ *   data:image/webp;base64,....    → w1732812345678.webp
+ *   https://x.com/a/bc.jpg?v=1     → bc.jpg
+ */
+export function favName(value: string): string {
+  if (value.startsWith("data:")) {
+    const ext = value.slice(5, value.indexOf(";")).split("/")[1] || "png"
+    return `w${Date.now().toString(36)}.${ext === "jpeg" ? "jpg" : ext}`
+  }
+  if (!value.startsWith("/assets/")) {
+    const base = value.split(/[?#]/)[0].split("/").pop() || ""
+    if (base) return base
+    return `w${Date.now().toString(36)}.png`
+  }
+  return value.slice("/assets/".length)
+}
+
+/** 收藏图在插件里的地址：public/ 原样发布，文件名保持现状不重命名 */
+export const favUrl = (name: string) => `/plugins/desk-cards/favorites/${name}`
+
+const FAV_EXT = /\.(png|jpe?g|webp|gif|bmp|avif)$/i
+
+/**
+ * 存一份原图到 public/favorites，返回文件名（同名即覆盖）。
+ *
+ * 文件内容写的是**图片地址**而不是图片字节：内核 putFile 只收 multipart，
+ * 传二进制要先把 data URL 拆回字节，而写一行地址则零解码、可读、可手改。
+ * 重装/换机后这张图还在原位，地址依然有效，收藏因此是可重建的索引而不是黑盒。
+ */
+export async function saveFav(value: string, name = favName(value)): Promise<string> {
+  const src = value.startsWith("data:") ? value : new URL(value, location.origin).href
+  const fd = new FormData()
+  fd.append("path", `/data/plugins/desk-cards/favorites/${name}`)
+  fd.append("isDir", "false")
+  fd.append("file", new File([src], name))
+  const res = await fetch("/api/file/putFile", { method: "POST", body: fd })
+  const json = await res.json()
+  if (json?.code !== 0) throw new Error(json?.msg || "save failed")
+  return name
+}
+
+/** 删掉 public/favorites 里的一张 */
+export async function removeFav(name: string): Promise<void> {
+  const res = await fetch("/api/file/removeFile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: `/data/plugins/desk-cards/favorites/${name}` }),
+  })
+  const json = await res.json().catch(() => null)
+  if (json && json.code !== 0) throw new Error(json.msg || "remove failed")
+}
+
+/** 扫 public/favorites，用于重装/换机后把收藏恢复回来 */
+export async function listFavs(): Promise<string[]> {
+  const res = await fetch("/api/file/readDir", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: "/data/plugins/desk-cards/favorites" }),
+  })
+  const json = await res.json().catch(() => null)
+  const raw = json?.code === 0 && Array.isArray(json.data) ? json.data : []
+  return raw
+    .filter((it: any) => it?.isDir !== true)
+    .map((it: any) => String(it?.name || ""))
+    .filter((n: string) => FAV_EXT.test(n))
+}
+
+/** 从收藏文件里读回它指向的图片地址 */
+export async function readFav(name: string): Promise<string> {
+  const res = await fetch(favUrl(name))
+  if (!res.ok) return ""
+  const text = (await res.text()).trim()
+  return /^(data:|https?:|\/)/.test(text) ? text : ""
+}
+
+/**
+ * 用磁盘反推收藏索引：状态里的记录可能因重装/清缓存丢过，
+ * 而 public/favorites 里的文件一直在，谁在盘上就以谁为准。
+ */
+export async function restoreFavs(): Promise<{ name: string; value: string }[]> {
+  const names = await listFavs()
+  const rows = await Promise.all(names.map(async (name) => ({ name, value: await readFav(name) })))
+  return rows.filter((r) => r.value)
 }

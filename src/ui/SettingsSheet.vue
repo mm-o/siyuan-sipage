@@ -64,19 +64,25 @@
             <span class="set-meta-size">{{ wallSize }}</span>
           </div>
 
-          <!-- 最近使用：点一下切回去 -->
+          <!-- 收藏：点一下换过去，右上角叉删掉 -->
           <template v-if="current === 'wallpaper'">
-            <h4 class="set-side-sub">最近使用</h4>
-            <div class="set-recent">
+            <h4 class="set-side-sub">收藏 {{ favorites.items.length }} 张</h4>
+            <div v-if="favorites.items.length" class="set-fav">
               <button
-                v-for="(r, i) in recent"
-                :key="`${r.type}-${r.value}-${i}`"
-                class="set-recent-item"
-                :class="{ 'is-active': r.type === wallpaper.type && r.value === wallpaper.value }"
-                :style="wallpaperBg(r)"
-                @click="useWall(r)"
-              />
+                v-for="f in favorites.items"
+                :key="f.name"
+                class="set-fav-item"
+                :class="{ 'is-active': wallpaper.value === f.value }"
+                :style="{ backgroundImage: `url(${f.value})` }"
+                :aria-label="`用这张收藏 · ${f.name}`"
+                @click="useFav(f.value)"
+              >
+                <span class="set-fav-x" role="button" title="删除收藏" @click.stop="dropFav(f.name)">
+                  <X :size="11" :stroke-width="2.4" />
+                </span>
+              </button>
             </div>
+            <p v-else class="desk-hint">点壁纸右上角的 ♥ 收进来，收藏存在插件 public 里。</p>
           </template>
         </template>
 
@@ -99,7 +105,7 @@
           </div>
         </template>
 
-        <p v-if="current === 'wallpaper'" class="set-side-hint">缩略图点一下即换；最近 6 张留在这里，随时切回。</p>
+        <p v-if="current === 'wallpaper'" class="set-side-hint">缩略图点一下即换；收藏存在插件 public 里，重装也不丢。</p>
         <p v-else-if="current === 'library'" class="set-side-hint">同一张卡可以放多张；尺寸与位置在桌面「整理模式」里拖。</p>
         <p v-else-if="current === 'cards'" class="set-side-hint">拖动滑轨立刻生效，双击滑轨恢复该项默认值。</p>
 
@@ -130,15 +136,15 @@
  */
 import { computed, ref, watch } from "vue"
 import { getFrontend } from "siyuan"
-import { Grid2x2, Image as ImageIcon, Info, SlidersHorizontal } from "lucide-vue-next"
+import { Grid2x2, Image as ImageIcon, Info, SlidersHorizontal, X } from "lucide-vue-next"
 import { Settings as SettingsIcon } from "lucide-vue-next"
 import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
 import WallpaperPanel from "./WallpaperPanel.vue"
 import CardsPanel from "./CardsPanel.vue"
 import LibraryPanel from "./LibraryPanel.vue"
-import { appearance, desk, resetAppearance, resetDesk, wallpaper, addToDesk, countOnDesk, removeFromDesk } from "@/core/store"
-import { SOURCE_LABEL, wallpaperBg, wallSource } from "@/core/image"
+import { appearance, desk, favorites, resetAppearance, resetDesk, wallpaper, addToDesk, countOnDesk, removeFromDesk } from "@/core/store"
+import { SOURCE_LABEL, removeFav, wallpaperBg, wallSource } from "@/core/image"
 import { CARDS } from "@/core/registry"
 import pkg from "../../package.json"
 
@@ -217,12 +223,16 @@ watch(
   { immediate: true },
 )
 
-/* 最近使用 */
-const recent = computed(() => wallpaper.recent ?? [])
-function useWall(r: NonNullable<typeof wallpaper.recent>[number]) {
-  wallpaper.type = r.type
-  wallpaper.source = r.source
-  wallpaper.value = r.value
+/* 收藏：点一下换成这张，右上角叉删掉（同时清 public 里的文件） */
+function useFav(value: string) {
+  wallpaper.type = "cover"
+  wallpaper.source = "cover"
+  wallpaper.value = value
+}
+
+async function dropFav(name: string) {
+  favorites.items = favorites.items.filter((f) => f.name !== name)
+  await removeFav(name)
 }
 
 /**
@@ -359,11 +369,11 @@ function resetAll() {
   border-top: 1px solid var(--desk-stroke);
 }
 
-/* 最近使用网格按行高自适应：整栏拉满，不留大块空白 */
-.set-side > .set-recent {
-  flex: 0 1 auto;
-  max-height: 190px;
-  overflow: hidden;
+/* 收藏网格按行高自适应：整栏拉满，不留大块空白；多了自己滚 */
+.set-side > .set-fav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .set-side > .set-side-hint {
@@ -428,7 +438,7 @@ function resetAll() {
   font-variant-numeric: tabular-nums;
 }
 
-/* 最近使用：3 × 2，与来源网格同构 */
+/* 收藏：3 列，与来源网格同构；每格右上角带删除 */
 .set-side-sub {
   margin: 0;
   font-size: var(--desk-fs-caption);
@@ -437,13 +447,15 @@ function resetAll() {
   color: var(--desk-text-3);
 }
 
-.set-recent {
+.set-fav {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--desk-sp-1h);
+  align-content: start;
 }
 
-.set-recent-item {
+.set-fav-item {
+  position: relative;
   aspect-ratio: 16 / 10;
   padding: 0;
   border-radius: 7px;
@@ -456,13 +468,38 @@ function resetAll() {
     box-shadow var(--desk-dur-fast) var(--desk-ease);
 }
 
-.set-recent-item:hover {
+.set-fav-item:hover {
   transform: translateY(-1px);
   box-shadow: var(--desk-shadow-2);
 }
 
-.set-recent-item.is-active {
+.set-fav-item.is-active {
   box-shadow: 0 0 0 2px var(--desk-accent);
+}
+
+/* 删除叉：只在悬停/选中时露出来，不挡缩略图 */
+.set-fav-x {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 46%);
+  color: #fff;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--desk-dur-fast) var(--desk-ease);
+}
+
+.set-fav-item:hover .set-fav-x {
+  opacity: 1;
+}
+
+.set-fav-x:hover {
+  background: var(--desk-accent);
 }
 
 .set-preview-card {

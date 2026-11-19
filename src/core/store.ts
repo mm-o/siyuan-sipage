@@ -1,5 +1,6 @@
 import { reactive, watch } from "vue"
 import { LunarDay } from "tyme4ts"
+import { restoreFavs } from "@/core/image"
 
 /* ════════════════════════════════════════════════════════════
  * 桌面状态与几何
@@ -24,6 +25,7 @@ const LS = {
   appearance: "appearance",
   weather: "weather",
   countdown: "countdown",
+  favorites: "favorites",
 } as const
 
 let driver: StorageDriver | null = null
@@ -61,12 +63,6 @@ function save(key: string, value: unknown) {
 const G = globalThis as unknown as Record<string, any>
 
 /* ── 壁纸 ─────────────────────────────────────────────── */
-interface WallItem {
-  type: WallpaperState["type"]
-  value: string
-  source?: WallpaperState["source"]
-}
-
 interface WallpaperState {
   /** theme = 跟随思源主题色；siyuan = 思源 assets 里的图 */
   type: "cover" | "solid" | "url" | "theme" | "siyuan"
@@ -75,8 +71,6 @@ interface WallpaperState {
   resolved?: string
   blur: number
   mask: number
-  /** 最近用过（最多 6 条，右栏预览下方回切用） */
-  recent?: WallItem[]
 }
 
 const DEFAULT_WALLPAPER: WallpaperState = {
@@ -88,6 +82,28 @@ const DEFAULT_WALLPAPER: WallpaperState = {
 }
 
 export const wallpaper: WallpaperState = (G.__deskWallpaper ||= reactive<WallpaperState>({ ...DEFAULT_WALLPAPER }))
+
+/* ── 收藏（替代「最近使用」）─────────────────────────────── */
+/**
+ * 一条收藏 = 一张图 + 它在 public/favorites 里的文件名。
+ * 文件里存的是图片地址本身，所以重装后扫一遍目录就能把状态原样拼回来。
+ */
+export interface FavItem {
+  /** 文件名，唯一键，同名即同一张图 */
+  name: string
+  /** 可回放的图片地址（/assets/... 或 data: URL） */
+  value: string
+  /** 来自哪个来源，右栏不显示，仅用于去重口径 */
+  source?: WallpaperState["source"]
+}
+
+interface FavState {
+  items: FavItem[]
+}
+
+export const favorites: FavState = (G.__deskFavorites ||= reactive<FavState>({ items: [] }))
+
+export const isFav = (name: string) => favorites.items.some((f) => f.name === name)
 
 /* ── 外观 ─────────────────────────────────────────────── */
 interface Appearance {
@@ -493,12 +509,13 @@ export function persisted<T extends object>(key: string, defaults: T): T {
 export async function bootStore() {
   if (G.__deskBooted) return
   G.__deskBooted = true
-  const [w, d, a, wx, cd] = await Promise.all([
+  const [w, d, a, wx, cd, fv] = await Promise.all([
     read(LS.wallpaper, DEFAULT_WALLPAPER),
     read<DeskState>(LS.desk, { cards: [] }),
     read(LS.appearance, DEFAULT_APPEARANCE),
     read<WeatherState>(LS.weather, { locations: [], activeId: "" }),
     read<CountdownState>(LS.countdown, { events: [], seeded: false }),
+    read<FavState>(LS.favorites, { items: [] }),
   ])
   Object.assign(wallpaper, w)
   Object.assign(appearance, a)
@@ -518,6 +535,13 @@ export async function bootStore() {
   weather.locations = Array.isArray(wx.locations) ? wx.locations : []
   weather.activeId = wx.activeId || weather.locations[0]?.id || ""
   countdown.events = Array.isArray(cd.events) ? cd.events : []
+  favorites.items = Array.isArray(fv?.items) ? fv.items : []
+  /* 盘上有的文件一定在收藏里：状态只是缓存，文件才是准 */
+  const disk = await restoreFavs().catch(() => [])
+  if (disk.length) {
+    const known = new Set(favorites.items.map((f) => f.name))
+    favorites.items = [...favorites.items, ...disk.filter((d) => !known.has(d.name))]
+  }
   seedCountdown()
   countdown.seeded = true
   seedDefaultDesk()
@@ -531,22 +555,9 @@ function persistAll() {
   save(LS.appearance, appearance)
   save(LS.weather, weather)
   save(LS.countdown, countdown)
+  save(LS.favorites, favorites)
 }
 
-watch([wallpaper, appearance, desk, weather, countdown], persistAll, { deep: true })
-/* 壁纸一换就记一笔，右栏「最近使用」直接读它；同一个不去重 */
-watch(
-  () => [wallpaper.type, wallpaper.value] as const,
-  ([type, value]) => {
-    if (!value) return
-    const list = wallpaper.recent ?? []
-    if (list[0]?.type === type && list[0]?.value === value) return
-    wallpaper.recent = [
-      { type, value, source: wallpaper.source },
-      ...list.filter((r) => !(r.type === type && r.value === value)),
-    ].slice(0, 6)
-  },
-  { immediate: true },
-)
+watch([wallpaper, appearance, desk, weather, countdown, favorites], persistAll, { deep: true })
 /* 动效设置 → CSS 变量，改完立刻生效 */
 watch(() => [appearance.motion, appearance.motionDur, appearance.motionStagger, appearance.motionChar], applyMotionVars, { immediate: true })
