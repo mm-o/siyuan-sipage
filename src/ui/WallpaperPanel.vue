@@ -171,10 +171,11 @@
  * 来源只用可靠通道：思源主题色 / 思源 assets / 思源题头图 / 必应官方接口 / 国内图源 / Picsum / 本地随机。
  */
 import { Chips } from "@/ui/controls"
-import { computed, h, onMounted, reactive, ref, watch } from "vue"
+import { computed, defineComponent, h, onMounted, reactive, ref, watch } from "vue"
 import type { Component } from "vue"
 import { Circle, Database, Globe, Heart, Image as ImageIcon, Palette, Shuffle } from "lucide-vue-next"
-import { favorites, isFav, wallpaper } from "@/core/store"
+import { addFavorite, dropFavorite, favorites, isFav, wallpaper } from "@/core/store"
+import { toast } from "@/ui/controls"
 import {
   alcyBatch,
   alcyWallpaper,
@@ -186,8 +187,6 @@ import {
   picsumFirst,
   picsumShuffle,
   randomCoverUrl,
-  removeFav,
-  saveFav,
   THEME_BG,
   wallSource,
   type AlcyImage,
@@ -201,24 +200,31 @@ import {
 
 /**
  * 收藏开关：贴在每张可收藏的图右上角。
- * 落盘顺序 = 先写 public/favorites（文件），成功后再进状态，失败状态不变。
+ * 必须是独立的组件 —— 函数式组件没有自己的渲染副作用域，
+ * isFav 的依赖会串到父级，导致一收藏就整屏变亮。
  */
-const FavDot = (props: { name: string; value: string }) =>
-  h(
-    "span",
-    {
-      class: ["fav-dot", { "is-on": isFav(props.name) }],
-      role: "button",
-      title: isFav(props.name) ? "取消收藏" : "收藏",
-      "aria-label": isFav(props.name) ? "取消收藏" : "收藏",
-      onClick: (e: MouseEvent) => {
-        e.stopPropagation()
-        e.preventDefault()
-        void toggleFav(props.name, props.value)
-      },
-    },
-    [h(Heart, { size: 12, strokeWidth: 2 })],
-  )
+const FavDot = defineComponent({
+  props: { name: { type: String, required: true }, value: { type: String, required: true } },
+  setup(props) {
+    const on = computed(() => isFav(props.name))
+    return () =>
+      h(
+        "span",
+        {
+          class: ["fav-dot", { "is-on": on.value }],
+          role: "button",
+          title: on.value ? "取消收藏" : "收藏",
+          "aria-label": on.value ? "取消收藏" : "收藏",
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation()
+            e.preventDefault()
+            void toggleFav(props.name, props.value)
+          },
+        },
+        [h(Heart, { size: 12, strokeWidth: 2 })],
+      )
+  },
+})
 
 const working = ref<string[]>([])
 
@@ -226,13 +232,10 @@ async function toggleFav(name: string, value: string) {
   if (working.value.includes(name)) return
   working.value = [...working.value, name]
   try {
-    if (isFav(name)) {
-      await removeFav(name)
-      favorites.items = favorites.items.filter((f) => f.name !== name)
-    } else {
-      await saveFav(value, name)
-      favorites.items = [{ name, value, source: wallpaper.source }, ...favorites.items]
-    }
+    if (isFav(name)) await dropFavorite(name)
+    else await addFavorite(value)
+  } catch (e) {
+    toast(String((e as Error)?.message || "收藏失败"))
   } finally {
     working.value = working.value.filter((n) => n !== name)
   }

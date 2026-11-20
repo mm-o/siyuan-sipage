@@ -1,6 +1,6 @@
 import { reactive, watch } from "vue"
 import { LunarDay } from "tyme4ts"
-import { restoreFavs } from "@/core/image"
+import { listFavs, removeFav, saveFav } from "@/core/image"
 
 /* ════════════════════════════════════════════════════════════
  * 桌面状态与几何
@@ -85,16 +85,11 @@ export const wallpaper: WallpaperState = (G.__deskWallpaper ||= reactive<Wallpap
 
 /* ── 收藏（替代「最近使用」）─────────────────────────────── */
 /**
- * 一条收藏 = 一张图 + 它在 public/favorites 里的文件名。
- * 文件里存的是图片地址本身，所以重装后扫一遍目录就能把状态原样拼回来。
+ * 一条收藏 = 公开文件夹里的一张真图。文件名即唯一键，地址由 favUrl(name) 推出，
+ * 所以一条记录只有一个字段，磁盘就是索引本身。
  */
 export interface FavItem {
-  /** 文件名，唯一键，同名即同一张图 */
   name: string
-  /** 可回放的图片地址（/assets/... 或 data: URL） */
-  value: string
-  /** 来自哪个来源，右栏不显示，仅用于去重口径 */
-  source?: WallpaperState["source"]
 }
 
 interface FavState {
@@ -104,6 +99,28 @@ interface FavState {
 export const favorites: FavState = (G.__deskFavorites ||= reactive<FavState>({ items: [] }))
 
 export const isFav = (name: string) => favorites.items.some((f) => f.name === name)
+
+/** 收藏一张图：同名覆盖同一张，成功后就地前插（磁盘已是最新，无需回读） */
+export async function addFavorite(value: string): Promise<string> {
+  const name = await saveFav(value)
+  const rest = favorites.items.filter((f) => f.name !== name)
+  favorites.items = [{ name }, ...rest]
+  return name
+}
+
+/** 取消收藏：先摘状态再删盘，删不掉也不影响界面 */
+export async function dropFavorite(name: string): Promise<void> {
+  favorites.items = favorites.items.filter((f) => f.name !== name)
+  await removeFav(name)
+}
+
+/** 收藏当前桌面壁纸；主题/纯色没有图片可存，直接返回 false */
+export async function favoriteWallpaper(): Promise<boolean> {
+  const { type, value } = wallpaper
+  if (type === "theme" || type === "solid") return false
+  await addFavorite(value)
+  return true
+}
 
 /* ── 外观 ─────────────────────────────────────────────── */
 interface Appearance {
@@ -536,12 +553,9 @@ export async function bootStore() {
   weather.activeId = wx.activeId || weather.locations[0]?.id || ""
   countdown.events = Array.isArray(cd.events) ? cd.events : []
   favorites.items = Array.isArray(fv?.items) ? fv.items : []
-  /* 盘上有的文件一定在收藏里：状态只是缓存，文件才是准 */
-  const disk = await restoreFavs().catch(() => [])
-  if (disk.length) {
-    const known = new Set(favorites.items.map((f) => f.name))
-    favorites.items = [...favorites.items, ...disk.filter((d) => !known.has(d.name))]
-  }
+  /* 磁盘是唯一真相：公开文件夹里有什么，收藏就是什么，状态只是它的缓存 */
+  const disk = await listFavs().catch(() => null)
+  if (disk) favorites.items = disk.map((name) => ({ name }))
   seedCountdown()
   countdown.seeded = true
   seedDefaultDesk()

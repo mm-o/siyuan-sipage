@@ -72,17 +72,17 @@
                 v-for="f in favorites.items"
                 :key="f.name"
                 class="set-fav-item"
-                :class="{ 'is-active': wallpaper.value === f.value }"
-                :style="{ backgroundImage: `url(${f.value})` }"
+                :class="{ 'is-active': wallpaper.value === favUrl(f.name) }"
+                :style="{ backgroundImage: `url(${favUrl(f.name)})` }"
                 :aria-label="`用这张收藏 · ${f.name}`"
-                @click="useFav(f.value)"
+                @click="useFav(favUrl(f.name))"
               >
                 <span class="set-fav-x" role="button" title="删除收藏" @click.stop="dropFav(f.name)">
                   <X :size="11" :stroke-width="2.4" />
                 </span>
               </button>
             </div>
-            <p v-else class="desk-hint">点壁纸右上角的 ♥ 收进来，收藏存在插件 public 里。</p>
+            <p v-else class="desk-hint">点壁纸右上角的 ♥ 或桌面右键「收藏当前壁纸」，图会存进思源 public 文件夹。</p>
           </template>
         </template>
 
@@ -105,8 +105,7 @@
           </div>
         </template>
 
-        <p v-if="current === 'wallpaper'" class="set-side-hint">缩略图点一下即换；收藏存在插件 public 里，重装也不丢。</p>
-        <p v-else-if="current === 'library'" class="set-side-hint">同一张卡可以放多张；尺寸与位置在桌面「整理模式」里拖。</p>
+        <p v-if="current === 'library'" class="set-side-hint">同一张卡可以放多张；尺寸与位置在桌面「整理模式」里拖。</p>
         <p v-else-if="current === 'cards'" class="set-side-hint">拖动滑轨立刻生效，双击滑轨恢复该项默认值。</p>
 
         <dl v-if="current === 'wallpaper'" class="set-stats">
@@ -143,8 +142,8 @@ import Sheet from "./Sheet.vue"
 import WallpaperPanel from "./WallpaperPanel.vue"
 import CardsPanel from "./CardsPanel.vue"
 import LibraryPanel from "./LibraryPanel.vue"
-import { appearance, desk, favorites, resetAppearance, resetDesk, wallpaper, addToDesk, countOnDesk, removeFromDesk } from "@/core/store"
-import { SOURCE_LABEL, removeFav, wallpaperBg, wallSource } from "@/core/image"
+import { appearance, desk, favorites, resetAppearance, resetDesk, wallpaper, addToDesk, countOnDesk, removeFromDesk, dropFavorite } from "@/core/store"
+import { SOURCE_LABEL, favUrl, wallpaperBg, wallSource } from "@/core/image"
 import { CARDS } from "@/core/registry"
 import pkg from "../../package.json"
 
@@ -224,16 +223,13 @@ watch(
 )
 
 /* 收藏：点一下换成这张，右上角叉删掉（同时清 public 里的文件） */
-function useFav(value: string) {
+function useFav(url: string) {
   wallpaper.type = "cover"
   wallpaper.source = "cover"
-  wallpaper.value = value
+  wallpaper.value = url
 }
 
-async function dropFav(name: string) {
-  favorites.items = favorites.items.filter((f) => f.name !== name)
-  await removeFav(name)
-}
+const dropFav = (name: string) => void dropFavorite(name)
 
 /**
  * 预览尺寸：用注册表的约束推出来，不另写一套。
@@ -367,13 +363,16 @@ function resetAll() {
   margin-top: auto;
   padding-top: var(--desk-sp-2);
   border-top: 1px solid var(--desk-stroke);
+  flex: 0 0 auto;
 }
 
-/* 收藏网格按行高自适应：整栏拉满，不留大块空白；多了自己滚 */
+/* 收藏网格：整栏剩余空间全部给它，装不下就自己滚，底部按钮永远不被挤走 */
 .set-side > .set-fav {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 96px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: var(--desk-sp-0);
 }
 
 .set-side > .set-side-hint {

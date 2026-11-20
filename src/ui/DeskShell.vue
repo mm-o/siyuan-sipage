@@ -149,7 +149,7 @@ import { computed, onBeforeUnmount, onMounted, ref, type Component } from "vue"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
-import { PANEL_CLOCK, desk, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
+import { PANEL_CLOCK, desk, favoriteWallpaper, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
 import { wallpaperBg } from "@/core/image"
 import { useDeskGrid, normalizeSizes } from "./arrange"
 import CardFrame from "./CardFrame.vue"
@@ -261,6 +261,19 @@ function deskMenu(e: MouseEvent) {
     label: "设置",
     click: () => openSettings("wallpaper"),
   })
+  if (wallpaper.type !== "theme" && wallpaper.type !== "solid") {
+    menu.addItem({
+      icon: "iconImage",
+      label: "收藏当前壁纸",
+      click: async () => {
+        try {
+          toast((await favoriteWallpaper()) ? "已收藏到思源 public" : "当前壁纸没有图片可收藏")
+        } catch (err) {
+          toast(`收藏失败：${(err as Error)?.message || "未知"}`)
+        }
+      },
+    })
+  }
   menu.addSeparator()
   menu.addItem({
     icon: "iconLayoutGrid",

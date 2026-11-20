@@ -338,67 +338,96 @@ export async function randomAssetUrl(): Promise<string> {
   return list[Math.floor(Math.random() * list.length)].url
 }
 
-/* ── 收藏：文件的唯一形态，状态存在 store，文件落在 public/favorites ── */
-/**
- * 收藏名的唯一推导：直接取完整文件名，同名天然覆盖同一张图。
- *   /assets/20240101-abc.png      → 20240101-abc.png
- *   data:image/webp;base64,....    → w1732812345678.webp
- *   https://x.com/a/bc.jpg?v=1     → bc.jpg
- */
+/* ── 收藏：真图字节存进思源公开文件夹 /data/public，用 /public/ 直接访问 ── */
+const FAV_DIR = "siyuan-desk-cards"
+
+const FAV_EXT = /\.(png|jpe?g|webp|gif|bmp|avif)$/i
+
+/** 收藏图的公开地址：/data/public 由内核以静态文件直出，不需要任何鉴权 */
+export const favUrl = (name: string) => `/public/${FAV_DIR}/${name}`
+
+/** 收藏名的唯一推导：data URL 用时间戳，其余取原文件名，同名即同一张 */
 export function favName(value: string): string {
   if (value.startsWith("data:")) {
     const ext = value.slice(5, value.indexOf(";")).split("/")[1] || "png"
     return `w${Date.now().toString(36)}.${ext === "jpeg" ? "jpg" : ext}`
   }
-  if (!value.startsWith("/assets/")) {
-    const base = value.split(/[?#]/)[0].split("/").pop() || ""
-    if (base) return base
-    return `w${Date.now().toString(36)}.png`
-  }
-  return value.slice("/assets/".length)
+  const base = value.split(/[?#]/)[0].split("/").pop() || ""
+  return FAV_EXT.test(base) ? base : `w${Date.now().toString(36)}.png`
 }
 
-/** 收藏图在插件里的地址：public/ 原样发布，文件名保持现状不重命名 */
-export const favUrl = (name: string) => `/plugins/desk-cards/favorites/${name}`
+function dataUrlBytes(dataUrl: string): { blob: Blob; type: string } {
+  const [, meta = "", body = ""] = dataUrl.match(/^data:([^,]*),(.*)$/s) || []
+  const type = meta.split(";")[0] || "image/png"
+  if (!/;base64/i.test(meta)) return { blob: new Blob([decodeURIComponent(body)], { type }), type }
+  const bin = atob(body)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return { blob: new Blob([bytes], { type }), type }
+}
 
-const FAV_EXT = /\.(png|jpe?g|webp|gif|bmp|avif)$/i
+/** 把任意壁纸值还原成真实图片字节：data URL 直接拆，外部地址走唯一取图口 */
+async function imageBytes(value: string): Promise<{ blob: Blob; ext: string }> {
+  if (value.startsWith("data:")) {
+    const { blob, type } = dataUrlBytes(value)
+    return { blob, ext: (type.split("/")[1] || "png").replace("jpeg", "jpg") }
+  }
+  const url = new URL(value, location.origin).href
+  if (url.includes("/public/")) {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error("read image failed")
+    const type = res.headers.get("content-type") || "image/png"
+    return { blob: await res.blob(), ext: (type.split("/")[1] || "png").replace("jpeg", "jpg") }
+  }
+  const dataUrl = await fetchImage(url)
+  const { blob, type } = dataUrlBytes(dataUrl)
+  return { blob, ext: (type.split("/")[1] || "png").replace("jpeg", "jpg") }
+}
+
+async function ensureFavDir() {
+  const fd = new FormData()
+  fd.append("path", `/data/public/${FAV_DIR}`)
+  fd.append("isDir", "true")
+  await fetch("/api/file/putFile", { method: "POST", body: fd })
+}
 
 /**
- * 存一份原图到 public/favorites，返回文件名（同名即覆盖）。
- *
- * 文件内容写的是**图片地址**而不是图片字节：内核 putFile 只收 multipart，
- * 传二进制要先把 data URL 拆回字节，而写一行地址则零解码、可读、可手改。
- * 重装/换机后这张图还在原位，地址依然有效，收藏因此是可重建的索引而不是黑盒。
+ * 收藏：把当前壁纸的**真实图片字节**写进 /data/public/siyuan-desk-cards，
+ * 返回文件名。写的是字节而不是地址 —— 这样 /public/ 下就是一张能直接打开的图，
+ * 内核自己按 mime 供给，重装插件不影响，也不占用插件目录。
  */
-export async function saveFav(value: string, name = favName(value)): Promise<string> {
-  const src = value.startsWith("data:") ? value : new URL(value, location.origin).href
+export async function saveFav(value: string): Promise<string> {
+  const { blob, ext } = await imageBytes(value)
+  /* 名字由 favName 定，扩展名按真实字节校正 —— 名字是收藏的唯一键，必须前后一致 */
+  const name = `${favName(value).replace(/\.[^.]+$/, "")}.${ext}`
+  await ensureFavDir()
   const fd = new FormData()
-  fd.append("path", `/data/plugins/desk-cards/favorites/${name}`)
+  fd.append("path", `/data/public/${FAV_DIR}/${name}`)
   fd.append("isDir", "false")
-  fd.append("file", new File([src], name))
+  fd.append("file", new File([blob], name))
   const res = await fetch("/api/file/putFile", { method: "POST", body: fd })
-  const json = await res.json()
+  const json = await res.json().catch(() => null)
   if (json?.code !== 0) throw new Error(json?.msg || "save failed")
   return name
 }
 
-/** 删掉 public/favorites 里的一张 */
+/** 删掉公开文件夹里的一张收藏 */
 export async function removeFav(name: string): Promise<void> {
   const res = await fetch("/api/file/removeFile", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: `/data/plugins/desk-cards/favorites/${name}` }),
+    body: JSON.stringify({ path: `/data/public/${FAV_DIR}/${name}` }),
   })
   const json = await res.json().catch(() => null)
   if (json && json.code !== 0) throw new Error(json.msg || "remove failed")
 }
 
-/** 扫 public/favorites，用于重装/换机后把收藏恢复回来 */
+/** 扫公开文件夹：收藏的唯一真相在磁盘上，状态只是它的镜像 */
 export async function listFavs(): Promise<string[]> {
   const res = await fetch("/api/file/readDir", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: "/data/plugins/desk-cards/favorites" }),
+    body: JSON.stringify({ path: `/data/public/${FAV_DIR}` }),
   })
   const json = await res.json().catch(() => null)
   const raw = json?.code === 0 && Array.isArray(json.data) ? json.data : []
@@ -406,22 +435,4 @@ export async function listFavs(): Promise<string[]> {
     .filter((it: any) => it?.isDir !== true)
     .map((it: any) => String(it?.name || ""))
     .filter((n: string) => FAV_EXT.test(n))
-}
-
-/** 从收藏文件里读回它指向的图片地址 */
-export async function readFav(name: string): Promise<string> {
-  const res = await fetch(favUrl(name))
-  if (!res.ok) return ""
-  const text = (await res.text()).trim()
-  return /^(data:|https?:|\/)/.test(text) ? text : ""
-}
-
-/**
- * 用磁盘反推收藏索引：状态里的记录可能因重装/清缓存丢过，
- * 而 public/favorites 里的文件一直在，谁在盘上就以谁为准。
- */
-export async function restoreFavs(): Promise<{ name: string; value: string }[]> {
-  const names = await listFavs()
-  const rows = await Promise.all(names.map(async (name) => ({ name, value: await readFav(name) })))
-  return rows.filter((r) => r.value)
 }
