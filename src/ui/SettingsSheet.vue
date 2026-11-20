@@ -66,18 +66,18 @@
 
           <!-- 收藏：点一下换过去，右上角叉删掉 -->
           <template v-if="current === 'wallpaper'">
-            <h4 class="set-side-sub">收藏 {{ favorites.items.length }} 张</h4>
-            <div v-if="favorites.items.length" class="set-fav">
+            <h4 class="set-side-sub">收藏 {{ favorites.length }} 张</h4>
+            <div v-if="favorites.length" class="set-fav">
               <button
-                v-for="f in favorites.items"
-                :key="f.name"
+                v-for="name in favorites"
+                :key="name"
                 class="set-fav-item"
-                :class="{ 'is-active': wallpaper.value === favUrl(f.name) }"
-                :style="{ backgroundImage: `url(${favUrl(f.name)})` }"
-                :aria-label="`用这张收藏 · ${f.name}`"
-                @click="useFav(favUrl(f.name))"
+                :class="{ 'is-active': wallpaper.value === favUrl(name) }"
+                :style="{ backgroundImage: `url(${favUrl(name)})` }"
+                :aria-label="`用这张收藏 · ${name}`"
+                @click="useFav(favUrl(name))"
               >
-                <span class="set-fav-x" role="button" title="删除收藏" @click.stop="dropFav(f.name)">
+                <span class="set-fav-x" role="button" title="删除收藏" @click.stop="dropFav(name)">
                   <X :size="11" :stroke-width="2.4" />
                 </span>
               </button>

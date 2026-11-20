@@ -25,7 +25,6 @@ const LS = {
   appearance: "appearance",
   weather: "weather",
   countdown: "countdown",
-  favorites: "favorites",
 } as const
 
 let driver: StorageDriver | null = null
@@ -83,34 +82,28 @@ const DEFAULT_WALLPAPER: WallpaperState = {
 
 export const wallpaper: WallpaperState = (G.__deskWallpaper ||= reactive<WallpaperState>({ ...DEFAULT_WALLPAPER }))
 
-/* ── 收藏（替代「最近使用」）─────────────────────────────── */
+/* ── 收藏 ──────────────────────────────────────────────── */
 /**
- * 一条收藏 = 公开文件夹里的一张真图。文件名即唯一键，地址由 favUrl(name) 推出，
- * 所以一条记录只有一个字段，磁盘就是索引本身。
+ * 一条收藏就是公开文件夹里的一个文件名 —— 地址由 favUrl(name) 推出，
+ * 所以这里只存名字，磁盘就是索引本身，没有第二份数据。
  */
-export interface FavItem {
-  name: string
-}
+export const favorites: string[] = (G.__deskFavorites ||= reactive<string[]>([]))
 
-interface FavState {
-  items: FavItem[]
-}
-
-export const favorites: FavState = (G.__deskFavorites ||= reactive<FavState>({ items: [] }))
-
-export const isFav = (name: string) => favorites.items.some((f) => f.name === name)
+export const isFav = (name: string) => favorites.includes(name)
 
 /** 收藏一张图：同名覆盖同一张，成功后就地前插（磁盘已是最新，无需回读） */
 export async function addFavorite(value: string): Promise<string> {
   const name = await saveFav(value)
-  const rest = favorites.items.filter((f) => f.name !== name)
-  favorites.items = [{ name }, ...rest]
+  const at = favorites.indexOf(name)
+  if (at >= 0) favorites.splice(at, 1)
+  favorites.unshift(name)
   return name
 }
 
 /** 取消收藏：先摘状态再删盘，删不掉也不影响界面 */
 export async function dropFavorite(name: string): Promise<void> {
-  favorites.items = favorites.items.filter((f) => f.name !== name)
+  const at = favorites.indexOf(name)
+  if (at >= 0) favorites.splice(at, 1)
   await removeFav(name)
 }
 
@@ -526,13 +519,12 @@ export function persisted<T extends object>(key: string, defaults: T): T {
 export async function bootStore() {
   if (G.__deskBooted) return
   G.__deskBooted = true
-  const [w, d, a, wx, cd, fv] = await Promise.all([
+  const [w, d, a, wx, cd] = await Promise.all([
     read(LS.wallpaper, DEFAULT_WALLPAPER),
     read<DeskState>(LS.desk, { cards: [] }),
     read(LS.appearance, DEFAULT_APPEARANCE),
     read<WeatherState>(LS.weather, { locations: [], activeId: "" }),
     read<CountdownState>(LS.countdown, { events: [], seeded: false }),
-    read<FavState>(LS.favorites, { items: [] }),
   ])
   Object.assign(wallpaper, w)
   Object.assign(appearance, a)
@@ -552,26 +544,26 @@ export async function bootStore() {
   weather.locations = Array.isArray(wx.locations) ? wx.locations : []
   weather.activeId = wx.activeId || weather.locations[0]?.id || ""
   countdown.events = Array.isArray(cd.events) ? cd.events : []
-  favorites.items = Array.isArray(fv?.items) ? fv.items : []
-  /* 磁盘是唯一真相：公开文件夹里有什么，收藏就是什么，状态只是它的缓存 */
-  const disk = await listFavs().catch(() => null)
-  if (disk) favorites.items = disk.map((name) => ({ name }))
+  /* 收藏没有第二份状态：公开文件夹里有什么，收藏就是什么 */
+  favorites.splice(0, favorites.length, ...(await listFavs()))
   seedCountdown()
   countdown.seeded = true
   seedDefaultDesk()
   ready = true
 }
 
-/* ── 保存：状态一变就防抖写盘 ── */
+/* ── 保存：状态一变就防抖写盘 ──
+ * wallpaper 只写 value（地址），resolved 是运行时下载的 data URL，几百 KB，
+ * 写进存储既慢又会撑爆配额，所以永远不落盘，重启后按 value 重新取。 */
 function persistAll() {
-  save(LS.wallpaper, wallpaper)
+  const { type, value, source, blur, mask } = wallpaper
+  save(LS.wallpaper, { type, value, source, blur, mask })
   save(LS.desk, desk)
   save(LS.appearance, appearance)
   save(LS.weather, weather)
   save(LS.countdown, countdown)
-  save(LS.favorites, favorites)
 }
 
-watch([wallpaper, appearance, desk, weather, countdown, favorites], persistAll, { deep: true })
+watch([wallpaper, appearance, desk, weather, countdown], persistAll, { deep: true })
 /* 动效设置 → CSS 变量，改完立刻生效 */
 watch(() => [appearance.motion, appearance.motionDur, appearance.motionStagger, appearance.motionChar], applyMotionVars, { immediate: true })

@@ -46,31 +46,6 @@ export async function forwardProxy(
   return `data:${mime};base64,${json.data.body}`
 }
 
-/** 直连试探：能 decode 就算成功 */
-function tryDirect(url: string, timeout = 8000): Promise<boolean> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    let done = false
-    const finish = (ok: boolean) => {
-      if (done) return
-      done = true
-      img.onload = img.onerror = null
-      resolve(ok)
-    }
-    const timer = setTimeout(() => finish(false), timeout)
-    img.onload = () => {
-      clearTimeout(timer)
-      finish(img.naturalWidth > 0)
-    }
-    img.onerror = () => {
-      clearTimeout(timer)
-      finish(false)
-    }
-    img.src = url
-  })
-}
-
-/** 得到一个可用的图片地址：直连可用就直连，否则走内核代理（返回 data URL） */
 /* ── 思源头图（题头图）清单 ──────────────────────────────── */
 
 export interface CoverItem {
@@ -246,21 +221,25 @@ export async function loadBingImages(): Promise<BingImage[]> {
  * 内核的 GET?url= 形式对二进制返 0 字节，只有 POST JSON 那个口能拿到 body，
  * 所以任何外网图都必须经过这里 —— 这是全项目唯一的取图口。
  */
-const fetchImage = (url: string) => forwardProxy(url, "base64")
+export const fetchImage = (url: string) => forwardProxy(url, "base64")
 
-const picsumWall = (seed: string, w: number, h: number) =>
-  fetchImage(`https://picsum.photos/seed/${seed}/${w}/${h}`)
-
-export interface PicsumImage {
+/**
+ * 外网图统一一种形状：
+ *   url   原图地址，进状态、进收藏、壁纸用它 —— 短、可复现、能落盘
+ *   thumb 网格缩略（data URL）—— 只活内存，12 张一起渲染也不压内存
+ * 点选时才按 url 取一张原图，所以清晰度和开销互不拖累。
+ */
+export interface WebImage {
   seed: string
+  url: string
   thumb: string
 }
 
-/** 一批 Picsum 图：缩略图 480×270 即最终壁纸，同一 seed 必是同一张 */
-export async function picsumBatch(count = 12, seeds?: string[]): Promise<PicsumImage[]> {
-  const list = seeds ?? Array.from({ length: count }, () => randSeed())
-  return Promise.all(list.map(async (seed) => ({ seed, thumb: await picsumWall(seed, 480, 270) })))
-}
+/** 壁纸原图：1920×1080，实测单张 355KB / 1.5s，和 480 的耗时几乎一样 */
+const picsumUrl = (seed: string) => `https://picsum.photos/seed/${seed}/1920/1080`
+
+/** 网格缩略：640×360，足够铺满小格，单张约 60KB */
+const picsumThumb = (seed: string) => `https://picsum.photos/seed/${seed}/640/360`
 
 function randSeed() {
   return Math.random().toString(36).slice(2, 8)
@@ -269,28 +248,26 @@ function randSeed() {
 /** 首批固定，打开面板立刻有图；「换一批」才随机 */
 const PICSUM_SEEDS = ["grain", "ridge", "harbor", "dune", "fern", "lumen", "ember", "vista", "ash", "tide", "nimbus", "quarry"]
 
-export const picsumFirst = () => picsumBatch(PICSUM_SEEDS.length, PICSUM_SEEDS)
-export const picsumShuffle = (count = 12) => picsumBatch(count)
+const picsumBatch = (seeds: string[]): Promise<WebImage[]> =>
+  Promise.all(
+    seeds.map(async (seed) => ({ seed, url: picsumUrl(seed), thumb: await fetchImage(picsumThumb(seed)) })),
+  )
 
-/** 国内图源：alcy.cc 单次直出 webp，实测 0.7s，国内可直连 */
+export const picsumFirst = () => picsumBatch(PICSUM_SEEDS)
+export const picsumShuffle = () => picsumBatch(Array.from({ length: 12 }, randSeed))
+
+/** 国内图源：alcy.cc 单次直出原图 webp，实测 0.7s，国内可直连 */
 export const ALCY_API = "https://t.alcy.cc/pc"
 
 export const alcyWallpaper = () => fetchImage(ALCY_API)
 
-/** 一批国内图源：接口每次返回不同图，用时间戳做去重键 */
-export interface AlcyImage {
-  seed: string
-  thumb: string
-  full: string
-}
-
-export async function alcyBatch(count = 12): Promise<AlcyImage[]> {
-  const now = Date.now()
+/** 接口每次随机、拿不到可复现地址，所以 data 本身就是这张图的身份 */
+export async function alcyBatch(count = 12): Promise<WebImage[]> {
+  const time = Date.now().toString(36)
   return Promise.all(
     Array.from({ length: count }, async (_, i) => {
-      const url = await alcyWallpaper()
-      // 接口本身随机：缩略图即原图，点哪张用哪张
-      return { seed: `a${now.toString(36)}${i}`, thumb: url, full: url }
+      const data = await alcyWallpaper()
+      return { seed: `a${time}${i}`, url: data, thumb: data }
     }),
   )
 }
@@ -332,12 +309,6 @@ export function loadAssets(): Promise<AssetImage[]> {
   return assetLoading
 }
 
-export async function randomAssetUrl(): Promise<string> {
-  const list = await loadAssets()
-  if (!list.length) return COVERS[0]
-  return list[Math.floor(Math.random() * list.length)].url
-}
-
 /* ── 收藏：真图字节存进思源公开文件夹 /data/public，用 /public/ 直接访问 ── */
 const FAV_DIR = "siyuan-desk-cards"
 
@@ -346,42 +317,48 @@ const FAV_EXT = /\.(png|jpe?g|webp|gif|bmp|avif)$/i
 /** 收藏图的公开地址：/data/public 由内核以静态文件直出，不需要任何鉴权 */
 export const favUrl = (name: string) => `/public/${FAV_DIR}/${name}`
 
-/** 收藏名的唯一推导：data URL 用时间戳，其余取原文件名，同名即同一张 */
-export function favName(value: string): string {
-  if (value.startsWith("data:")) {
-    const ext = value.slice(5, value.indexOf(";")).split("/")[1] || "png"
-    return `w${Date.now().toString(36)}.${ext === "jpeg" ? "jpg" : ext}`
-  }
-  const base = value.split(/[?#]/)[0].split("/").pop() || ""
-  return FAV_EXT.test(base) ? base : `w${Date.now().toString(36)}.png`
+/** 短哈希：同一张图永远同一个名字，这是图标能点亮的前提 */
+const shortHash = (s: string) => {
+  let h = 5381
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+  return h.toString(36)
 }
 
-function dataUrlBytes(dataUrl: string): { blob: Blob; type: string } {
+/**
+ * 名字只由 value 决定，纯函数、无时间戳 —— 渲染时算的和落盘时写的是同一个名字。
+ * 有扩展名就用原名，没有（Picsum、alcy 这类）用短哈希兜底。
+ */
+export function favName(value: string): string {
+  if (value.startsWith("data:")) {
+    const ext = (value.slice(5, value.indexOf(";")).split("/")[1] || "png").replace("jpeg", "jpg")
+    /* 头部字节所有 JPEG 都一样，用长度 + 尾部才能区分开 */
+    return `${shortHash(`${value.length}:${value.slice(-96)}`)}.${ext}`
+  }
+  const base = value.split(/[?#]/)[0].split("/").pop() || ""
+  return FAV_EXT.test(base) ? base : `${shortHash(value)}.jpg`
+}
+
+/** data URL → 真字节 */
+function dataUrlBytes(dataUrl: string): Blob {
   const [, meta = "", body = ""] = dataUrl.match(/^data:([^,]*),(.*)$/s) || []
   const type = meta.split(";")[0] || "image/png"
-  if (!/;base64/i.test(meta)) return { blob: new Blob([decodeURIComponent(body)], { type }), type }
+  if (!/;base64/i.test(meta)) return new Blob([decodeURIComponent(body)], { type })
   const bin = atob(body)
   const bytes = new Uint8Array(bin.length)
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-  return { blob: new Blob([bytes], { type }), type }
+  return new Blob([bytes], { type })
 }
 
 /** 把任意壁纸值还原成真实图片字节：data URL 直接拆，外部地址走唯一取图口 */
-async function imageBytes(value: string): Promise<{ blob: Blob; ext: string }> {
-  if (value.startsWith("data:")) {
-    const { blob, type } = dataUrlBytes(value)
-    return { blob, ext: (type.split("/")[1] || "png").replace("jpeg", "jpg") }
-  }
+async function imageBytes(value: string): Promise<Blob> {
+  if (value.startsWith("data:")) return dataUrlBytes(value)
   const url = new URL(value, location.origin).href
   if (url.includes("/public/")) {
     const res = await fetch(url)
     if (!res.ok) throw new Error("read image failed")
-    const type = res.headers.get("content-type") || "image/png"
-    return { blob: await res.blob(), ext: (type.split("/")[1] || "png").replace("jpeg", "jpg") }
+    return await res.blob()
   }
-  const dataUrl = await fetchImage(url)
-  const { blob, type } = dataUrlBytes(dataUrl)
-  return { blob, ext: (type.split("/")[1] || "png").replace("jpeg", "jpg") }
+  return dataUrlBytes(await fetchImage(url))
 }
 
 async function ensureFavDir() {
@@ -397,9 +374,8 @@ async function ensureFavDir() {
  * 内核自己按 mime 供给，重装插件不影响，也不占用插件目录。
  */
 export async function saveFav(value: string): Promise<string> {
-  const { blob, ext } = await imageBytes(value)
-  /* 名字由 favName 定，扩展名按真实字节校正 —— 名字是收藏的唯一键，必须前后一致 */
-  const name = `${favName(value).replace(/\.[^.]+$/, "")}.${ext}`
+  const blob = await imageBytes(value)
+  const name = favName(value)
   await ensureFavDir()
   const fd = new FormData()
   fd.append("path", `/data/public/${FAV_DIR}/${name}`)

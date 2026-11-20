@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="desk-panel set-page">
     <h2 class="set-h2">壁纸</h2>
     <p class="set-p">换一张底片；模糊与遮罩在「组件设置 → 壁纸」里调。</p>
@@ -44,7 +44,7 @@
             :aria-label="a.path"
             @click="assetsPick(a.url)"
           >
-            <FavDot :name="favName(a.url)" :value="a.url" />
+            <FavDot :value="a.url" />
           </button>
         </div>
         <p v-if="!assets.length" class="desk-hint">笔记本里还没有图片资源。</p>
@@ -64,7 +64,7 @@
             :aria-label="c.photographer ? `${labelOf(c)} · ${c.photographer}` : labelOf(c)"
             @click="useImage(coverUrl(c.file), 'cover')"
           >
-            <FavDot :name="favName(coverUrl(c.file))" :value="coverUrl(c.file)" />
+            <FavDot :value="coverUrl(c.file)" />
           </button>
         </div>
         <button v-if="coverRest && !expanded" class="desk-btn cover-more" type="button" @click="expanded = true">
@@ -83,7 +83,7 @@
           :aria-label="b.title"
           @click="useImage(b.url, 'bing')"
         >
-          <FavDot :name="favName(b.url)" :value="b.url" />
+          <FavDot :value="b.url" />
         </button>
         <p v-if="!bing.length" class="desk-hint">必应壁纸加载失败，请检查网络。</p>
       </div>
@@ -95,12 +95,12 @@
             v-for="a in alcy"
             :key="a.seed"
             class="desk-tile"
-            :class="{ 'is-active': wallpaper.value === a.full }"
+            :class="{ 'is-active': wallpaper.value === a.url }"
             :style="{ backgroundImage: `url(${a.thumb})` }"
             :aria-label="`国内图源 · ${a.seed}`"
-            @click="useImage(a.full, 'gitee')"
+            @click="pickImage(a, 'gitee')"
           >
-            <FavDot :name="favName(a.full)" :value="a.full" />
+            <FavDot :value="a.url" />
           </button>
         </div>
         <button class="desk-btn batch-btn" type="button" :class="{ 'is-busy': busy.gitee }" :disabled="busy.gitee" @click="reshuffleAlcy">
@@ -108,19 +108,19 @@
         </button>
       </div>
 
-      <!-- Picsum：缩略图全部列出，点哪张用哪张 -->
+      <!-- Picsum：全部列出，点哪张用哪张 -->
       <div v-else-if="source === 'picsum'" class="picsum">
         <div class="desk-tiles">
           <button
             v-for="p in picsum"
             :key="p.seed"
             class="desk-tile"
-            :class="{ 'is-active': wallpaper.value === p.thumb }"
+            :class="{ 'is-active': wallpaper.value === p.url }"
             :style="{ backgroundImage: `url(${p.thumb})` }"
             :aria-label="`Picsum · ${p.seed}`"
-            @click="useImage(p.thumb, 'picsum')"
+            @click="pickImage(p, 'picsum')"
           >
-            <FavDot :name="favName(p.thumb)" :value="p.thumb" />
+            <FavDot :value="p.url" />
           </button>
         </div>
         <button class="desk-btn batch-btn" type="button" :class="{ 'is-busy': busy.picsum }" :disabled="busy.picsum" @click="reshuffle">
@@ -144,9 +144,7 @@
           :style="{ background: c }"
           :aria-label="c"
           @click="wallpaper.value = c"
-        >
-          <FavDot :name="favName(c)" :value="c" />
-        </button>
+        />
       </div>
 
       <!-- 跟随思源：没有可选项，只说清它跟的是什么 -->
@@ -170,17 +168,17 @@
  * 职责：选「用哪张壁纸」。模糊/遮罩不在这里（属于全局显示设置，在组件设置里）。
  * 来源只用可靠通道：思源主题色 / 思源 assets / 思源题头图 / 必应官方接口 / 国内图源 / Picsum / 本地随机。
  */
-import { Chips } from "@/ui/controls"
-import { computed, defineComponent, h, onMounted, reactive, ref, watch } from "vue"
+import { Chips, toast } from "@/ui/controls"
+import { computed, defineComponent, h, reactive, ref, watch } from "vue"
 import type { Component } from "vue"
 import { Circle, Database, Globe, Heart, Image as ImageIcon, Palette, Shuffle } from "lucide-vue-next"
-import { addFavorite, dropFavorite, favorites, isFav, wallpaper } from "@/core/store"
-import { toast } from "@/ui/controls"
+import { addFavorite, dropFavorite, isFav, wallpaper } from "@/core/store"
 import {
   alcyBatch,
   alcyWallpaper,
   coverUrl,
   favName,
+  fetchImage,
   loadAssets,
   loadBingImages,
   loadCoverGroups,
@@ -189,24 +187,24 @@ import {
   randomCoverUrl,
   THEME_BG,
   wallSource,
-  type AlcyImage,
   type AssetImage,
   type BingImage,
   type CoverGroup,
   type CoverItem,
-  type PicsumImage,
   type WallSource,
+  type WebImage,
 } from "@/core/image"
 
 /**
- * 收藏开关：贴在每张可收藏的图右上角。
- * 必须是独立的组件 —— 函数式组件没有自己的渲染副作用域，
- * isFav 的依赖会串到父级，导致一收藏就整屏变亮。
+ * 收藏开关：贴在每张图右上角。
+ * 独立组件（不是函数式渲染）：在 setup 里算一次名字，只订阅这一张的状态，
+ * 别处的收藏变化不会把整屏点亮。名字与落盘名字同源，所以点完立刻变亮。
  */
 const FavDot = defineComponent({
-  props: { name: { type: String, required: true }, value: { type: String, required: true } },
+  props: { value: { type: String, required: true } },
   setup(props) {
-    const on = computed(() => isFav(props.name))
+    const name = computed(() => favName(props.value))
+    const on = computed(() => isFav(name.value))
     return () =>
       h(
         "span",
@@ -218,7 +216,7 @@ const FavDot = defineComponent({
           onClick: (e: MouseEvent) => {
             e.stopPropagation()
             e.preventDefault()
-            void toggleFav(props.name, props.value)
+            void toggleFav(props.value)
           },
         },
         [h(Heart, { size: 12, strokeWidth: 2 })],
@@ -226,16 +224,18 @@ const FavDot = defineComponent({
   },
 })
 
+/** 收藏/取消收藏一张图。名字由 value 推出，点击后状态立刻跟着翻 */
 const working = ref<string[]>([])
 
-async function toggleFav(name: string, value: string) {
+async function toggleFav(value: string) {
+  const name = favName(value)
   if (working.value.includes(name)) return
   working.value = [...working.value, name]
   try {
     if (isFav(name)) await dropFavorite(name)
     else await addFavorite(value)
   } catch (e) {
-    toast(String((e as Error)?.message || "收藏失败"))
+    toast((e as Error)?.message || "收藏失败")
   } finally {
     working.value = working.value.filter((n) => n !== name)
   }
@@ -255,8 +255,8 @@ const SOURCES: { value: WallSource; label: string; desc: string; icon: Component
 
 const groups = ref<CoverGroup[]>([])
 const bing = ref<BingImage[]>([])
-const picsum = ref<PicsumImage[]>([])
-const alcy = ref<AlcyImage[]>([])
+const picsum = ref<WebImage[]>([])
+const alcy = ref<WebImage[]>([])
 const assets = ref<AssetImage[]>([])
 const activeCat = ref("")
 const assetQ = ref("")
@@ -303,23 +303,34 @@ function labelOf(item: CoverItem) {
   return groups.value.find((g) => g.items.includes(item))?.label || ""
 }
 
-/** 换图：来源与图片一起落，桌面上的表现立刻一致 */
-function useImage(value: string, src: "cover" | "bing" | "picsum" | "gitee") {
+/** 换图：value 存地址（可复现、能落盘），resolved 存已下发的图（只活内存） */
+function useImage(value: string, src: "cover" | "bing" | "picsum" | "gitee", data?: string) {
   wallpaper.type = "cover"
   wallpaper.source = src
   wallpaper.value = value
+  wallpaper.resolved = data && data !== value ? data : undefined
 }
 
-onMounted(async () => {
-  groups.value = await loadCoverGroups()
-  bing.value = await loadBingImages()
-  assets.value = await loadAssets()
-  // 外网图必须走内核转发，12 张缩略图并发取（0.7~1.6s 一张）
-  picsum.value = await picsumFirst()
-  alcy.value = await alcyBatch()
-})
+/** 点一张外网图：这时才去取原图，网格里只放缩略 */
+async function pickImage(img: WebImage, src: "picsum" | "gitee") {
+  const full = img.url.startsWith("data:") ? img.url : await fetchImage(img.url).catch(() => img.thumb)
+  useImage(img.url, src, full)
+}
+
+/** 每个来源的列表只在用得到时取一次，取过的就一直复用 */
+async function ensure(s: WallSource) {
+  if (s === "siyuan" && !assets.value.length) assets.value = await loadAssets()
+  else if (s === "cover" && !groups.value.length) groups.value = await loadCoverGroups()
+  else if (s === "bing" && !bing.value.length) bing.value = await loadBingImages()
+  else if (s === "picsum" && !picsum.value.length) picsum.value = await picsumFirst()
+  else if (s === "gitee" && !alcy.value.length) alcy.value = await alcyBatch()
+}
+
+/* 来源一变就把它那一屏填满；取不到就空着，不影响别的来源 */
+watch(source, (s) => void ensure(s).catch(() => {}), { immediate: true })
 
 async function pick(s: WallSource) {
+  await ensure(s).catch(() => {})
   switch (s) {
     case "theme": {
       wallpaper.type = "theme"
@@ -335,19 +346,19 @@ async function pick(s: WallSource) {
       break
     }
     case "bing": {
-      if (!bing.value.length) bing.value = await loadBingImages()
       const one = bing.value[Math.floor(Math.random() * bing.value.length)]
       if (one) useImage(one.url, "bing")
       break
     }
     case "gitee": {
       const one = alcy.value[0]
-      useImage(one ? one.full : await alcyWallpaper(), "gitee")
+      if (one) await pickImage(one, "gitee")
+      else useImage(await alcyWallpaper(), "gitee")
       break
     }
     case "picsum": {
       const one = picsum.value[0]
-      if (one) useImage(one.thumb, "picsum")
+      if (one) await pickImage(one, "picsum")
       break
     }
     case "random": {
