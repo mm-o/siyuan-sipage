@@ -2,33 +2,42 @@
 
 [简体中文](./README.zh-CN.md)
 
-Widget cards for SiYuan: put a desktop of cards in a tab — calendar, clock, daily quote, poem, English sentence, plus a photo wallpaper behind them.
+A customizable card desktop for SiYuan, with live cards embedded in documents.
 
-## What it does
+## Features
 
-- **Cards on a desk**: one tab shows a grid of cards over your wallpaper. Add / remove / resize from the card's context menu or the card library.
-- **Sizes**: `1x1` / `2x1` / `2x2` / `2x4` / `4x2`; the grid fills the tab width and keeps the gutters even.
-- **Details**: click a card to open it in a sheet; every card can also go full screen (no frame, the card itself fills the screen).
-- **Calendar**: month grid, lunar date, solar terms, zodiac, constellation, moon phase, duty/star/mansion, and the day's "suitable / avoid" lists.
-- **Wallpaper**: SiYuan covers (grouped), Bing daily, Picsum, or a plain colour / image URL.
-- **Embed**: insert a live card into a document with the `插入卡片` command.
+- 15 cards: clock, calendar, English, quotes, poems, weather, countdown, writing heatmap, pomodoro, memo, document statistics, quick open, recent documents, shortcuts, and SiYuan blocks.
+- Independent desktop clock, free drag/resize, automatic arrangement, detail sheets and fullscreen. Multiple instances of each card are supported.
+- Arrangement mode uses a dot grid and floating glass toolbar. Arrow keys move; Shift + arrows resize; Esc finishes.
+- Theme backgrounds, SiYuan assets/covers, Bing, domestic images, Picsum, local random images, solid colors and image URLs. Favorites store actual images in SiYuan's public directory.
+- The insert-card command adds live document cards.
 
-## Install
+## Development
 
-Copy the built `dist/` folder into `<workspace>/data/plugins/desk-cards/`, then enable **Desk Cards** in SiYuan → Settings → Marketplace → Downloaded.
-
-## Develop
+Use Node.js 20.19+ or 22.12+ and the pinned pnpm 10.33.4.
 
 ```bash
-pnpm install
-pnpm dev:card   # build the harness page (dev-dist)
-pnpm build      # build the plugin (dist)
-pnpm check:dist # guard: dist only depends on `siyuan`
-pnpm check:arch # guard: layering (core / ui / cards)
+pnpm install --frozen-lockfile
+pnpm build
 ```
 
-See `docs/ARCHITECTURE.md` for the layering rules and `docs/DESIGN.md` for the design language.
+Copy the contents of `dist/` into `<SiYuan workspace>/data/plugins/desk-cards/`, then enable the plugin.
 
-## License
+Copy `.env.example` to `.env` and set your SiYuan workspace path for development.
+
+```bash
+pnpm dev            # watch-build into the configured workspace's plugin directory
+pnpm dev:reload     # build, deploy and request a SiYuan UI reload
+pnpm check          # types/unused code, architecture, breakpoints, build and artifacts
+pnpm check:browser  # independent preview and five isolated browser regressions
+```
+
+Reload accepts `SIYUAN_URL` and `SIYUAN_TOKEN`, or command-line options. Browser verification uses system Edge by default; set `EDGE_PATH` for another executable.
+
+## Releases
+
+The `release:patch`, `release:minor`, `release:major` and `release:manual` commands update manifest versions only. Explicitly running `pnpm release:ship "description"` checks, builds, commits, tags, pushes and creates a GitHub Release. Git Bash and an authenticated GitHub CLI are required.
+
+See [architecture](./docs/ARCHITECTURE.md), [design](./docs/DESIGN.md), and [verification](./tools/verify/README.md).
 
 MIT

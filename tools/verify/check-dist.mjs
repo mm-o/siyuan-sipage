@@ -1,57 +1,23 @@
-/**
- * ⚠️ 非源码 / 不参与打包 —— 开发期验证脚本（Playwright 截图、产物守卫）。
- * 构建入口只有 src/index.ts；运行 pnpm check:dist 可自证 dist 里没有 .mjs。
- */
-/**
- * 构建产物守卫
- *
- * 目的：证明「构建不会把测试脚本 / 参考源码打进去」。
- * 规则：
- *   1. dist 里只允许白名单扩展名（.js .css .json .png .webp .md .svg .woff .woff2）
- *   2. 任何 .mjs / .ts / .vue / .map 出现即失败
- *   3. index.js 里只允许 require("siyuan") 这一条外部依赖
- *
- * 用法：pnpm check:dist
- */
+/** 发布产物守卫：必要文件非空、清单一致、无源码/测试泄漏、外部依赖仅 siyuan。 */
 import fs from 'node:fs'
 import path from 'node:path'
 
-const DIST = path.resolve(process.cwd(), 'dist')
-const ALLOW = new Set(['.js', '.css', '.json', '.png', '.webp', '.jpg', '.svg', '.md', '.woff', '.woff2', '.ico'])
-
-if (!fs.existsSync(DIST)) {
-  console.error('dist 不存在，先 pnpm build')
-  process.exit(1)
-}
-
-const files = []
-function walk(dir) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, entry.name)
-    if (entry.isDirectory()) walk(p)
-    else files.push(p)
-  }
-}
-walk(DIST)
-
-const bad = files.filter((f) => !ALLOW.has(path.extname(f).toLowerCase()))
-const entry = path.join(DIST, 'index.js')
-const requires = fs.existsSync(entry)
-  ? [...fs.readFileSync(entry, 'utf8').matchAll(/require\("([^"]+)"\)/g)].map((m) => m[1])
-  : []
-const foreign = requires.filter((r) => r !== 'siyuan' && !r.startsWith('./'))
-
-const report = {
-  文件数: files.length,
-  不允许的扩展名: bad.map((f) => path.relative(DIST, f)),
-  入口外部依赖: [...new Set(requires)],
-  异常依赖: foreign,
-}
-
-console.log(JSON.stringify(report, null, 2))
-
-if (bad.length || foreign.length) {
-  console.error('构建产物守卫未通过')
-  process.exit(1)
-}
-console.log('OK 构建产物干净：无 .mjs / .ts / .vue，入口只依赖 siyuan')
+const dist = path.resolve('dist')
+const allow = new Set(['.js', '.css', '.json', '.png', '.webp', '.jpg', '.svg', '.md', '.woff', '.woff2', '.ico'])
+const files = fs.existsSync(dist) ? fs.readdirSync(dist, { recursive: true }).map(name => path.join(dist, name)).filter(file => fs.statSync(file).isFile()) : []
+const missing = ['index.js', 'index.css', 'plugin.json'].filter(name => !files.includes(path.join(dist, name)) || fs.statSync(path.join(dist, name)).size === 0)
+const bad = files.filter(file => !allow.has(path.extname(file).toLowerCase())).map(file => path.relative(dist, file))
+const entry = path.join(dist, 'index.js')
+const requires = fs.existsSync(entry) ? [...fs.readFileSync(entry, 'utf8').matchAll(/require\(["']([^"']+)["']\)/g)].map(match => match[1]) : []
+const foreign = requires.filter(name => name !== 'siyuan' && !name.startsWith('./'))
+const issues = []
+try {
+  const source = JSON.parse(fs.readFileSync('plugin.json', 'utf8'))
+  const built = JSON.parse(fs.readFileSync(path.join(dist, 'plugin.json'), 'utf8'))
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+  if (built.name !== source.name || built.version !== source.version || built.version !== pkg.version) issues.push('插件名称或版本与源码不一致')
+  for (const key of ['icon', 'preview']) if (built[key] && !files.includes(path.join(dist, built[key]))) issues.push(`缺少 ${key}: ${built[key]}`)
+} catch (error) { issues.push(`清单读取失败: ${error.message}`) }
+console.log(JSON.stringify({ 文件数: files.length, 缺失文件: missing, 不允许的扩展名: bad, 入口外部依赖: [...new Set(requires)], 异常依赖: foreign, 清单问题: issues }, null, 2))
+if (missing.length || bad.length || foreign.length || issues.length) process.exit(1)
+console.log('OK 产物完整、清单一致、入口仅依赖 siyuan')
