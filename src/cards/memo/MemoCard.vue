@@ -8,20 +8,21 @@
 
       <ul class="mm-list desk-seq">
         <li v-for="item in visible.slice(0, plan.rows)" :key="item.id" class="mm-row" :class="{ 'is-done': item.done }">
-          <button class="mm-dot" type="button" :aria-label="item.done ? '标记未完成' : '标记完成'" @click="toggle(item.id)" />
+          <button class="mm-dot" type="button" role="checkbox" :aria-checked="item.done" :aria-label="item.done ? '标记未完成' : '标记完成'" @click="toggle(item.id)" />
           <span class="mm-text">{{ item.text }}</span>
         </li>
         <li v-if="!visible.length" class="mm-empty desk-note">没有待办，点开详情可以添加</li>
       </ul>
 
       <form v-if="plan.input" class="mm-add" @submit.prevent="submit">
-        <input v-model="draft" class="mm-input" type="text" placeholder="回车添加" @keydown.enter.prevent="submit" />
+        <GlassField v-model="draft" class="mm-input" label="新备忘录" placeholder="回车添加" @keydown.enter.prevent="submit" />
       </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { GlassField } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { add, leftCount, toggle, visible } from "./memo"
 
@@ -98,20 +99,6 @@ function submit() {
   font-size: clamp(11px, 4.6cqh, 13px);
 }
 
-.mm-dot {
-  flex: none;
-  width: clamp(11px, 4.4cqh, 14px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1.5px solid color-mix(in srgb, var(--desk-text) 28%, transparent);
-  background: transparent;
-  cursor: pointer;
-}
-
-.mm-row.is-done .mm-dot {
-  background: var(--desk-accent);
-  border-color: var(--desk-accent);
-}
 
 .mm-text {
   min-width: 0;
@@ -134,12 +121,6 @@ function submit() {
 .mm-input {
   width: 100%;
   height: clamp(22px, 8cqh, 28px);
-  padding: 0 8px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-  color: var(--desk-text);
-  font-size: var(--desk-fs-sm);
 }
 
 @container (max-width: 200px) {

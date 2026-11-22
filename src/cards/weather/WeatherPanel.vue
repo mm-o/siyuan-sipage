@@ -9,14 +9,12 @@
             <span class="wx-head-cond">{{ data ? cond.label : "" }}</span>
             <span class="wx-head-time">{{ data ? `发布于:${data.now.time.replace("T", " ")}` : "" }}</span>
           </p>
-          <button class="wx-manage" type="button" @click="showPlaces = !showPlaces">
-            {{ showPlaces ? "收起地点" : "管理地点" }}
-          </button>
+          <GlassButton class="wx-manage" :icon="MapPin" :label="showPlaces ? '收起地点' : '管理地点'" :active="showPlaces" text tone="photo" @click="showPlaces = !showPlaces" />
         </header>
 
         <div v-if="!data" class="wx-main-state">
           <span class="wx-main-state-text">{{ error || "加载中" }}</span>
-          <button v-if="error" class="wx-btn" type="button" @click="reload">重试</button>
+          <GlassButton v-if="error" :icon="RotateCcw" label="重试" text tone="photo" @click="reload" />
         </div>
 
         <template v-else>
@@ -99,17 +97,12 @@
  *            （名称 / 天气 / 22px 温度 / 最高最低，当前项高亮，hover 出删除）。
  * 窄屏（<720px）：上下两段，右栏收进「管理地点」。
  */
-import { computed, onBeforeUnmount, ref } from "vue"
-import { Pin, Trash2 } from "lucide-vue-next"
-import {
-  addWeatherPlace,
-  pinWeatherPlace, removeWeatherPlace,
-  selectWeatherPlace,
-  weather,
-  type WeatherPlace,
-} from "@/core/store"
+import { computed, ref } from "vue"
+import { MapPin, RotateCcw } from "lucide-vue-next"
+import { GlassButton } from "@/ui/controls"
+import { weather } from "@/core/store"
 import PlacesDrawer from "./PlacesDrawer.vue"
-import { describe, preciseLocate, searchPlaces, skyBackdrop, usePlaceWeather, useWeather } from "./weather"
+import { describe, skyBackdrop, usePlaceWeather, useWeather } from "./weather"
 
 const { place, data, error, reload } = useWeather()
 
@@ -139,14 +132,6 @@ const chart = computed(() => {
     values.map((v, i) => `${(i + 0.5) * (700 / values.length)},${52 - ((v - lo) / span) * 40}`).join(" ")
   return { max: line(max), min: line(min) }
 })
-
-/* ── 搜索（防抖 300ms）────────────────────────────────── */
-
-/** 请求代号：只有最后一次搜索的结果能落到界面上 */
-
-/** 定位：系统定位优先，拿不到就用 IP 定位（区县级精度靠系统定位） */
-/** 加入并切换到该地点，搜索框与候选清空（避免重复加入） */
-
 
 /* ── 窄屏：右栏收成「管理地点」按钮 ───────────────────── */
 const showPlaces = ref(false)
@@ -260,12 +245,9 @@ function dayLabel(date: string, index: number) {
   background-size: cover;
   background-position: center;
   overflow-y: auto;
-  scrollbar-width: none;
 }
 
-.wx-main::-webkit-scrollbar {
-  display: none;
-}
+.wx-main
 
 .wx-head {
   display: flex;
@@ -299,16 +281,8 @@ function dayLabel(date: string, index: number) {
 
 .wx-manage {
   display: none;
+  flex: none;
   margin-left: auto;
-  height: 24px;
-  padding: 0 10px;
-  border-radius: var(--desk-r-sm);
-  border: 1px solid rgb(255 255 255 / 22%);
-  background: rgb(255 255 255 / 16%);
-  color: #fff;
-  font: inherit;
-  font-size: var(--desk-fs-sm);
-  cursor: pointer;
 }
 
 .wx-main-state {
@@ -323,18 +297,6 @@ function dayLabel(date: string, index: number) {
 .wx-main-state-text {
   font-size: var(--desk-fs-body);
   color: rgb(255 255 255 / 72%);
-}
-
-.wx-btn {
-  height: 28px;
-  padding: 0 12px;
-  border-radius: var(--desk-r-sm);
-  border: 1px solid rgb(255 255 255 / 26%);
-  background: rgb(255 255 255 / 18%);
-  color: #fff;
-  font: inherit;
-  font-size: var(--desk-fs-sm);
-  cursor: pointer;
 }
 
 /* 大温度区：80px 数字 + 右侧描述/风/体感（对齐 参考实现 的 section.wx-main-temp {
@@ -396,14 +358,11 @@ function dayLabel(date: string, index: number) {
   padding: 0 0 4px;
   list-style: none;
   overflow-x: auto;
-  scrollbar-width: none;
   /* 右侧收个淡出，越界的下一列不会硬切 */
   mask-image: linear-gradient(to right, #000 92%, transparent);
 }
 
-.wx-hours::-webkit-scrollbar {
-  display: none;
-}
+.wx-hours
 
 .wx-hour {
   display: flex;
@@ -494,12 +453,9 @@ function dayLabel(date: string, index: number) {
   .wx-panel-inner {
     flex-direction: column;
     overflow-y: auto;
-    scrollbar-width: none;
   }
 
-  .wx-panel-inner::-webkit-scrollbar {
-    display: none;
-  }
+  .wx-panel-inner
 
   .wx-head {
     align-items: flex-start;

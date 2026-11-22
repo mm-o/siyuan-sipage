@@ -6,16 +6,14 @@
         <span class="mm-tab" :class="{ 'is-on': memo.filter === 'todo' }" @click="memo.filter = 'todo'">待办</span>
         <span class="mm-tab" :class="{ 'is-on': memo.filter === 'done' }" @click="memo.filter = 'done'">已完成</span>
         <span class="mm-grow" />
-        <GlassButton :icon="Trash2" label="清空已完成" @click="clearDone" />
+        <GlassButton :icon="Trash2" label="清空已完成" variant="danger" @click="clearDone" />
       </header>
 
       <ul class="mm-list">
         <li v-for="item in visible" :key="item.id" class="mm-row" :class="{ 'is-done': item.done, 'is-active': item.id === activeId }" @click="activeId = item.id">
-          <button class="mm-dot" type="button" :aria-label="item.done ? '标记未完成' : '标记完成'" @click.stop="toggle(item.id)" />
+          <button class="mm-dot" type="button" role="checkbox" :aria-checked="item.done" :aria-label="item.done ? '标记未完成' : '标记完成'" @click.stop="toggle(item.id)" />
           <span class="mm-text desk-ellipsis">{{ item.text }}</span>
-          <button class="mm-del" type="button" aria-label="删除" @click.stop="remove(item.id)">
-            <X :size="14" :stroke-width="1.8" />
-          </button>
+          <GlassButton :icon="X" label="删除" variant="danger" @click.stop="remove(item.id)" />
         </li>
         <li v-if="!visible.length" class="mm-empty">这里还没有内容</li>
       </ul>
@@ -23,7 +21,7 @@
 
     <div class="mm-pane desk-pane is-right">
       <template v-if="active">
-        <textarea v-model="draft" class="mm-edit" placeholder="写点什么…" @input="update(active.id, draft)" />
+        <GlassField v-model="draft" as="textarea" class="mm-edit" label="备忘录内容" placeholder="写点什么…" @input="update(active.id, draft)" />
         <footer class="mm-foot">
           <span class="mm-time desk-note">{{ new Date(active.at).toLocaleString("zh-CN", { hour12: false }) }}</span>
           <GlassButton :icon="Check" label="标记完成" @click="toggle(active.id)" />
@@ -32,15 +30,15 @@
       <p v-else class="mm-empty">左边选一条，或直接新建</p>
 
       <form class="mm-new" @submit.prevent="create">
-        <input v-model="fresh" class="mm-input" type="text" placeholder="新备忘，回车添加" />
-        <GlassButton :icon="Plus" label="添加" @click="create" />
+        <GlassField v-model="fresh" class="mm-input" label="新备忘录" placeholder="新备忘，回车添加" />
+        <GlassButton :icon="Plus" label="添加" variant="primary" @click="create" />
       </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { GlassButton } from "@/ui/controls"
+import { GlassButton, GlassField } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { Check, Plus, Trash2, X } from "lucide-vue-next"
 import { add, clearDone, memo, remove, toggle, update, visible } from "./memo"
@@ -67,7 +65,6 @@ function create() {
 </script>
 
 <style scoped>
-
 
 .mm-pane {
   display: flex;
@@ -117,7 +114,6 @@ function create() {
   gap: var(--desk-sp-1);
   min-height: 0;
   overflow: auto;
-  scrollbar-width: none;
 }
 
 .mm-row {
@@ -130,56 +126,16 @@ function create() {
   cursor: pointer;
 }
 
-.mm-row.is-active {
-  background: color-mix(in srgb, var(--desk-accent) 12%, transparent);
-}
-
-.mm-dot {
-  flex: none;
-  width: 14px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1.5px solid color-mix(in srgb, var(--desk-text) 30%, transparent);
-  background: transparent;
-  cursor: pointer;
-}
-
-.mm-row.is-done .mm-dot {
-  background: var(--desk-accent);
-  border-color: var(--desk-accent);
-}
-
-
 
 .mm-row.is-done .mm-text {
   color: var(--desk-text-3);
   text-decoration: line-through;
 }
 
-.mm-del {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border: 0;
-  border-radius: var(--desk-r-sm);
-  background: transparent;
-  color: var(--desk-text-3);
-  cursor: pointer;
-}
-
 .mm-edit {
   flex: 1 1 auto;
   min-height: 0;
   resize: none;
-  padding: var(--desk-sp-2h);
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 4%, transparent);
-  color: var(--desk-text);
-  font-size: var(--desk-fs-body);
-  line-height: 1.6;
 }
 
 .mm-foot {
@@ -189,8 +145,6 @@ function create() {
   gap: var(--desk-sp-2);
 }
 
-
-
 .mm-new {
   display: flex;
   gap: var(--desk-sp-1h);
@@ -198,13 +152,7 @@ function create() {
 
 .mm-input {
   flex: 1 1 auto;
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-  color: var(--desk-text);
-  font-size: var(--desk-fs-sm);
+  min-width: 0;
 }
 
 .mm-empty {

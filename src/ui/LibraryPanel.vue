@@ -1,5 +1,5 @@
 <template>
-  <section class="lib">
+  <section class="lib set-page">
     <h2 class="set-h2">卡片库</h2>
     <p class="set-p">点一行选中，右侧预览并添加。</p>
 
@@ -16,7 +16,7 @@
             <b>{{ def.name }}</b>
             <small>{{ def.desc }}</small>
           </span>
-          <span v-if="countOf(def.id)" class="lib-count">×{{ countOf(def.id) }}</span>
+          <span v-if="countOnDesk(def.id)" class="lib-count desk-badge is-on">{{ countOnDesk(def.id) }}</span>
         </button>
       </li>
     </ul>
@@ -35,8 +35,6 @@ import { countOnDesk } from "@/core/store"
 
 defineProps<{ selected: string }>()
 const emit = defineEmits<{ select: [string] }>()
-
-const countOf = (id: string) => countOnDesk(id)
 </script>
 
 <style scoped>
@@ -57,20 +55,11 @@ const countOf = (id: string) => countOnDesk(id)
   min-height: 44px;
   padding: var(--desk-sp-0) var(--desk-sp-2);
   border: 0;
-  border-radius: var(--desk-r-control);
-  background: transparent;
-  color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.lib-row:hover {
-  background: color-mix(in srgb, var(--desk-text) 6%, transparent);
-}
 
-.lib-row.is-active {
-  background: color-mix(in srgb, var(--desk-accent) 14%, transparent);
-}
 
 .lib-icon {
   display: grid;
@@ -107,21 +96,8 @@ const countOf = (id: string) => countOnDesk(id)
 }
 
 .lib-count {
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-  font-variant-numeric: tabular-nums;
+  flex: none;
 }
 
 /* 标题/说明与其它分区一致 */
-.set-h2 {
-  margin: 0 0 var(--desk-sp-1);
-  font-size: var(--desk-fs-title);
-  font-weight: 600;
-}
-
-.set-p {
-  margin: 0;
-  font-size: var(--desk-fs-body);
-  color: var(--desk-text-2);
-}
 </style>

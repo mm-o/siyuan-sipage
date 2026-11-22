@@ -1,18 +1,19 @@
 <template>
   <Teleport to="body">
     <Transition name="desk-fade" appear>
-      <div v-if="open" class="desk-sheet-mask" :class="{ 'is-pinned': pinned }" @mousedown.self="onMaskDown">
+      <div v-if="open" ref="maskRef" class="desk-sheet-mask" :class="{ 'is-pinned': pinned }" @mousedown.self="!pinned && close()">
         <section
-          v-if="open"
           ref="panelRef"
           class="desk-sheet desk-enter"
           :class="{ 'is-pinned': pinned }"
           :style="panelStyle"
           role="dialog"
           aria-modal="true"
+          :aria-label="title || '对话框'"
+          tabindex="-1"
         >
           <!-- 顶部标题栏：图标 + 标题 + 右侧动作（钉住 / 全屏 / 关闭），自己一块 pane -->
-          <header class="desk-sheet-head desk-pane is-top">
+          <header class="desk-sheet-head desk-pane is-top" @pointerdown="startDrag" @dblclick="box = null">
             <span v-if="icon" class="desk-sheet-head-icon">
               <component :is="icon" :size="18" :stroke-width="1.8" />
             </span>
@@ -22,20 +23,19 @@
                 :icon="pinned ? PinOff : Pin"
                 :label="pinned ? '取消钉住' : '钉住（看到背景）'"
                 :active="pinned"
-                @click="pinned = !pinned"
+                @click="togglePin"
               />
               <slot name="actions" />
-              <GlassButton class="desk-sheet-close" :icon="X" :label="closeTitle" @click="close" />
+              <GlassButton class="desk-sheet-close" :icon="X" label="关闭" @click="close" />
             </div>
           </header>
 
-          <div class="desk-sheet-body desk-enter">
+          <div class="desk-sheet-body">
             <slot />
           </div>
 
-          <footer v-if="$slots.footer" class="desk-sheet-foot">
-            <slot name="footer" />
-          </footer>
+          <!-- 四角缩放：只有热区，不出图形 -->
+          <b v-for="g in GRIPS" :key="g" class="desk-sheet-grip" :class="`is-${g}`" aria-hidden="true" @pointerdown="startResize($event, g)" />
         </section>
       </div>
     </Transition>
@@ -43,55 +43,110 @@
 </template>
 
 <script setup lang="ts">
-/**
- * 统一弹层（Sheet）—— 详情、设置、卡片库共用这一套
- *
- * 一套结构：一块玻璃面 + 右上角动作行（调用方的动作 + 关闭键，同一个 GlassButton）+ 内容自己排版。
- * 没有「标题栏」这种东西：标题属于内容（设置写在左栏顶部，详情由卡片自己给），
- * 否则弹窗就会出现两种长相。
- *
- * 一套展开方式：传入 origin（触发元素的矩形）后，面板从触发点放大到居中，
- * 关闭时缩回原处。实现用 Web Animations API，避免和 Vue 过渡打架。
- */
+/** 统一弹层：标题栏、功能按钮和内容面板；origin 用于 FLIP 展开与关闭。 */
 import { GlassButton } from "@/ui/controls"
 import { computed, nextTick, onBeforeUnmount, ref, watch, type Component } from "vue"
 import { Pin, PinOff, X } from "lucide-vue-next"
 
-const props = withDefaults(
-  defineProps<{
-    open: boolean
-    width?: string | number
-    height?: string | number
-    closeTitle?: string
-    maskClosable?: boolean
-    /** 顶部标题栏文案与图标（所有弹窗统一有标题栏） */
-    title?: string
-    icon?: Component
-    /** 触发元素的原位矩形，用于 FLIP 放大/缩回 */
-    origin?: DOMRect | null
-  }>(),
-  { closeTitle: "关闭", maskClosable: true },
-)
-
-const emit = defineEmits<{ "update:open": [boolean]; closed: [] }>()
+const props = defineProps<{
+  width?: string | number
+  height?: string | number
+  title?: string
+  icon?: Component
+  origin?: DOMRect | null
+  /** 钉住由调用方持有：一个桌面可以同时钉住多张弹窗，谁被钉住只有调用方知道。 */
+  pinned?: boolean
+}>()
+const emit = defineEmits<{ "update:pinned": [boolean] }>()
+const open = defineModel<boolean>("open", { required: true })
 
 const panelRef = ref<HTMLElement>()
+const maskRef = ref<HTMLElement>()
 const closing = ref(false)
-/** 钉住：遮罩不再压暗/模糊（能看清背景），点遮罩也不关 */
-const pinned = ref(false)
+/** 钉住：遮罩不压暗、不模糊、放行指针；点外部不关 */
+const pinned = ref(props.pinned ?? false)
+watch(() => props.pinned, (value) => { if (value !== undefined) pinned.value = value })
 
-watch(
-  () => props.open,
-  (v) => {
-    if (!v) pinned.value = false
-  },
-)
+function togglePin() {
+  pinned.value = !pinned.value
+  emit("update:pinned", pinned.value)
+}
+
+/** 多弹窗共存时，Esc 与 Tab 只作用于最上面那一层（DOM 末尾的遮罩）。 */
+function onTop() {
+  const all = document.querySelectorAll(".desk-sheet-mask")
+  return all[all.length - 1] === maskRef.value
+}
+
+/**
+ * 拖动 / 缩放：第一次交互时把「居中矩形」冻结成绝对盒，之后只改这一个值。
+ * 未交互前仍走 mask 的居中布局，打开动画与关闭回缩都不受影响。
+ */
+const MIN_W = 380
+const MIN_H = 260
+const GRIPS = ["nw", "ne", "sw", "se"] as const
+const box = ref<{ l: number; t: number; w: number; h: number } | null>(null)
 
 const panelStyle = computed(() => {
-  const w = typeof props.width === "number" ? `${props.width}px` : props.width || "min(920px, 90vw)"
-  const h = typeof props.height === "number" ? `${props.height}px` : props.height || "min(620px, 82vh)"
-  return { width: w, height: h }
+  const b = box.value
+  if (!b) {
+    const w = typeof props.width === "number" ? `${props.width}px` : props.width || "min(920px, 90vw)"
+    const h = typeof props.height === "number" ? `${props.height}px` : props.height || "min(620px, 82vh)"
+    return { width: w, height: h }
+  }
+  return { position: "fixed" as const, left: `${b.l}px`, top: `${b.t}px`, width: `${b.w}px`, height: `${b.h}px`, maxHeight: "none", margin: "0" }
 })
+
+/** 指针拖拽通用壳：点下冻结、移动回调、抬手解绑 */
+function pointerDrag(e: PointerEvent, onMove: (dx: number, dy: number, from: NonNullable<typeof box.value>) => void) {
+  if (e.button !== 0) return
+  const el = e.currentTarget as HTMLElement
+  if (!box.value) {
+    const r = panelRef.value?.getBoundingClientRect()
+    if (!r) return
+    box.value = { l: r.left, t: r.top, w: r.width, h: r.height }
+  }
+  const from = { ...box.value }
+  const x0 = e.clientX
+  const y0 = e.clientY
+  e.preventDefault()
+  el.setPointerCapture(e.pointerId)
+  const move = (ev: PointerEvent) => onMove(ev.clientX - x0, ev.clientY - y0, from)
+  const end = () => {
+    el.removeEventListener("pointermove", move)
+    el.removeEventListener("pointerup", end)
+    el.removeEventListener("pointercancel", end)
+  }
+  el.addEventListener("pointermove", move)
+  el.addEventListener("pointerup", end)
+  el.addEventListener("pointercancel", end)
+}
+
+/** 顶栏平移：至少留 120px 横向与 48px 顶栏在视口内 */
+function startDrag(e: PointerEvent) {
+  if ((e.target as HTMLElement).closest("button, a, input, textarea")) return
+  pointerDrag(e, (dx, dy, from) => {
+    box.value = {
+      ...from,
+      l: Math.min(Math.max(from.l + dx, 120 - from.w), window.innerWidth - 120),
+      t: Math.min(Math.max(from.t + dy, 0), window.innerHeight - 48),
+    }
+  })
+}
+
+/** 四角缩放：对边固定，到下限后不再反向移动 */
+function startResize(e: PointerEvent, dir: string) {
+  pointerDrag(e, (dx, dy, from) => {
+    let { l, t, w, h } = from
+    if (dir.includes("e")) w = from.w + dx
+    if (dir.includes("s")) h = from.h + dy
+    if (dir.includes("w")) { w = from.w - dx; l = from.l + dx }
+    if (dir.includes("n")) { h = from.h - dy; t = from.t + dy }
+    if (w < MIN_W) { if (dir.includes("w")) l -= MIN_W - w; w = MIN_W }
+    if (h < MIN_H) { if (dir.includes("n")) t -= MIN_H - h; h = MIN_H }
+    box.value = { l, t, w, h }
+  })
+}
 
 /** 从触发元素矩形算出的起始变换 */
 function flipFrom(origin: DOMRect, panel: DOMRect) {
@@ -103,7 +158,7 @@ function flipFrom(origin: DOMRect, panel: DOMRect) {
 }
 
 async function playOpen() {
-  if (!props.origin) return
+  if (!props.origin || matchMedia("(prefers-reduced-motion: reduce)").matches) return
   await nextTick()
   const panel = panelRef.value
   if (!panel) return
@@ -121,7 +176,7 @@ async function playOpen() {
 async function close() {
   if (closing.value) return
   const panel = panelRef.value
-  if (props.origin && panel) {
+  if (props.origin && panel && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
     closing.value = true
     const to = flipFrom(props.origin, panel.getBoundingClientRect())
     const anim = panel.animate(
@@ -136,32 +191,49 @@ async function close() {
     } catch {}
     closing.value = false
   }
-  emit("update:open", false)
-  emit("closed")
+  open.value = false
 }
 
-function onMaskDown() {
-  if (props.maskClosable && !pinned.value) void close()
-}
+let previousFocus: HTMLElement | null = null
 
 function onKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape" && props.open) {
+  if (!open.value || e.defaultPrevented || !onTop()) return
+  /* 下拉弹层开着时，Esc 先交给它自己关闭。 */
+  if (e.key === "Escape" && document.querySelector(".desk-pop")) return
+  if (e.key === "Escape") {
+    e.preventDefault()
     e.stopPropagation()
     void close()
+  } else if (e.key === "Tab" && panelRef.value) {
+    const elements = [...panelRef.value.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex="0"]')].filter(el => el.getClientRects().length)
+    const first = elements[0] || panelRef.value
+    const last = elements[elements.length - 1] || first
+    if (!panelRef.value.contains(document.activeElement) || e.shiftKey && document.activeElement === first || !e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      ;(e.shiftKey ? last : first).focus()
+    }
   }
 }
 
-watch(
-  () => props.open,
-  (v) => {
-    if (v) {
-      document.addEventListener("keydown", onKeydown, true)
-      void playOpen()
-    } else {
-      document.removeEventListener("keydown", onKeydown, true)
-    }
-  },
-)
+watch(open, async (value) => {
+  /* 每次开关都回到居中初始盒 */
+  box.value = null
+  if (value) {
+    previousFocus = document.activeElement as HTMLElement | null
+    document.addEventListener("keydown", onKeydown, true)
+    await nextTick()
+    if (!open.value) return
+    panelRef.value?.focus({ preventScroll: true })
+    void playOpen()
+  } else {
+    pinned.value = false
+    emit("update:pinned", false)
+    document.removeEventListener("keydown", onKeydown, true)
+    await nextTick()
+    if (!open.value && previousFocus?.isConnected && !document.querySelector(".desk-full")) previousFocus.focus({ preventScroll: true })
+    previousFocus = null
+  }
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   document.removeEventListener("keydown", onKeydown, true)
@@ -177,17 +249,23 @@ onBeforeUnmount(() => {
   place-items: center;
   padding: 24px;
   /* 遮罩轻一点：让卡片自己的背景成为视觉主体 */
-  background: rgb(2 6 23 / 42%);
-  backdrop-filter: blur(8px) saturate(120%);
-  transition:
-    background var(--desk-dur) var(--desk-ease),
-    backdrop-filter var(--desk-dur) var(--desk-ease);
+  background: var(--dg-modal-veil);
+  backdrop-filter: blur(4px) saturate(1.08);
+  -webkit-backdrop-filter: blur(4px) saturate(1.08);
+  transition: background var(--desk-dur) var(--desk-ease);
 }
 
-/* 钉住：外部不再压暗、不再模糊，弹窗保持打开（点遮罩也不关） */
+/* 钉住：不再压暗、不再模糊，也不再拦截指针——背后的桌面可以正常点击。
+   弹窗自己恢复指针，避免被父级 none 带走。 */
 .desk-sheet-mask.is-pinned {
   background: transparent;
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+.desk-sheet-mask.is-pinned .desk-sheet {
+  pointer-events: auto;
 }
 
 /* 弹窗本身不再是一块大玻璃：壳透明，面下沉到内容的每一栏（`.desk-pane`）。
@@ -216,8 +294,29 @@ onBeforeUnmount(() => {
   padding: 0 var(--desk-detail-pad);
   /* 和内容同处一块面：只有一条 1px 分隔线，不再自己画底色 */
   margin: 0 0 var(--desk-detail-gap);
-  border-bottom: 1px solid var(--desk-stroke);
+  /* 顶栏即拖动把手 */
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
 }
+
+.desk-sheet-head:active {
+  cursor: grabbing;
+}
+
+/* 四角缩放手柄：只有热区，不出图形 */
+.desk-sheet-grip {
+  position: absolute;
+  z-index: 3;
+  width: 14px;
+  height: 14px;
+  touch-action: none;
+}
+
+.desk-sheet-grip.is-nw { left: -2px; top: -2px; cursor: nwse-resize; }
+.desk-sheet-grip.is-ne { right: -2px; top: -2px; cursor: nesw-resize; }
+.desk-sheet-grip.is-sw { left: -2px; bottom: -2px; cursor: nesw-resize; }
+.desk-sheet-grip.is-se { right: -2px; bottom: -2px; cursor: nwse-resize; }
 
 .desk-sheet-head-icon {
   flex: none;
@@ -259,14 +358,6 @@ onBeforeUnmount(() => {
   display: none;
 }
 
-.desk-sheet-foot {
-  flex: 0 0 auto;
-  padding: var(--desk-sp-2h) 14px;
-  border-top: 1px solid var(--b3-border-color, rgb(60 60 67 / 12%));
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--desk-sp-2);
-}
 /* 壳不存在：不画底、不描边、不投影、不模糊，只当布局容器。
    屏幕上只有每一栏那块面，缝里直接透出模态背景。 */
 .desk-sheet.desk-sheet {
@@ -276,5 +367,7 @@ onBeforeUnmount(() => {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   overflow: visible;
+  /* 聚焦兜底：思源全局会给 tabindex 元素画主题色 focus 环，弹窗壳不需要 */
+  outline: none;
 }
 </style>

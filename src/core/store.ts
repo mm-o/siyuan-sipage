@@ -1,6 +1,7 @@
 import { reactive, watch } from "vue"
 import { LunarDay } from "tyme4ts"
 import { listFavs, removeFav, saveFav } from "@/core/image"
+import { pad } from "@/core/util"
 
 /* ════════════════════════════════════════════════════════════
  * 桌面状态与几何
@@ -82,6 +83,11 @@ const DEFAULT_WALLPAPER: WallpaperState = {
 
 export const wallpaper: WallpaperState = (G.__deskWallpaper ||= reactive<WallpaperState>({ ...DEFAULT_WALLPAPER }))
 
+/** 切换图片或来源时原子替换身份与运行时图像，显示参数保持不变。 */
+export function setWallpaper(type: WallpaperState["type"], value = "", source?: WallpaperState["source"], resolved?: string) {
+  Object.assign(wallpaper, { type, value, source, resolved })
+}
+
 /* ── 收藏 ──────────────────────────────────────────────── */
 /**
  * 一条收藏就是公开文件夹里的一个文件名 —— 地址由 favUrl(name) 推出，
@@ -100,11 +106,11 @@ export async function addFavorite(value: string): Promise<string> {
   return name
 }
 
-/** 取消收藏：先摘状态再删盘，删不掉也不影响界面 */
+/** 磁盘删除成功后更新镜像，失败时保留收藏。 */
 export async function dropFavorite(name: string): Promise<void> {
+  await removeFav(name)
   const at = favorites.indexOf(name)
   if (at >= 0) favorites.splice(at, 1)
-  await removeFav(name)
 }
 
 /** 收藏当前桌面壁纸；主题/纯色没有图片可存，直接返回 false */
@@ -148,13 +154,21 @@ export const DEFAULT_APPEARANCE: Appearance = {
 
 export const appearance: Appearance = (G.__deskAppearance ||= reactive<Appearance>({ ...DEFAULT_APPEARANCE }))
 
-/** 把动效设置同步为全局 CSS 变量（弹窗被 Teleport 到 body，写在 <html> 上才通吃） */
-function applyMotionVars() {
-  const r = document.documentElement.style
-  const on = appearance.motion
-  r.setProperty("--desk-enter-dur", on ? `${appearance.motionDur}ms` : "0ms")
-  r.setProperty("--desk-char-step", on ? `${appearance.motionChar}ms` : "0ms")
-  r.setProperty("--desk-seq-step", on ? `${appearance.motionStagger}ms` : "0ms")
+/** 设置是唯一来源；桌面、卡片、预览与 Teleport 弹层消费同一套 CSS 变量。 */
+function applyAppearanceVars() {
+  const style = document.documentElement.style
+  const vars = {
+    "--desk-r-card": `${appearance.radius}px`,
+    "--desk-blur-regular": `${appearance.blur}px`,
+    "--desk-card-opacity": String(appearance.opacity),
+    "--desk-card-shadow": String(appearance.shadow),
+    "--desk-lift": `${-appearance.lift}px`,
+    "--desk-pane-opacity": String(appearance.paneOpacity),
+    "--desk-enter-dur": appearance.motion ? `${appearance.motionDur}ms` : "0ms",
+    "--desk-char-step": appearance.motion ? `${appearance.motionChar}ms` : "0ms",
+    "--desk-seq-step": appearance.motion ? `${appearance.motionStagger}ms` : "0ms",
+  }
+  for (const [name, value] of Object.entries(vars)) style.setProperty(name, value)
 }
 
 export function resetAppearance() {
@@ -180,8 +194,8 @@ interface DeskState {
 }
 
 /** 单格宽度区间：只有这个范围参与列数计算 */
-const CELL_MIN = 24
-const CELL_MAX = 36
+export const CELL_MIN = 24
+export const CELL_MAX = 36
 const DEFAULT_CELL = 27
 export const PANEL_CLOCK = "@clock"
 const PANEL_TOOLS = "@tools"
@@ -376,7 +390,6 @@ export function removeCountdownEvent(id: string) {
  */
 function seedCountdown() {
   if (countdown.seeded || countdown.events.length) return
-  const pad = (n: number) => String(n).padStart(2, "0")
   const key = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   const today = key(new Date())
 
@@ -565,5 +578,4 @@ function persistAll() {
 }
 
 watch([wallpaper, appearance, desk, weather, countdown], persistAll, { deep: true })
-/* 动效设置 → CSS 变量，改完立刻生效 */
-watch(() => [appearance.motion, appearance.motionDur, appearance.motionStagger, appearance.motionChar], applyMotionVars, { immediate: true })
+watch(appearance, applyAppearanceVars, { deep: true, immediate: true })

@@ -57,7 +57,7 @@
 
       <div v-else class="hm-state">
         <span class="hm-state-text">{{ error ? "读取写作记录失败" : "读取中" }}</span>
-        <button v-if="error" class="desk-btn" type="button" @click="reload">重试</button>
+        <GlassButton v-if="error" text label="重试" @click="reload" />
       </div>
     </div>
 
@@ -108,15 +108,13 @@
  * accessibility「不要只靠颜色」→ 数字与列表同时给结论；layout「对齐与分组」→ 图与统计各自成组、统一基线；
  * typography「macOS 正文 13pt、最小 10pt」→ 数字 22 / 标签 11 / 读数 12。
  */
+import { GlassButton } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { buildGrid, buildStats, recentActive, splitGrid, useHeatmap, WEEKS_YEAR } from "./heatmap"
 import "./styles.css"
 
 /** 详情固定看一年（53 周），和卡片上的「近 N 周」无关 */
-const WEEKS = WEEKS_YEAR
-
 const { counts, error, reload } = useHeatmap(WEEKS_YEAR)
-
 
 const hovered = ref("")
 const grid = computed(() => buildGrid(counts.value ?? new Map(), WEEKS_YEAR))
@@ -282,12 +280,9 @@ const rangeText = computed(() => {
   gap: var(--desk-sp-3);
   padding: var(--desk-detail-pad) var(--desk-sp-3);
   overflow-y: auto;
-  scrollbar-width: none;
 }
 
-.hm-side::-webkit-scrollbar {
-  display: none;
-}
+.hm-side
 
 /* 四个数字：2×2，数字在上、标签在下（同一基线） */
 .hm-figures {
@@ -313,8 +308,6 @@ const rangeText = computed(() => {
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
-
-
 
 .hm-recent {
   display: flex;
@@ -373,8 +366,6 @@ const rangeText = computed(() => {
   min-width: 3ch;
   text-align: right;
 }
-
-
 
 /* ── 窄屏（<720px）：上下两段，统计挤到下面 ───────────── */
 @container (max-width: 720px) {

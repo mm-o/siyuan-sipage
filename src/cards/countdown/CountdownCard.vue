@@ -15,7 +15,7 @@
 
         <!-- 其余事件：图标块 + 标题 + 日期 + 数字（对齐 .dma-row） -->
         <ul v-if="plan.rows" class="cd-rows desk-seq">
-          <li v-for="item in rows" :key="item.event.id" class="cd-row">
+          <li v-for="item in rows" :key="item.event.id" class="cd-row desk-content-surface">
             <span class="cd-tile" :style="{ background: softOf(categoryOf(item.event.category).color), color: categoryOf(item.event.category).color }">
               <component :is="categoryOf(item.event.category).icon" :size="18" :stroke-width="1.9" />
             </span>
@@ -43,7 +43,7 @@
  * 倒数日卡片
  *
  * 视觉对齐 参考实现 的 daysMatter：封面压暗 + 白字的主事件块（标题 / 还剩·已经 / 大数字 / 目标日），
- * 其余事件是「图标块 + 标题日期 + 数字」的列表行。卡面是实色卡（`surface: "solid"`），
+ * 其余事件是「图标块 + 标题日期 + 数字」的列表行，卡面交由框架提供。
  * 按尺寸裁块，不缩外框。
  *
  *   1x1  主事件：标题 + 数字
@@ -85,15 +85,13 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 </script>
 
 <style scoped>
-/* 实色卡：和日历一样是「纸面」，不吃外观的玻璃底色。
-   卡片不留外圈留白 —— 主事件直接铺满，白的只出现在块与块的缝隙里（iTab 的 widget 也是这样）。 */
+/* 根节点只负责布局，表面由父卡框统一提供；照片主事件保留自己的内容背景。 */
 .cd-card {
   container-type: size;
   position: relative;
   height: 100%;
   min-height: 0;
   color: var(--desk-text);
-  background: var(--desk-surface);
   overflow: hidden;
 }
 
@@ -187,9 +185,6 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
   gap: clamp(4px, 2cqw, 10px);
   min-height: 0;
   padding: clamp(4px, 1.6cqh, 10px) clamp(6px, 2.4cqw, 12px);
-  border-radius: clamp(6px, 2.4cqh, 10px);
-  border: 1px solid var(--desk-stroke);
-  background: color-mix(in srgb, var(--desk-text) 4%, transparent);
   overflow: hidden;
 }
 
@@ -313,20 +308,8 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 /* ── 按实际像素再降档 ─────────────────────────────────── */
 /* 尺寸档只说明「几格」，像素大小由桌面上的卡片数决定：6~7 张卡时单格只有 ~70px，
    2x2 实际 152×152 —— 再塞两行列表会把标题和数字挤重叠，所以小块只留主事件（等于 1x1 的信息量）。 */
-@container (max-width: 260px) {
-  /* 列表在小卡里被收起，网格同时收成一列，主事件铺满 */
-  .cd-body {
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr);
-  }
-
-  .cd-rows {
-    display: none;
-  }
-}
-
-@container (max-height: 260px) {
-  /* 矮卡：列表收起，网格同时收成一列，主事件铺满（不留白右半） */
+@container (max-width: 260px) or (max-height: 260px) {
+  /* 窄卡或矮卡：列表收起，网格收成一列，主事件铺满（不留白右半） */
   .cd-body {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: minmax(0, 1fr);

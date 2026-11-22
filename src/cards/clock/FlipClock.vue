@@ -25,6 +25,7 @@
  * 下半卡随后从后向前翻入（新值）。字形用一张整字按半卡裁剪，上下永远对齐。
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
+import { pad } from "@/core/util"
 
 const now = ref(new Date())
 const prev = ref<string[]>([])
@@ -32,10 +33,7 @@ const flipping = ref(false)
 let timer = 0
 let flapTimer = 0
 
-const text = (d: Date) =>
-  `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(
-    d.getSeconds(),
-  ).padStart(2, "0")}`
+const text = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 
 const digits = computed(() => [...text(now.value)])
 

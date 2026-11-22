@@ -14,14 +14,14 @@ import { cacheGet, cacheSet, placeId, weather, type WeatherPlace } from "@/core/
 import { COVERS, forwardProxy } from "@/core/image"
 
 /* ══ 1. 数据形状 ══════════════════════════════════════════ */
-export interface WeatherHour {
+interface WeatherHour {
   /** 当地时刻 YYYY-MM-DDTHH:mm */
   time: string
   code: number
   temp: number
 }
 
-export interface WeatherDay {
+interface WeatherDay {
   /** 当地日期 YYYY-MM-DD */
   date: string
   code: number
@@ -32,7 +32,7 @@ export interface WeatherDay {
   sunset: string
 }
 
-export interface WeatherNow {
+interface WeatherNow {
   temp: number
   /** 体感温度 */
   feels: number
@@ -165,7 +165,7 @@ export function skyBackdrop(code: number, isDay: boolean) {
 /* ── 接口 ──────────────────────────────────────────────── */
 
 /** 中文天气描述 → WMO 码（判断顺序：雪 → 雨 → 其它） */
-export function cnCode(text: string): number {
+function cnCode(text: string): number {
   const t = String(text || "")
   if (/雷/.test(t)) return 95
   if (/雪/.test(t)) return /大/.test(t) ? 75 : /中/.test(t) ? 73 : 71
@@ -197,7 +197,7 @@ const round = (n: unknown) => Math.round(Number(n) || 0)
 const hhmm = (iso: unknown) => String(iso || "").slice(11, 16)
 
 /** 内核代理把整串 Go 错误丢回来（含 URL），卡片上只放得下一句人话 */
-export function shortError(e: unknown) {
+function shortError(e: unknown) {
   const raw = String((e as Error)?.message || "")
   if (/handshake timeout|timeout|deadline|no such host/i.test(raw)) return "网络超时，稍后重试"
   if (/code":\s*[45]\d\d/.test(raw)) return "天气服务暂不可用"
@@ -269,14 +269,13 @@ async function loadCn(code: string): Promise<WeatherData> {
   if (now?.status !== "ok" || !now?.now) throw new Error("国内源数据为空")
 
   const n = now.now
-  const num = (v: unknown) => Math.round(Number(v) || 0)
   const list = (now.daily_forecast ?? []) as Record<string, unknown>[]
 
   const days: WeatherDay[] = list.slice(0, 7).map((f) => ({
     date: String(f.date),
     code: cnCode(String(f.cond_txt_d ?? "")),
-    max: num(f.tmp_max),
-    min: num(f.tmp_min),
+    max: round(f.tmp_max),
+    min: round(f.tmp_min),
     sunrise: String(now.sun?.rise ?? ""),
     sunset: String(now.sun?.set ?? ""),
   }))
@@ -288,7 +287,7 @@ async function loadCn(code: string): Promise<WeatherData> {
     return {
       time: m ? `${year}-${m[1]}-${m[2]}T${m[3]}:${m[4]}` : String(h.fxTime ?? ""),
       code: cnCode(String(h.text ?? "")),
-      temp: num(h.temp),
+      temp: round(h.temp),
     }
   })
 
@@ -298,9 +297,9 @@ async function loadCn(code: string): Promise<WeatherData> {
 
   return {
     now: {
-      temp: num(n.tmp),
-      feels: num(n.tmp),
-      humidity: num(n.hum),
+      temp: round(n.tmp),
+      feels: round(n.tmp),
+      humidity: round(n.hum),
       wind: LEVEL[Math.min(level, 10)],
       code: cnCode(String(n.cond_txt ?? "")),
       isDay: true,
@@ -312,7 +311,7 @@ async function loadCn(code: string): Promise<WeatherData> {
 }
 
 /** 某个地点的当前天气 + 24 小时 + 7 日（10 分钟内直接吃缓存） */
-export async function loadWeather(place: WeatherPlace): Promise<WeatherData> {
+async function loadWeather(place: WeatherPlace): Promise<WeatherData> {
   const key = place.id
   const hit = cache.get(key)
   if (hit && Date.now() - hit.at < TTL) return hit.data

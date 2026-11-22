@@ -15,15 +15,16 @@
       </div>
 
       <footer class="pm-foot">
-        <button v-if="!running" class="pm-btn is-primary" type="button" @click="start">开始</button>
-        <button v-else class="pm-btn" type="button" @click="pause">暂停</button>
-        <button class="pm-btn" type="button" @click="reset">重置</button>
+        <GlassButton :icon="running ? Pause : Play" :label="running ? '暂停' : '开始'" :variant="running ? 'default' : 'primary'" :tone="pomodoro.cover ? 'photo' : 'auto'" text @click="running ? pause() : start()" />
+        <GlassButton :icon="RotateCcw" label="重置" :tone="pomodoro.cover ? 'photo' : 'auto'" text @click="reset" />
       </footer>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { GlassButton } from "@/ui/controls"
+import { Pause, Play, RotateCcw } from "lucide-vue-next"
 import { clockText, pause, pomodoro, reset, start, usePomodoro } from "./pomodoro"
 
 defineProps<{ size?: string; w?: number; h?: number }>()
@@ -99,23 +100,6 @@ const { running, left, percent } = usePomodoro()
 .pm-foot {
   display: flex;
   gap: var(--desk-sp-1h);
-}
-
-.pm-btn {
-  height: clamp(22px, 9cqh, 28px);
-  padding: 0 10px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 6%, transparent);
-  color: var(--desk-text);
-  font-size: clamp(10px, 4cqh, 12px);
-  cursor: pointer;
-}
-
-.pm-btn.is-primary {
-  border-color: transparent;
-  background: var(--desk-accent);
-  color: #fff;
 }
 
 @container (max-height: 120px) {

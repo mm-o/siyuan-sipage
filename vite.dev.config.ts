@@ -6,7 +6,7 @@ import { defineConfig } from "vite"
 export default defineConfig({
   root: resolve(__dirname, "dev"),
   base: "./",
-  publicDir: resolve(__dirname, "public"),
+  publicDir: false,
   plugins: [vue()],
   resolve: {
     alias: {
@@ -21,5 +21,4 @@ export default defineConfig({
     minify: false,
     target: "esnext",
   },
-  server: { port: 5600, strictPort: true },
 })

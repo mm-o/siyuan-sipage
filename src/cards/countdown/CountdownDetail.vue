@@ -2,17 +2,15 @@
 <div class="cd-detail-inner">
   <!-- 编辑表单 -->
   <form v-if="editing" class="cd-form" @submit.prevent="save">
-    <button class="cd-back" type="button" @click="backToList">
-      <ChevronLeft :size="16" :stroke-width="2" />返回
-    </button>
+    <GlassButton class="cd-back" :icon="ChevronLeft" label="返回" text @click="backToList" />
     <div class="cd-form-body cd-scroll">
       <label class="cd-field">
         <span class="cd-field-label">标题</span>
-        <input v-model="draft.title" class="desk-input" placeholder="例如：妈妈的生日" maxlength="24" />
+        <GlassField v-model="draft.title" label="倒数日标题" placeholder="例如：妈妈的生日" maxlength="24" />
       </label>
       <label class="cd-field">
         <span class="cd-field-label">日期</span>
-        <input v-model="draft.date" class="desk-input" type="date" />
+        <GlassField v-model="draft.date" label="倒数日日期" type="date" />
       </label>
       <div class="cd-field">
         <span class="cd-field-label">分类</span>
@@ -36,28 +34,22 @@
       </div>
       <div v-if="draft.repeat === 'year'" class="cd-field-row">
         <span class="cd-field-label">按农历（春节、中秋这类）</span>
-        <button class="cd-switch" :class="{ 'is-on': draft.lunar }" type="button" role="switch" :aria-checked="!!draft.lunar" @click="draft.lunar = !draft.lunar">
-          <span class="cd-switch-knob" />
-        </button>
+        <GlassSwitch v-model="draft.lunar" label="按农历重复" />
       </div>
       <div class="cd-field-row">
         <span class="cd-field-label">置顶</span>
-        <button class="cd-switch" :class="{ 'is-on': draft.pinned }" type="button" role="switch" :aria-checked="draft.pinned" @click="draft.pinned = !draft.pinned">
-          <span class="cd-switch-knob" />
-        </button>
+        <GlassSwitch v-model="draft.pinned" label="置顶倒数日" />
       </div>
     </div>
     <div class="cd-foot">
-      <button class="cd-btn" type="button" @click="cancelEdit">取消</button>
-      <button class="cd-btn cd-btn--primary" type="submit" :disabled="!valid">保存</button>
+      <GlassButton class="cd-btn" label="取消" text @click="cancelEdit" />
+      <GlassButton class="cd-btn" label="保存" variant="primary" text type="submit" :disabled="!valid" />
     </div>
   </form>
 
   <!-- 事件详情 -->
   <template v-else-if="current">
-    <button class="cd-detail-back" type="button" @click="backToList">
-      <ChevronLeft :size="18" :stroke-width="2" />返回
-    </button>
+    <GlassButton class="cd-detail-back" :icon="ChevronLeft" label="返回" text @click="backToList" />
     <div class="cd-detail-head" :style="{ backgroundImage: coverStyleOf(current.event, 'head') }" />
     <div class="cd-detail-body cd-scroll">
       <h2 class="cd-detail-title">
@@ -77,26 +69,13 @@
         </div>
         <div class="cd-meta-row">
           <span class="cd-meta-key">置顶</span>
-          <button
-            class="cd-switch"
-            :class="{ 'is-on': current.event.pinned }"
-            type="button"
-            role="switch"
-            :aria-checked="current.event.pinned"
-            @click="togglePinned(current.event.id)"
-          >
-            <span class="cd-switch-knob" />
-          </button>
+          <GlassSwitch :model-value="current.event.pinned" label="置顶倒数日" @update:model-value="togglePinned(current.event.id)" />
         </div>
       </div>
     </div>
     <div class="cd-foot">
-      <button class="cd-btn cd-btn--primary cd-btn--grow" type="button" @click="startEdit(current.event.id)">
-        <Pencil :size="15" :stroke-width="2" />编辑
-      </button>
-      <button class="cd-btn cd-btn--danger" type="button" aria-label="删除" @click="removeSelected">
-        <Trash2 :size="16" :stroke-width="2" />
-      </button>
+      <GlassButton class="cd-btn cd-btn--grow" :icon="Pencil" label="编辑" variant="primary" text @click="startEdit(current.event.id)" />
+      <GlassButton class="cd-btn" :icon="Trash2" label="删除" variant="danger" @click="removeSelected" />
     </div>
   </template>
 
@@ -116,7 +95,7 @@
  */
 import { computed, reactive, watch } from "vue"
 import { CalendarDays, ChevronLeft, Pencil, Trash2 } from "lucide-vue-next"
-import { Segmented } from "@/ui/controls"
+import { GlassButton, GlassField, GlassSwitch, Segmented } from "@/ui/controls"
 import {
   EVENT_CATEGORIES,
   REPEAT_OPTIONS,
@@ -188,17 +167,9 @@ const togglePinned = (id: string) => emit("pin", id)
 
   .cd-detail-back {
   display: none;
-  align-items: center;
-  gap: var(--desk-sp-1);
-  height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-bottom: 1px solid var(--desk-stroke);
-  background: transparent;
-  color: var(--desk-text);
-  font: inherit;
-  font-size: var(--desk-fs-lg);
-  cursor: pointer;
+  flex: none;
+  align-self: flex-start;
+  margin: var(--desk-sp-2);
   }
 
   .cd-detail-body {
@@ -312,18 +283,8 @@ const togglePinned = (id: string) => emit("pin", id)
 
   .cd-back {
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--desk-sp-1);
-  height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-bottom: 1px solid var(--desk-stroke);
-  background: transparent;
-  color: var(--desk-text);
-  font: inherit;
-  font-size: var(--desk-fs-lg);
-  cursor: pointer;
+  align-self: flex-start;
+  margin: var(--desk-sp-2);
   }
 
   .cd-form-body {
@@ -358,89 +319,8 @@ const togglePinned = (id: string) => emit("pin", id)
   gap: var(--desk-sp-1h);
   }
 
-  .cd-switch {
-  flex: none;
-  position: relative;
-  width: 40px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--desk-text) 20%, transparent);
-  cursor: pointer;
-  transition: background var(--desk-dur-fast) var(--desk-ease);
-  }
-
-  .cd-switch.is-on {
-  background: var(--desk-accent);
-  }
-
-  .cd-switch-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
-  transition: transform var(--desk-dur-fast) var(--desk-ease);
-  }
-
-  .cd-switch.is-on .cd-switch-knob {
-  transform: translateX(18px);
-  }
-
-  .cd-detail {
-  display: none;
-  }
-
-  .cd-detail-back {
-  display: inline-flex;
-  }
-  .cd-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--desk-sp-1);
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-md);
-  background: transparent;
-  color: var(--desk-text);
-  font: inherit;
-  font-size: var(--desk-fs-body);
-  cursor: pointer;
-  }
-
-  .cd-btn:hover {
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-  }
-
   .cd-btn--grow {
   flex: 1 1 auto;
-  }
-
-  .cd-btn--primary {
-  border-color: color-mix(in srgb, var(--desk-accent) 45%, transparent);
-  background: color-mix(in srgb, var(--desk-accent) 8%, transparent);
-  color: var(--desk-accent);
-  }
-
-  .cd-btn--primary:hover {
-  background: color-mix(in srgb, var(--desk-accent) 14%, transparent);
-  }
-
-  .cd-btn--primary:disabled {
-  opacity: 0.45;
-  cursor: default;
-  }
-
-  .cd-btn--danger {
-  border-color: color-mix(in srgb, var(--desk-danger) 40%, transparent);
-  background: color-mix(in srgb, var(--desk-danger) 8%, transparent);
-  color: var(--desk-danger);
   }
   .cd-chip {
   display: inline-flex;
@@ -448,18 +328,7 @@ const togglePinned = (id: string) => emit("pin", id)
   gap: var(--desk-sp-1);
   height: 30px;
   padding: 0 10px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--desk-text) 4%, transparent);
-  color: var(--desk-text-2);
   font: inherit;
   font-size: var(--desk-fs-sm);
-  cursor: pointer;
-  }
-
-  .cd-chip.is-active {
-  color: var(--desk-accent);
-  border-color: var(--desk-accent);
-  background: var(--desk-surface);
   }
 </style>

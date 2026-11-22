@@ -21,18 +21,12 @@ importers:
       eslint:
         specifier: ^9.22.0
         version: 9.39.5(jiti@1.21.7)
-      eslint-plugin-perfectionist:
-        specifier: ^4.2.0
-        version: 4.15.1(eslint@9.39.5(jiti@1.21.7))(typescript@5.9.3)
       fast-glob:
         specifier: ^3.2.12
         version: 3.3.3
       lucide-vue-next:
         specifier: ^1.0.0
         version: 1.0.0(vue@3.5.45(typescript@5.9.3))
-      minimist:
-        specifier: ^1.2.8
-        version: 1.2.8
       playwright-core:
         specifier: ^1.65.0
         version: 1.65.0
@@ -1784,9 +1778,6 @@ packages:
 
   minimatch@3.1.5:
     resolution: {integrity: sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==}
-
-  minimist@1.2.8:
-    resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
 
   mlly@1.8.2:
     resolution: {integrity: sha512-d+ObxMQFmbt10sretNDytwt85VrbkhhUA/JBGm1MPaWJ65Cl4wOgLaB1NYvJSZ0Ef03MMEU/0xpPMXUIQ29UfA==}
@@ -4093,8 +4084,6 @@ snapshots:
   minimatch@3.1.5:
     dependencies:
       brace-expansion: 1.1.22
-
-  minimist@1.2.8: {}
 
   mlly@1.8.2:
     dependencies:

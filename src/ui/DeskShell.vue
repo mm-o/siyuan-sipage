@@ -1,20 +1,28 @@
 <template>
-  <div ref="rootRef" class="desk-root" :class="{ 'is-arrange': arranging }" @contextmenu.prevent="deskMenu">
+  <div ref="rootRef" class="desk-root" :class="{ 'is-arrange': arranging, 'is-manipulating': !!drag }" @contextmenu.prevent="deskMenu">
     <!-- 壁纸（桌面窗口层，不随滚动条变化） -->
     <div class="desk-wallpaper" :style="wallpaperStyle" />
     <div class="desk-wallpaper-mask" :style="maskStyle" />
+    <div class="arrange-veil" aria-hidden="true" />
 
     <!-- 唯一画布：卡片 / 时钟 / 工具组同坐标系 -->
     <div ref="scrollRef" class="desk-scroll">
       <div class="desk-canvas" :style="canvasStyle">
-        <div v-if="arranging" class="gridlines" :style="{ backgroundSize: `${grid.unit}px ${grid.unit}px` }" />
+        <Transition name="desk-fade">
+          <div v-if="arranging" class="gridlines" :style="{ '--arrange-unit': `${grid.unit}px` }" aria-hidden="true" />
+        </Transition>
+        <div v-if="drag" class="arrange-origin" :style="originStyle" aria-hidden="true" />
 
         <div
           v-for="(inst, i) in desk.cards"
           :key="inst.uid"
           class="item"
-          :class="{ 'desk-enter': enterOn, 'is-panel': panel(inst), 'is-dragging': drag?.index === i }"
+          :class="{ 'desk-enter': enterOn && !arranging, 'is-panel': panel(inst), 'is-dragging': drag?.index === i }"
           :style="itemStyle(inst)"
+          :tabindex="arranging ? 0 : undefined"
+          :role="arranging ? 'group' : undefined"
+          :aria-label="arranging ? `${itemName(inst)}，${inst.w} 列 ${inst.h} 行。方向键移动，Shift 加方向键调整尺寸` : undefined"
+          @keydown="arrangeKey(i, $event)"
           @pointerdown="grab(i, $event)"
           @pointermove="onMove"
           @pointerup="endMove"
@@ -22,52 +30,22 @@
         >
           <!-- 面板：时钟 / 工具组 -->
           <template v-if="panel(inst)">
-            <div v-if="inst.cardId === PANEL_CLOCK" class="clock">
-              <div class="time">{{ timeText }}</div>
-              <div class="date"><span>{{ dateText }}</span><span class="dot">·</span><span>参考实现 卡片</span></div>
-            </div>
+            <DeskClock v-if="inst.cardId === PANEL_CLOCK" />
             <div v-else class="tools">
               <button
-                class="brand"
+                class="brand gb on-photo"
                 type="button"
                 aria-label="设置"
                 @pointerdown.stop
                 @click.stop="openSettings('wallpaper', $event)"
               >
+                <span class="gb-lens" aria-hidden="true" />
                 <svg viewBox="0 0 32 32" width="26" height="26"><use xlink:href="#iconDeskCards" /></svg>
               </button>
               <div class="actions">
-                <button
-                  class="btn ariaLabel"
-                  data-position="north"
-                  data-tooltip-encoding="none"
-                  aria-label="设置"
-                  @pointerdown.stop
-                  @click.stop="openSettings('wallpaper', $event)"
-                >
-                  <Settings :size="16" :stroke-width="1.9" />
-                </button>
-                <button
-                  class="btn ariaLabel"
-                  data-position="north"
-                  data-tooltip-encoding="none"
-                  aria-label="添加卡片"
-                  @pointerdown.stop
-                  @click.stop="openSettings('library', $event)"
-                >
-                  <Plus :size="17" :stroke-width="2.1" />
-                </button>
-                <button
-                  class="btn ariaLabel"
-                  data-position="north"
-                  data-tooltip-encoding="none"
-                  :aria-label="arranging ? '完成整理' : '整理桌面'"
-                  @pointerdown.stop
-                  @click.stop="toggle()"
-                >
-                  <Check v-if="arranging" :size="16" :stroke-width="2.2" />
-                  <LayoutGrid v-else :size="15" :stroke-width="1.9" />
-                </button>
+                <GlassButton :icon="Settings" label="设置" tone="photo" @pointerdown.stop @click.stop="openSettings('wallpaper', $event)" />
+                <GlassButton :icon="Plus" label="添加卡片" tone="photo" @pointerdown.stop @click.stop="openSettings('library', $event)" />
+                <GlassButton :icon="arranging ? Check : LayoutGrid" :label="arranging ? '完成整理' : '整理桌面'" tone="photo" @pointerdown.stop @click.stop="toggle()" />
               </div>
             </div>
           </template>
@@ -77,7 +55,6 @@
             v-else
             :inert="arranging || undefined"
             :card-id="inst.cardId"
-            :size="label(inst)"
             :w="inst.w"
             :h="inst.h"
             @expand="(r) => expand(inst, r)"
@@ -90,29 +67,46 @@
 
           <!-- 四边缩放：只在整理模式出现。到边界的手柄只变淡（仍可抓着往回收），夹取在 arrange.ts 里做 -->
           <template v-if="arranging && !panel(inst)">
-            <span
+            <GlassButton
               v-for="e in EDGES"
               :key="e.id"
+              :icon="e.icon"
               :class="['edge', `is-${e.id}`, { 'is-off': !canResize(inst, e.id) }]"
-              :aria-label="canResize(inst, e.id) ? `向${e.label}拉伸` : `已到尺寸边界`"
+              :label="`调整${itemName(inst)}${e.label}边尺寸`"
               @pointerdown.stop="grab(i, $event, e.id)"
-              @pointermove="onMove"
-              @pointerup="endMove"
-              @pointercancel="endMove"
-            >
-              <component :is="e.icon" :size="14" :stroke-width="1.8" />
-            </span>
-            <span class="handle"><Move :size="18" :stroke-width="1.8" /></span>
+              @pointermove.stop="onMove"
+              @pointerup.stop="endMove"
+              @pointercancel.stop="endMove"
+              @keydown.stop="resizeKey(i, e.id, $event)"
+            />
+            <span class="handle" aria-hidden="true"><Move :size="16" :stroke-width="1.8" /></span>
           </template>
+          <span v-if="arranging" class="arrange-caption" aria-hidden="true">{{ itemName(inst) }}<span>{{ inst.w }} × {{ inst.h }}</span></span>
         </div>
 
       </div>
 
-      <div v-if="!hasCards" class="empty">
+      <div v-if="!cardCount" class="empty">
         <p>桌面还是空的</p>
-        <button class="desk-btn" @click="openSettings('library', $event)">添加第一张卡片</button>
+        <GlassButton text variant="primary" :icon="Plus" label="添加第一张卡片" @click="openSettings('library', $event)" />
       </div>
     </div>
+
+    <Transition name="arrange-bar">
+      <div v-if="arranging" class="arrange-toolbar" role="toolbar" aria-label="整理桌面" @pointerdown.stop @contextmenu.stop.prevent>
+        <div class="arrange-toolbar-info">
+          <LayoutGrid :size="18" :stroke-width="1.8" aria-hidden="true" />
+          <div>
+            <strong>整理桌面<span class="arrange-count">{{ cardCount }} 张卡片</span></strong>
+            <span class="arrange-hint" role="status" aria-live="polite">{{ arrangeHint }}</span>
+          </div>
+        </div>
+        <div class="arrange-toolbar-actions">
+          <GlassButton class="arrange-action" text :icon="LayoutGrid" label="一键整理" :disabled="!!drag" @click="tidyDesk" />
+          <GlassButton class="arrange-action" text variant="primary" :icon="Check" label="完成" @click="toggle(false)" />
+        </div>
+      </div>
+    </Transition>
 
     <!-- 全屏 -->
     <Teleport v-if="full.open" to="body">
@@ -122,20 +116,23 @@
       </div>
     </Teleport>
 
-    <!-- 详情 -->
+    <!-- 详情：每张卡一个弹窗；钉住的留在原地，可以同时钉住多个 -->
     <Sheet
-      v-model:open="expanded.open"
-      :origin="expanded.origin"
-      :title="detailDef?.name"
-      :icon="detailDef?.icon"
-      :width="detailSize?.width || 'min(760px, 86vw)'"
-      :height="detailSize?.height || 'min(560px, 78vh)'"
+      v-for="s in sheets"
+      :key="s.key"
+      v-model:open="s.open"
+      v-model:pinned="s.pinned"
+      :origin="s.origin"
+      :title="defOf(s)?.name"
+      :icon="defOf(s)?.icon"
+      :width="sizeOf(s)?.width || 'min(760px, 86vw)'"
+      :height="sizeOf(s)?.height || 'min(560px, 78vh)'"
     >
       <template #actions>
-        <GlassButton :icon="Maximize2" label="全屏" @click="fullFromDetail" />
+        <GlassButton :icon="Maximize2" label="全屏" @click="fullFromDetail(s)" />
       </template>
-      <div v-if="expanded.open" class="desk-expanded desk-enter" :class="{ 'desk-pane is-solo': !detailDef?.detail }">
-        <component :is="expanded.component" :key="expandKey" mode="detail" />
+      <div v-if="s.open" class="desk-expanded desk-enter" :class="{ 'desk-pane is-solo': !defOf(s)?.detail }">
+        <component :is="defOf(s)?.detail || defOf(s)?.component" :key="`${s.key}-${s.cardId}`" mode="detail" />
       </div>
     </Sheet>
 
@@ -145,13 +142,14 @@
 
 <script setup lang="ts">
 import { GlassButton, toast } from "@/ui/controls"
-import { computed, onBeforeUnmount, onMounted, ref, type Component } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
 import { PANEL_CLOCK, desk, favoriteWallpaper, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
 import { wallpaperBg } from "@/core/image"
 import { useDeskGrid, normalizeSizes } from "./arrange"
+import DeskClock from "./DeskClock.vue"
 import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
 import SettingsSheet from "./SettingsSheet.vue"
@@ -172,12 +170,6 @@ const wallpaperStyle = computed(() => ({
 }))
 const maskStyle = computed(() => ({ background: `rgba(4, 8, 16, ${wallpaper.mask})` }))
 
-/* 时间 */
-const now = ref(new Date())
-let timer = 0
-const timeText = computed(() => `${String(now.value.getHours()).padStart(2, "0")}:${String(now.value.getMinutes()).padStart(2, "0")}`)
-const dateText = computed(() => `${now.value.getMonth() + 1}月${now.value.getDate()}日 星期${"日一二三四五六"[now.value.getDay()]}`)
-
 /* 网格 */
 const rootRef = ref<HTMLElement>()
 const scrollRef = ref<HTMLElement>()
@@ -192,7 +184,7 @@ function replayEnter() {
     enterRaf = requestAnimationFrame(() => (enterOn.value = true))
   })
 }
-const { arranging, grid, drag, grab, onMove, endMove, toggle } = useDeskGrid(viewport)
+const { arranging, grid, drag, grab, onMove, endMove, toggle, arrangeKey, resizeKey } = useDeskGrid(viewport)
 
 /* 底部多留一屏：滚到底不会贴住最后一张卡 */
 const canvasStyle = computed(() => ({
@@ -200,7 +192,30 @@ const canvasStyle = computed(() => ({
   height: `${grid.value.height + grid.value.unit * 6}px`,
 }))
 const panel = (c: { cardId: string }) => c.cardId.startsWith("@")
-const hasCards = computed(() => desk.cards.some((c) => !panel(c)))
+const cardCount = computed(() => desk.cards.filter((c) => !panel(c)).length)
+const itemName = (c: { cardId: string }) => c.cardId === PANEL_CLOCK ? "桌面时钟" : panel(c) ? "桌面工具" : getCard(c.cardId)?.name || "卡片"
+const arrangeFeedback = ref("")
+let feedbackTimer = 0
+const arrangeHint = computed(() => {
+  const active = drag.value && desk.cards[drag.value.index]
+  return active ? `${drag.value?.resize ? '调整尺寸' : '移动'} · ${itemName(active)} · ${active.w} × ${active.h}` : arrangeFeedback.value || "拖动卡片移动 · 拖动边缘缩放 · Esc 完成"
+})
+const originStyle = computed(() => {
+  const d = drag.value
+  return d ? itemStyle({ x: d.bx, y: d.by, w: d.bw, h: d.bh }) : {}
+})
+
+function tidyDesk() {
+  endMove()
+  normalizeSizes()
+  flowDesk(grid.value.cols)
+  const message = `已整理 ${cardCount.value} 张卡片`
+  if (arranging.value) {
+    arrangeFeedback.value = message
+    window.clearTimeout(feedbackTimer)
+    feedbackTimer = window.setTimeout(() => (arrangeFeedback.value = ""), 2200)
+  } else toast(message)
+}
 
 function itemStyle(c: { x: number; y: number; w: number; h: number }) {
   const u = grid.value.unit
@@ -212,35 +227,50 @@ const cardOf = (id: string) => getCard(id)?.component
 
 
 
-/* 详情 / 全屏 */
-const expanded = ref<{ open: boolean; component?: Component; origin: DOMRect | null; cardId: string; size: CardSize | "" }>({ open: false, origin: null, cardId: "", size: "" })
-const full = ref<{ open: boolean; component?: Component; cardId: string; size: CardSize | "" }>({ open: false, cardId: "", size: "" })
+/* 详情 / 全屏：每张卡一个独立弹窗。钉住的那个不被顶替，可以同时钉住多个。 */
+interface DetailSheet {
+  key: number
+  cardId: string
+  origin: DOMRect | null
+  size: CardSize | ""
+  open: boolean
+  pinned: boolean
+}
+const sheets = ref<DetailSheet[]>([])
+let sheetSeq = 0
+
+const full = ref<{ open: boolean; cardId: string; size: CardSize | "" }>({ open: false, cardId: "", size: "" })
 const refreshKey = ref(0)
-/** 详情每次打开都换 key → 重新挂载，入场动效必定从“点开那一刻”开始 */
-const expandKey = ref(0)
-const detailDef = computed(() => getCard(expanded.value.cardId || ""))
-const detailSize = computed(() => detailDef.value?.detailSize)
+const defOf = (s: DetailSheet) => getCard(s.cardId)
+const sizeOf = (s: DetailSheet) => defOf(s)?.detailSize
+
+const dropSheet = (s: DetailSheet) => { sheets.value = sheets.value.filter((item) => item !== s) }
 
 function openFull(inst: { cardId: string; w: number; h: number }) {
-  const def = getCard(inst.cardId)
-  if (!def) return
-  full.value = { open: true, component: def.detail || def.component, cardId: inst.cardId, size: label(inst) }
-  expanded.value.open = false
+  if (!getCard(inst.cardId)) return
+  full.value = { open: true, cardId: inst.cardId, size: label(inst) }
+  sheets.value = sheets.value.filter((s) => s.cardId !== inst.cardId)
 }
 
 function expand(inst: { cardId: string; w: number; h: number }, origin?: DOMRect) {
-  if (arranging.value) return
-  const def = getCard(inst.cardId)
-  expandKey.value += 1
-  expanded.value = { open: true, component: def?.detail || def?.component, origin: origin || null, cardId: inst.cardId, size: label(inst) }
+  if (arranging.value || !getCard(inst.cardId)) return
+  /* 先清掉上一轮关掉的：只有还开着的弹窗参与下面两条判断。 */
+  sheets.value = sheets.value.filter((s) => s.open)
+  const same = sheets.value.find((s) => s.cardId === inst.cardId)
+  if (same) {
+    same.origin = origin || null
+    same.size = label(inst)
+    return
+  }
+  /* 只顶替未钉住的那一个；钉住的一个都不动，于是可以同时留多个。 */
+  const spare = sheets.value.find((s) => !s.pinned)
+  if (spare) Object.assign(spare, { cardId: inst.cardId, origin: origin || null, size: label(inst) })
+  else sheets.value.push({ key: ++sheetSeq, cardId: inst.cardId, origin: origin || null, size: label(inst), open: true, pinned: false })
 }
 
-function fullFromDetail() {
-  const { cardId } = expanded.value
-  const inst = desk.cards.find((c) => c.cardId === cardId)
-  if (!cardId || !inst) return
-  expanded.value.open = false
-  openFull({ cardId, w: inst.w, h: inst.h })
+function fullFromDetail(s: DetailSheet) {
+  full.value = { open: true, cardId: s.cardId, size: s.size }
+  dropSheet(s)
 }
 
 /* 设置 */
@@ -254,7 +284,7 @@ function deskMenu(e: MouseEvent) {
   menu.addItem({
     icon: "iconAdd",
     label: "添加卡片",
-    click: () => openSettings("cards"),
+    click: () => openSettings("library"),
   })
   menu.addItem({
     icon: "iconSettings",
@@ -278,11 +308,7 @@ function deskMenu(e: MouseEvent) {
   menu.addItem({
     icon: "iconLayoutGrid",
     label: "一键整理",
-    click: () => {
-      normalizeSizes()
-      flowDesk(grid.value.cols)
-      toast(`已整理 ${desk.cards.filter((c) => !c.cardId.startsWith("@")).length} 张卡片`)
-    },
+    click: tidyDesk,
   })
   menu.addItem({
     icon: "iconLayout",
@@ -292,24 +318,26 @@ function deskMenu(e: MouseEvent) {
   menu.open({ x: e.clientX, y: e.clientY })
 }
 
-function openSettings(tab: "wallpaper" | "cards" | "like" | "about" | "library", e?: MouseEvent) {
-  /* library 分区已并入「组件设置」，旧入口统一落到 cards */
-  const target = tab === "library" || tab === "like" ? "cards" : tab
+function openSettings(tab: "wallpaper" | "cards" | "about" | "library", e?: MouseEvent) {
   settingsOrigin.value = (e?.currentTarget as HTMLElement | null)?.getBoundingClientRect() ?? null
-  settingsTab.value = target
+  settingsTab.value = tab
   settingsOpen.value = true
 }
 
 function onKey(e: KeyboardEvent) {
-  if (e.key !== "Escape") return
+  if (e.key !== "Escape" || e.defaultPrevented) return
+  /* 下拉弹层开着时，Esc 只关闭它自己。 */
+  if (document.querySelector(".desk-pop")) return
   if (full.value.open) full.value.open = false
-  else expanded.value.open = false
+  else if (!settingsOpen.value && arranging.value) {
+    toggle(false)
+    e.preventDefault()
+    e.stopPropagation()
+  }
 }
 
 /* 视口测量：量滚动层可用宽（已扣滚动条），去抖后写入 */
 let observer: ResizeObserver | null = null
-/** 尺寸测量去抖（滚动/缩放时只算一次） */
-let measureTimer = 0
 /** 卡片可见性观察（入场动效重播） */
 let io: IntersectionObserver
 let raf = 0
@@ -342,12 +370,6 @@ function measure() {
 }
 
 onMounted(() => {
-  now.value = new Date()
-  /* 对齐到整分钟再起 60s 定时器：唤醒次数从每 10 秒一次降到每分钟一次 */
-  timer = window.setTimeout(() => {
-    now.value = new Date()
-    timer = window.setInterval(() => (now.value = new Date()), 60_000)
-  }, 60_000 - (Date.now() % 60_000))
   document.addEventListener("keydown", onKey)
   measure()
   /* 窗口拖拽时 ResizeObserver 会连续回调：合并到每帧一次，避免重复重排 */
@@ -368,13 +390,12 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  window.clearTimeout(timer)
-  window.clearInterval(timer)
+  cancelAnimationFrame(enterRaf)
   io.disconnect()
   observer?.disconnect()
   observer = null
   if (raf) cancelAnimationFrame(raf)
-  window.clearTimeout(measureTimer)
+  window.clearTimeout(feedbackTimer)
   document.removeEventListener("keydown", onKey)
 })
 </script>
@@ -398,134 +419,17 @@ onBeforeUnmount(() => {
     height var(--desk-dur) var(--desk-ease-out);
 }
 
-/* 手动拖动 / 整理模式下不要过渡，否则跟手会黏 */
-.is-arrange .item,
-.item.is-dragging { transition: none; }
-
-.item.is-panel { overflow: visible; }
-.is-arrange .item { cursor: grab; touch-action: none; user-select: none; }
-.item.is-dragging { z-index: 5; cursor: grabbing; filter: drop-shadow(0 8px 20px rgb(0 0 0 / 28%)); }
+/* 整理模式的材质、网格与操作控件统一由 styles/index.css 提供。 */
+.item.is-panel { overflow: visible; z-index: 6; }
 .item.is-dragging :deep(.frame),
 .item.is-dragging :deep(.frame *) { pointer-events: none; }
-.item.is-panel { z-index: 6; }
-.is-arrange .item.is-panel { outline: 1px dashed color-mix(in srgb, var(--desk-text) 55%, transparent); border-radius: var(--desk-r-xs); }
-/* ── 参考线 ── */
-/* 整理模式：一格一格的圆角方块（白色描边平铺，随单格等比缩放） */
-.gridlines {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><rect x='1' y='1' width='38' height='38' rx='9' fill='none' stroke='rgba(255,255,255,0.30)' stroke-width='1.4'/></svg>");
-  background-repeat: repeat;
-}
 
-/* 整理模式：壁纸压暗（只压壁纸，卡片照常） */
-.is-arrange .desk-wallpaper::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgb(0 0 0 / 46%);
-}
-/* ── 缩放手柄 ── */
-.edge {
-  position: absolute;
-  z-index: 6;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  /* 与全屏 / 更多同一套毛玻璃按钮：深色半透 + 高光描边 + 清透模糊 */
-  border: 1px solid rgb(255 255 255 / 24%);
-  border-radius: 50%;
-  background: rgb(20 22 28 / 34%);
-  backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
-  -webkit-backdrop-filter: blur(var(--desk-blur-clear, 12px)) saturate(var(--desk-saturate, 1.4));
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 18%),
-    0 2px 8px rgb(0 0 0 / 22%);
-  color: rgb(255 255 255 / 92%);
-  /* 默认隐藏：整理模式 + 悬停卡片才淡入（动效在 styles/index.css） */
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity var(--desk-dur-fast) var(--desk-ease),
-    background var(--desk-dur-fast) var(--desk-ease),
-    transform var(--desk-dur-fast) var(--desk-ease);
-}
-
-/* 四条边：按钮居中压在边上 */
-.edge.is-n { top: -12px; left: 50%; margin-left: -12px; cursor: ns-resize; }
-.edge.is-s { bottom: -12px; left: 50%; margin-left: -12px; cursor: ns-resize; }
-.edge.is-w { left: -12px; top: 50%; margin-top: -12px; cursor: ew-resize; }
-.edge.is-e { right: -12px; top: 50%; margin-top: -12px; cursor: ew-resize; }
-
-/* 整理模式：可交互（显隐由悬停动效控制） */
-.is-arrange .edge { pointer-events: auto; }
-/* 到边界的一侧：灰掉且不可点 */
-.edge.is-off {
-  opacity: 0.32;
-  filter: grayscale(1);
-  pointer-events: none;
-  cursor: default;
-}
-.is-arrange .edge:hover { background: rgb(20 22 28 / 58%); transform: scale(1.1); }
-.is-arrange .edge:active { transform: scale(0.94); }
-
-.handle {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  z-index: 7;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  color: #fff;
-  background: rgb(0 0 0 / 38%);
-  opacity: 0;
-  transition:
-    opacity var(--desk-dur-fast) var(--desk-ease),
-    transform var(--desk-dur-fast) var(--desk-ease);
-  pointer-events: none;
-}
-
-/* 悬停卡片：手柄淡入并回弹到原尺寸 */
-.item:hover .handle {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-/* ── 时钟 ── */
-.clock { container-type: size; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; color: #fff; text-align: center; text-shadow: 0 4px 24px rgb(0 0 0 / 42%); }
-.time { font-size: clamp(40px, 40cqh, 130px); font-weight: 300; line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
-.date { display: flex; gap: 0.5em; margin-top: clamp(6px, 6cqh, 18px); font-size: clamp(12px, 8cqh, 26px); color: rgb(255 255 255 / 78%); }
-.dot { opacity: 0.4; }
-/* ── 工具组：收起只剩大图标，悬停/整理向左展开 ── */
-/* 工具组：所有按钮同一尺寸，收缩/展开只改可见性，几何不可能被拉伸 */
-/* 工具组：品牌图标常驻不动；悬停/整理时三枚小按钮出现在它左侧 */
+/* 工具组：品牌标常驻，悬停时向左展开操作按钮。 */
 .tools { position: relative; display: grid; place-items: center; width: 100%; height: 100%; --tool: 44px; --mini: 30px; }
-.brand {
-  display: grid;
-  place-items: center;
-  width: var(--tool);
-  height: var(--tool);
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: rgb(255 255 255 / 72%);
-  cursor: pointer;
-}
-.brand:hover { color: #fff; background: rgb(15 23 42 / 22%); }
+.brand { width: var(--tool); height: var(--tool); }
 .brand svg { fill: currentColor; stroke: none; }
 .actions { position: absolute; top: 50%; right: calc(var(--tool) + 6px); display: none; width: max-content; transform: translateY(-50%); gap: var(--desk-sp-1); }
-.tools:hover .actions, .is-arrange .actions { display: flex; }
-.btn { flex: none; width: var(--mini); height: var(--mini); display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: rgb(255 255 255 / 66%); cursor: pointer; transition: color var(--desk-dur-fast) var(--desk-ease), background var(--desk-dur-fast) var(--desk-ease); }
-.btn:hover { color: #fff; background: rgb(15 23 42 / 26%); }
-.btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.btn svg { width: 62%; height: 62%; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tools:hover .actions, .tools:focus-within .actions { display: flex; }
 /* ── 空态 ── */
 .empty { padding: 40px 20px 80px; text-align: center; color: rgb(255 255 255 / 70%); }
 </style>

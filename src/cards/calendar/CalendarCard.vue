@@ -93,8 +93,7 @@ const month = computed(() => {
   height: 100%;
   padding: 5px;
   overflow: hidden;
-  background: #fff;
-  color: #1c1c1e;
+  color: var(--desk-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -126,13 +125,13 @@ const month = computed(() => {
 
 .lunar {
   font-size: 10cqmin;
-  color: #9a9a9e;
+  color: var(--desk-text-2);
   white-space: nowrap;
 }
 
 .week {
   font-size: 9cqmin;
-  color: #9a9a9e;
+  color: var(--desk-text-2);
   white-space: nowrap;
 }
 
@@ -175,7 +174,7 @@ const month = computed(() => {
 .head li {
   text-align: center;
   font-size: 5.4cqmin;
-  color: #9a9a9e;
+  color: var(--desk-text-2);
 }
 
 .head li.is-end {
@@ -194,7 +193,7 @@ const month = computed(() => {
 }
 
 .cell.is-other {
-  color: #c7c7cc;
+  color: var(--desk-text-3);
 }
 
 .cell.is-end {
@@ -219,7 +218,7 @@ const month = computed(() => {
 
   .week {
     font-size: 9cqmin;
-    color: #6b6b70;
+    color: var(--desk-text-2);
   }
 
   .month {

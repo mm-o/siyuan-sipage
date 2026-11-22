@@ -55,12 +55,11 @@
  * 所以「上一首 / 下一首」= 前一天 / 后一天的诗，缓存后不重复请求。
  * 序列与背景由 core/daily 统一管理：卡片与详情永远同一首诗、同一张图。
  */
-import { GlassButton, SeriesNav, Chips } from "@/ui/controls"
+import { Chips, GlassButton, SeriesNav, copyText, photoBg } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { Check, Copy, Image as ImageIcon } from "lucide-vue-next"
 import { DAILY_API, dailySeries } from "@/core/daily"
-import { photoBg } from "@/ui/controls"
-import { copyText } from "@/ui/controls"
+import { pad } from "@/core/util"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
 
@@ -88,8 +87,8 @@ const series = dailySeries<Poem>("shici", {
     const date = new Date()
     date.setDate(date.getDate() + offset)
     try {
-      const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-  const res = await fetch(`${API}?date=${day}`)
+      const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+      const res = await fetch(`${API}?date=${day}`)
       const json = await res.json()
       const d = json?.data
       if (!d?.title) return null

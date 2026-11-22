@@ -1,4 +1,6 @@
 import { Protyle } from "siyuan"
+import { persisted } from "@/core/store"
+import { sql } from "@/core/util"
 
 /** 用思源 Protyle 渲染块：插件自定义块只有它能挂载（knote 也是 require("siyuan") 拿 Protyle） */
 export function mountProtyle(app: unknown, element: HTMLElement, blockId: string) {
@@ -28,8 +30,6 @@ export function mountProtyle(app: unknown, element: HTMLElement, blockId: string
   }
 }
 
-import { persisted } from "@/core/store"
-
 /** 卡片/弹窗共用：只记「显示哪个块」和它的标题 */
 export const blockState = persisted("desk:block", { id: "", title: "" })
 
@@ -37,15 +37,9 @@ export function setId(id: string, title = "") {
   blockState.id = id.trim()
   blockState.title = title
 }
-
 /** 块标题（文档块取 content，其他块取首行，超长截断） */
 export async function blockTitle(id: string): Promise<string> {
-  const res = await fetch("/api/query/sql", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stmt: `select content as c from blocks where id = '${id}' limit 1` }),
-  })
-  const json = await res.json()
-  const text = String(((json?.data || [])[0] as { c?: string } | undefined)?.c || "").trim()
+  const rows = await sql(`select content as c from blocks where id = '${id}' limit 1`).catch(() => [])
+  const text = String((rows[0] as { c?: string } | undefined)?.c || "").trim()
   return text.length > 40 ? `${text.slice(0, 40)}…` : text
 }

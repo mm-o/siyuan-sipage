@@ -14,9 +14,9 @@
       </ul>
     </section>
 
-    <!-- 中：点一下执行，＋ 加入右栏（不设上限） -->
+    <!-- 中：点一下执行；右侧与卡片库一致，已添加显示数量，可以继续添加 -->
     <section class="sc-col desk-pane is-mid">
-      <h4 class="sc-sub desk-note">{{ active }} · 点一下执行，＋ 加入</h4>
+      <h4 class="sc-sub desk-note">{{ active }} · 点一下执行</h4>
       <ul class="sc-list">
         <li v-for="s in byGroup(active)" :key="s.id" class="row" @click="runShortcut(s)">
           <span class="tile" :style="{ background: GROUP_STYLE[s.group].soft, color: GROUP_STYLE[s.group].color }">
@@ -24,22 +24,20 @@
             <component :is="s.fallback" v-else :size="13" :stroke-width="1.9" />
           </span>
           <span class="name desk-ellipsis">{{ s.label }}</span>
-          <button v-if="!isOn(s.id)" class="btn" type="button" aria-label="加入" @click.stop="addShortcut(s.id)">
-            <Plus :size="13" :stroke-width="2.4" />
-          </button>
-          <Check v-else :size="13" :stroke-width="2.4" class="check" />
+          <span v-if="used(s.id)" class="desk-badge is-on">{{ used(s.id) }}</span>
+          <GlassButton :icon="Plus" label="加入" @click.stop="addShortcut(s.id)" />
         </li>
       </ul>
     </section>
 
-    <!-- 右：已启用（拖动排序 / 垃圾桶移除） -->
+    <!-- 右：已启用（拖动排序 / 垃圾桶移除一次） -->
     <section class="sc-col desk-pane is-right">
       <h4 class="sc-sub desk-note">已启用 {{ enabled.length }}</h4>
       <ul class="sc-list">
         <li
           v-for="(s, i) in enabled"
-          :key="s.id"
-          class="row is-static"
+          :key="i"
+          class="row"
           :class="{ 'is-drag': dragFrom === i }"
           draggable="true"
           @dragstart="dragFrom = i"
@@ -53,9 +51,7 @@
             <component :is="s.fallback" v-else :size="13" :stroke-width="2" />
           </span>
           <span class="name desk-ellipsis">{{ s.label }}</span>
-          <button class="btn" type="button" aria-label="移除" @click="toggleShortcut(s.id)">
-            <Trash2 :size="13" :stroke-width="1.9" />
-          </button>
+          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeShortcutAt(i)" />
         </li>
         <li v-if="!enabled.length" class="sc-sub desk-note">空</li>
       </ul>
@@ -65,17 +61,18 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import { Check, GripVertical, Plus, Trash2 } from "lucide-vue-next"
+import { GlassButton } from "@/ui/controls"
+import { GripVertical, Plus, Trash2 } from "lucide-vue-next"
 import {
   GROUPS,
   GROUP_STYLE,
   addShortcut,
   byGroup,
   enabledShortcuts,
+  removeShortcutAt,
   reorderShortcut,
   runShortcut,
   shortcutState,
-  toggleShortcut,
   useSprite,
   type ShortcutGroup,
 } from "./shortcut"
@@ -84,8 +81,8 @@ const active = ref<ShortcutGroup>("导航")
 const sprite = useSprite()
 const dragFrom = ref(-1)
 const enabled = computed(() => enabledShortcuts())
-const isOn = (id: string) => shortcutState.enabled.includes(id)
-const countOf = (g: ShortcutGroup) => byGroup(g).filter((s) => isOn(s.id)).length
+const used = (id: string) => shortcutState.enabled.filter((x) => x === id).length
+const countOf = (g: ShortcutGroup) => byGroup(g).reduce((n, s) => n + used(s.id), 0)
 
 function drop(to: number) {
   if (dragFrom.value >= 0) reorderShortcut(dragFrom.value, to)
@@ -94,9 +91,7 @@ function drop(to: number) {
 </script>
 
 <style scoped>
-/* 三栏同构：分类 / 可选 / 已启用共用一套行、图标块与按钮 */
-
-
+/* 三栏同构：分类 / 可选 / 已启用共用行、图标块与按钮 */
 .sc-col {
   display: flex;
   flex-direction: column;
@@ -104,14 +99,11 @@ function drop(to: number) {
   padding: var(--desk-sp-3);
   min-height: 0;
   overflow: auto;
-  scrollbar-width: none;
 }
 
 .sc-col.is-left { flex: 0 0 124px; }
 .sc-col.is-mid { flex: 1 1 auto; }
 .sc-col.is-right { flex: 0 0 208px; }
-
-
 
 .sc-list {
   list-style: none;
@@ -131,13 +123,12 @@ function drop(to: number) {
   border-radius: var(--desk-r-control);
   font-size: var(--desk-fs-sm);
   color: var(--desk-text-2);
-  cursor: pointer;
 }
 
-.row:hover { background: color-mix(in srgb, var(--desk-accent) 10%, transparent); }
+/* 只有可点击的两栏有指针与悬停反馈。 */
+.sc-col:not(.is-right) .row { cursor: pointer; }
+.sc-col:not(.is-right) .row:hover { background: var(--dg-hover); }
 .row.is-on { background: color-mix(in srgb, var(--desk-accent) 14%, transparent); color: var(--desk-accent); }
-.row.is-static { cursor: default; }
-.row.is-static:hover { background: transparent; }
 .row.is-drag { opacity: 0.5; }
 
 .tile {
@@ -149,9 +140,7 @@ function drop(to: number) {
   border-radius: var(--desk-r-sm);
 }
 
-.tile svg { width: 14px; height: 14px; fill: currentColor; }
-
-
+.tile svg { width: 14px; height: 14px; }
 
 .num {
   font-style: normal;
@@ -167,28 +156,5 @@ function drop(to: number) {
   flex: none;
   color: var(--desk-text-3);
   cursor: grab;
-}
-
-.btn,
-.check {
-  flex: none;
-  color: var(--desk-accent);
-}
-
-.btn {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border: 0;
-  border-radius: var(--desk-r-sm);
-  background: transparent;
-  color: var(--desk-text-3);
-  cursor: pointer;
-}
-
-.btn:hover {
-  background: color-mix(in srgb, var(--desk-accent) 16%, transparent);
-  color: var(--desk-accent);
 }
 </style>

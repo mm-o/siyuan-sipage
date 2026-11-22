@@ -2,11 +2,11 @@
   <div class="qp-panel desk-seq desk-panel-row">
     <!-- 左：已添加（拖动排序 + 垃圾桶） -->
     <section class="qp-col desk-pane is-left">
-      <h4 class="qp-sub desk-note">已添加 {{ docs.length }}/8 · 拖动排序</h4>
+      <h4 class="qp-sub desk-note">已添加 {{ docs.length }}/{{ QUICK_SLOTS }} · 拖动排序</h4>
       <ul class="qp-list">
         <li
           v-for="(d, i) in docs"
-          :key="d.id"
+          :key="i"
           class="qp-item"
           :class="{ 'is-drag': dragFrom === i }"
           draggable="true"
@@ -20,9 +20,7 @@
             <FileText :size="13" :stroke-width="2" />
           </span>
           <span class="qp-name desk-ellipsis">{{ d.title }}</span>
-          <button class="qp-act" type="button" aria-label="移除" @click="removeDoc(d.id)">
-            <Trash2 :size="13" :stroke-width="1.9" />
-          </button>
+          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeDocAt(i)" />
         </li>
         <li v-if="!docs.length" class="qp-empty desk-note">右栏点一下文档加入</li>
       </ul>
@@ -31,7 +29,7 @@
     <!-- 右：搜索 + 最近，点一下加入 -->
     <section class="qp-col desk-pane is-right">
       <form class="qp-search" @submit.prevent="run">
-        <input v-model="keyword" class="qp-input" type="text" placeholder="搜文档标题，回车" />
+        <GlassField v-model="keyword" class="qp-input" label="查找文档" placeholder="搜文档标题，回车" />
         <GlassButton :icon="Search" label="查找" @click="run" />
       </form>
 
@@ -41,8 +39,8 @@
             <FileText :size="13" :stroke-width="2" />
           </span>
           <span class="qp-name desk-ellipsis">{{ d.title }}</span>
-          <Plus v-if="!has(d.id)" :size="12" :stroke-width="2.4" class="qp-add" />
-          <Check v-else :size="12" :stroke-width="2.4" class="qp-add" />
+          <span v-if="used(d.id)" class="desk-badge is-on">{{ used(d.id) }}</span>
+          <GlassButton :icon="Plus" label="加入" :disabled="full" @click.stop="pick(d)" />
         </li>
         <li v-if="!hits.length && !recent.length" class="qp-empty desk-note">没有可添加的文档</li>
       </ul>
@@ -51,17 +49,18 @@
 </template>
 
 <script setup lang="ts">
-import { GlassButton } from "@/ui/controls"
-import { ref } from "vue"
-import { Check, FileText, GripVertical, Plus, Search, Trash2 } from "lucide-vue-next"
-import { docs, quickpick, recentDocs, reorderQuick, removeDoc, searchDocs, setSlot, tint, type PickDoc } from "@/core/quickdocs"
+import { GlassButton, GlassField } from "@/ui/controls"
+import { computed, ref } from "vue"
+import { FileText, GripVertical, Plus, Search, Trash2 } from "lucide-vue-next"
+import { QUICK_SLOTS, addDoc, docs, quickpick, recentDocs, removeDocAt, reorderQuick, searchDocs, tint, type PickDoc } from "@/core/quickdocs"
 
 const keyword = ref("")
 const hits = ref<PickDoc[]>([])
 const recent = ref<PickDoc[]>([])
 const dragFrom = ref(-1)
 
-const has = (id: string) => docs.value.some((d) => d.id === id)
+const used = (id: string) => docs.value.filter((d) => d.id === id).length
+const full = computed(() => docs.value.length >= QUICK_SLOTS)
 
 function drop(to: number) {
   if (dragFrom.value >= 0) reorderQuick(dragFrom.value, to)
@@ -77,8 +76,7 @@ async function run() {
 }
 
 function pick(d: PickDoc) {
-  if (has(d.id)) return
-  setSlot(docs.value.length, d)
+  addDoc(d)
   keyword.value = ""
   hits.value = []
 }
@@ -96,7 +94,6 @@ void quickpick
 
 <style scoped>
 
-
 .qp-col {
   display: flex;
   flex-direction: column;
@@ -104,7 +101,6 @@ void quickpick
   padding: var(--desk-sp-3);
   min-height: 0;
   overflow: auto;
-  scrollbar-width: none;
 }
 
 .qp-col.is-left {
@@ -114,8 +110,6 @@ void quickpick
 .qp-col.is-right {
   flex: 1 1 auto;
 }
-
-
 
 .qp-list {
   list-style: none;
@@ -132,15 +126,11 @@ void quickpick
   gap: var(--desk-sp-1h);
   height: 32px;
   padding: 0 6px;
-  border-radius: var(--desk-r-control);
   font-size: var(--desk-fs-sm);
-  color: var(--desk-text-2);
-  cursor: pointer;
 }
 
-.qp-item:hover {
-  background: color-mix(in srgb, var(--desk-accent) 10%, transparent);
-}
+.qp-col.is-right .qp-item { cursor: pointer; }
+
 
 .qp-grip {
   display: grid;
@@ -165,30 +155,6 @@ void quickpick
   border-radius: var(--desk-r-sm);
 }
 
-
-
-.qp-add {
-  flex: none;
-  color: var(--desk-accent);
-}
-
-.qp-act {
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--desk-text-3);
-  cursor: pointer;
-}
-
-.qp-act:hover {
-  background: color-mix(in srgb, var(--desk-accent) 16%, transparent);
-  color: var(--desk-accent);
-}
-
 .qp-search {
   display: flex;
   gap: var(--desk-sp-1h);
@@ -197,14 +163,6 @@ void quickpick
 .qp-input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-  color: var(--desk-text);
-  font-size: var(--desk-fs-sm);
 }
-
 
 </style>

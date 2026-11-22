@@ -8,6 +8,7 @@ import { LunarDay, SolarDay } from "tyme4ts"
 import type { Component } from "vue"
 import { Briefcase, Flag, Gift, Heart, House, LayoutGrid, Target } from "lucide-vue-next"
 import { COVERS } from "@/core/image"
+import { pad } from "@/core/util"
 import type { CountdownCategory, CountdownEvent } from "@/core/store"
 
 export type { CountdownEvent }
@@ -60,7 +61,7 @@ export const REPEAT_OPTIONS = [
   { label: "每年", value: "year" as const },
 ]
 
-export const REPEAT_LABEL: Record<CountdownEvent["repeat"], string> = { none: "不重复", year: "每年" }
+const REPEAT_LABEL: Record<CountdownEvent["repeat"], string> = { none: "不重复", year: "每年" }
 
 /** 重复文案：农历重复要说明，不然「每年」看不出按的是阴历 */
 export function repeatText(event: CountdownEvent) {
@@ -75,7 +76,7 @@ function effectiveDate(event: CountdownEvent, from = todayKey()) {
   if (event.repeat !== "year") return event.date
   const [y, m, d] = event.date.split("-").map(Number)
   if (event.lunar) {
-    const lunar = lunarParts(`${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`)
+    const lunar = lunarParts(`${y}-${pad(m)}-${pad(d)}`)
     return nextLunarKey(lunar.month, lunar.day, from)
   }
   return nextSolarKey(m, d, from)
@@ -204,15 +205,14 @@ export function draftValid(draft: Omit<CountdownEvent, "id">) {
   return draft.title.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(draft.date)
 }
 
-/* ── 日期换算（原 core/dates.ts：只有倒数日与热力图用，就留在用它的卡里）── */
-const pad = (n: number) => String(n).padStart(2, "0")
+/* ── 日期换算（只有倒数日与热力图用，就留在用它的卡里；补零走 core/util）── */
 
 /** Date → 本地日期键 YYYY-MM-DD（不用 toISOString，避免时区把日期挪一天） */
 export function dayKey(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export const todayKey = () => dayKey(new Date())
+const todayKey = () => dayKey(new Date())
 
 /** YYYY-MM-DD → 本地零点 Date */
 export function parseDay(key: string) {
@@ -221,20 +221,20 @@ export function parseDay(key: string) {
 }
 
 /** 天数差（目标 − 起点，未来为正）：本地零点相减再取整，绕开夏令时 */
-export function dayDiff(target: string, from = todayKey()) {
+function dayDiff(target: string, from = todayKey()) {
   const ms = parseDay(target).getTime() - parseDay(from).getTime()
   return Math.round(ms / 86_400_000)
 }
 
 /** 公历固定日（如 10-01）：今年没过就今年，过了就明年 */
-export function nextSolarKey(month: number, day: number, from = todayKey()) {
+function nextSolarKey(month: number, day: number, from = todayKey()) {
   const year = parseDay(from).getFullYear()
   const thisYear = `${year}-${pad(month)}-${pad(day)}`
   return thisYear >= from ? thisYear : `${year + 1}-${pad(month)}-${pad(day)}`
 }
 
 /** 农历固定日（如 正月初一）：今年没过就今年，过了就明年（多试一年兜住腊月跨年） */
-export function nextLunarKey(month: number, day: number, from = todayKey()) {
+function nextLunarKey(month: number, day: number, from = todayKey()) {
   const year = parseDay(from).getFullYear()
   let best = ""
   for (const y of [year, year + 1, year + 2]) {
@@ -246,7 +246,7 @@ export function nextLunarKey(month: number, day: number, from = todayKey()) {
 }
 
 /** 公历日期 → 它的农历月/日（「每年按农历重复」用） */
-export function lunarParts(solarKey: string) {
+function lunarParts(solarKey: string) {
   const [y, m, d] = solarKey.split("-").map(Number)
   const lunar = SolarDay.fromYmd(y, m, d).getLunarDay()
   return { month: lunar.getMonth(), day: lunar.getDay() }

@@ -1,9 +1,9 @@
-﻿<template>
+<template>
   <div class="desk-panel set-page">
     <h2 class="set-h2">壁纸</h2>
     <p class="set-p">换一张底片；模糊与遮罩在「组件设置 → 壁纸」里调。</p>
 
-    <!-- 八个来源一屏看完：4 列 × 2 行 -->
+    <!-- 来源统一选择 -->
     <div class="sources">
       <button
         v-for="s in SOURCES"
@@ -28,24 +28,24 @@
       <!-- 思源资源：笔记本里的图片，内核直给；全量列出 + 搜索 -->
       <div v-if="source === 'siyuan'" class="picsum">
         <div class="picker-search">
-          <input v-model="assetQ" class="desk-input" type="search" placeholder="搜索文件名…" />
+          <GlassField v-model="assetQ" type="search" label="搜索图片文件名" placeholder="搜索文件名…" />
         </div>
         <div class="picsum-bar">
           <span class="desk-hint">{{ assetShown.length }} / {{ assets.length }} 张 · 取自笔记本 assets</span>
-          <button class="desk-btn" type="button" @click="pick('siyuan')">换一张</button>
+          <GlassButton @click="pick('siyuan')" text label="换一张" />
         </div>
         <div class="desk-tiles asset-grid">
-          <button
+          <div
             v-for="a in assetShown"
             :key="a.path"
             class="desk-tile"
             :class="{ 'is-active': wallpaper.value === a.url }"
             :style="{ backgroundImage: `url(${a.url})` }"
-            :aria-label="a.path"
-            @click="assetsPick(a.url)"
+
           >
+            <button class="wallpaper-pick" type="button" :aria-label="a.path" @click="choose('siyuan', a.url)" />
             <FavDot :value="a.url" />
-          </button>
+          </div>
         </div>
         <p v-if="!assets.length" class="desk-hint">笔记本里还没有图片资源。</p>
         <p v-else-if="!assetShown.length" class="desk-hint">没有匹配的图片，换个关键词。</p>
@@ -55,83 +55,77 @@
       <template v-else-if="source === 'cover'">
         <Chips v-model="activeCat" :options="catOptions" />
         <div class="desk-tiles">
-          <button
+          <div
             v-for="c in coverVisible"
             :key="c.file"
             class="desk-tile ariaLabel" data-position="north" data-tooltip-encoding="none"
             :class="{ 'is-active': wallpaper.value === coverUrl(c.file) }"
             :style="{ backgroundImage: `url(${coverUrl(c.file)})` }"
-            :aria-label="c.photographer ? `${labelOf(c)} · ${c.photographer}` : labelOf(c)"
-            @click="useImage(coverUrl(c.file), 'cover')"
+
           >
+            <button class="wallpaper-pick" type="button" :aria-label="c.photographer ? `${labelOf(c)} · ${c.photographer}` : labelOf(c)" @click="choose('cover', coverUrl(c.file), 'cover')" />
             <FavDot :value="coverUrl(c.file)" />
-          </button>
+          </div>
         </div>
-        <button v-if="coverRest && !expanded" class="desk-btn cover-more" type="button" @click="expanded = true">
-          展开全部 {{ visible.length }} 张
-        </button>
+        <GlassButton v-if="coverRest && !expanded" class="cover-more" @click="expanded = true" text :label="`展开全部 ${visible.length} 张`" />
       </template>
 
       <!-- 必应每日 -->
       <div v-else-if="source === 'bing'" class="desk-tiles">
-        <button
+        <div
           v-for="b in bing"
           :key="b.url"
           class="desk-tile"
           :class="{ 'is-active': wallpaper.value === b.url }"
           :style="{ backgroundImage: `url(${b.url})` }"
-          :aria-label="b.title"
-          @click="useImage(b.url, 'bing')"
+
         >
-          <FavDot :value="b.url" />
-        </button>
+            <button class="wallpaper-pick" type="button" :aria-label="b.title" @click="pickImage({ url: b.url }, 'bing')" />
+            <FavDot :value="b.url" />
+          </div>
         <p v-if="!bing.length" class="desk-hint">必应壁纸加载失败，请检查网络。</p>
       </div>
 
       <!-- 国内图源：alcy.cc 一次直出，国内可访问 -->
       <div v-else-if="source === 'gitee'" class="picsum">
         <div class="desk-tiles">
-          <button
+          <div
             v-for="a in alcy"
             :key="a.seed"
             class="desk-tile"
             :class="{ 'is-active': wallpaper.value === a.url }"
             :style="{ backgroundImage: `url(${a.thumb})` }"
-            :aria-label="`国内图源 · ${a.seed}`"
-            @click="pickImage(a, 'gitee')"
+
           >
+            <button class="wallpaper-pick" type="button" :aria-label="`国内图源 · ${a.seed}`" @click="pickImage(a, 'gitee')" />
             <FavDot :value="a.url" />
-          </button>
+          </div>
         </div>
-        <button class="desk-btn batch-btn" type="button" :class="{ 'is-busy': busy.gitee }" :disabled="busy.gitee" @click="reshuffleAlcy">
-          {{ busy.gitee ? "取图中…" : `换一批 ${alcy.length}` }}
-        </button>
+        <GlassButton class="batch-btn" :class="{ 'is-busy': busy.gitee }" :disabled="busy.gitee" @click="reshuffle('gitee')" text :label='busy.gitee ? "取图中…" : `换一批 ${alcy.length}`' />
       </div>
 
       <!-- Picsum：全部列出，点哪张用哪张 -->
       <div v-else-if="source === 'picsum'" class="picsum">
         <div class="desk-tiles">
-          <button
+          <div
             v-for="p in picsum"
             :key="p.seed"
             class="desk-tile"
             :class="{ 'is-active': wallpaper.value === p.url }"
             :style="{ backgroundImage: `url(${p.thumb})` }"
-            :aria-label="`Picsum · ${p.seed}`"
-            @click="pickImage(p, 'picsum')"
+
           >
+            <button class="wallpaper-pick" type="button" :aria-label="`Picsum · ${p.seed}`" @click="pickImage(p, 'picsum')" />
             <FavDot :value="p.url" />
-          </button>
+          </div>
         </div>
-        <button class="desk-btn batch-btn" type="button" :class="{ 'is-busy': busy.picsum }" :disabled="busy.picsum" @click="reshuffle">
-          {{ busy.picsum ? "取图中…" : `换一批 ${picsum.length}` }}
-        </button>
+        <GlassButton class="batch-btn" :class="{ 'is-busy': busy.picsum }" :disabled="busy.picsum" @click="reshuffle('picsum')" text :label='busy.picsum ? "取图中…" : `换一批 ${picsum.length}`' />
       </div>
 
       <!-- 本地随机 -->
       <div v-else-if="source === 'random'" class="random">
         <div class="random-preview" :style="{ backgroundImage: `url(${wallpaper.value})` }" />
-        <button class="desk-btn" type="button" @click="shuffle">换一张</button>
+        <GlassButton @click="shuffle" text label="换一张" />
       </div>
 
       <!-- 纯色 -->
@@ -143,7 +137,7 @@
           :class="{ active: isActive(c) }"
           :style="{ background: c }"
           :aria-label="c"
-          @click="wallpaper.value = c"
+          @click="choose('solid', c)"
         />
       </div>
 
@@ -154,8 +148,8 @@
 
       <!-- 链接 -->
       <div v-else class="url-row">
-        <input v-model="url" class="desk-input" type="url" placeholder="https://example.com/wallpaper.jpg" @keydown.enter="applyUrl" />
-        <button class="desk-btn" type="button" @click="applyUrl">使用</button>
+        <GlassField v-model="url" type="url" label="壁纸图片链接" placeholder="https://example.com/wallpaper.jpg" @keydown.enter="applyUrl" />
+        <GlassButton @click="applyUrl" text label="使用" />
       </div>
     </div>
   </div>
@@ -168,14 +162,13 @@
  * 职责：选「用哪张壁纸」。模糊/遮罩不在这里（属于全局显示设置，在组件设置里）。
  * 来源只用可靠通道：思源主题色 / 思源 assets / 思源题头图 / 必应官方接口 / 国内图源 / Picsum / 本地随机。
  */
-import { Chips, toast } from "@/ui/controls"
+import { Chips, GlassButton, GlassField, toast } from "@/ui/controls"
 import { computed, defineComponent, h, reactive, ref, watch } from "vue"
 import type { Component } from "vue"
-import { Circle, Database, Globe, Heart, Image as ImageIcon, Palette, Shuffle } from "lucide-vue-next"
-import { addFavorite, dropFavorite, isFav, wallpaper } from "@/core/store"
+import { Circle, Database, Globe, Heart, Image as ImageIcon, Link, Palette, Shuffle } from "lucide-vue-next"
+import { addFavorite, dropFavorite, isFav, wallpaper, setWallpaper } from "@/core/store"
 import {
   alcyBatch,
-  alcyWallpaper,
   coverUrl,
   favName,
   fetchImage,
@@ -205,22 +198,15 @@ const FavDot = defineComponent({
   setup(props) {
     const name = computed(() => favName(props.value))
     const on = computed(() => isFav(name.value))
-    return () =>
-      h(
-        "span",
-        {
-          class: ["fav-dot", { "is-on": on.value }],
-          role: "button",
-          title: on.value ? "取消收藏" : "收藏",
-          "aria-label": on.value ? "取消收藏" : "收藏",
-          onClick: (e: MouseEvent) => {
-            e.stopPropagation()
-            e.preventDefault()
-            void toggleFav(props.value)
-          },
-        },
-        [h(Heart, { size: 12, strokeWidth: 2 })],
-      )
+    return () => h(GlassButton, {
+      class: "fav-dot",
+      icon: Heart,
+      active: on.value,
+      tone: "photo",
+      variant: on.value ? "danger" : "default",
+      label: on.value ? "取消收藏" : "收藏",
+      onClick: (e: MouseEvent) => { e.stopPropagation(); void toggleFav(props.value) },
+    })
   },
 })
 
@@ -241,7 +227,7 @@ async function toggleFav(value: string) {
   }
 }
 
-/** 八个来源，4 列两行；跟随思源、思源资源都在这一屏里 */
+/** 壁纸来源与显示标签 */
 const SOURCES: { value: WallSource; label: string; desc: string; icon: Component }[] = [
   { value: "theme", label: "跟随思源", desc: "吃主题色", icon: Palette },
   { value: "siyuan", label: "思源资源", desc: "笔记本图片", icon: Database },
@@ -251,6 +237,7 @@ const SOURCES: { value: WallSource; label: string; desc: string; icon: Component
   { value: "picsum", label: "Picsum", desc: "需科学上网", icon: ImageIcon },
   { value: "random", label: "本地随机", desc: "题头图里随机", icon: Shuffle },
   { value: "solid", label: "纯色", desc: "24 色板", icon: Circle },
+  { value: "url", label: "图片链接", desc: "自定义图片", icon: Link },
 ]
 
 const groups = ref<CoverGroup[]>([])
@@ -303,18 +290,17 @@ function labelOf(item: CoverItem) {
   return groups.value.find((g) => g.items.includes(item))?.label || ""
 }
 
-/** 换图：value 存地址（可复现、能落盘），resolved 存已下发的图（只活内存） */
-function useImage(value: string, src: "cover" | "bing" | "picsum" | "gitee", data?: string) {
-  wallpaper.type = "cover"
-  wallpaper.source = src
-  wallpaper.value = value
-  wallpaper.resolved = data && data !== value ? data : undefined
+/** 最后一次选择生效；所有来源与收藏共用 store 的切换入口。 */
+let selection = 0
+function choose(...args: Parameters<typeof setWallpaper>) {
+  selection++
+  setWallpaper(...args)
 }
 
-/** 点一张外网图：这时才去取原图，网格里只放缩略 */
-async function pickImage(img: WebImage, src: "picsum" | "gitee") {
+async function pickImage(img: { url: string; thumb?: string }, src: "bing" | "picsum" | "gitee") {
+  const request = ++selection
   const full = img.url.startsWith("data:") ? img.url : await fetchImage(img.url).catch(() => img.thumb)
-  useImage(img.url, src, full)
+  if (request === selection) setWallpaper("cover", img.url, src, full)
 }
 
 /** 每个来源的列表只在用得到时取一次，取过的就一直复用 */
@@ -330,92 +316,59 @@ async function ensure(s: WallSource) {
 watch(source, (s) => void ensure(s).catch(() => {}), { immediate: true })
 
 async function pick(s: WallSource) {
+  const request = ++selection
   await ensure(s).catch(() => {})
+  if (request !== selection) return
   switch (s) {
-    case "theme": {
-      wallpaper.type = "theme"
-      break
-    }
+    case "theme": return choose("theme")
     case "siyuan": {
-      wallpaper.type = "siyuan"
-      break
+      const one = assets.value[Math.floor(Math.random() * assets.value.length)]
+      return choose("siyuan", one?.url || "")
+    }
+    case "solid": return choose("solid", wallpaper.value.startsWith("#") ? wallpaper.value : COLORS[0])
+    case "url": {
+      url.value = wallpaper.value.startsWith("http") ? wallpaper.value : ""
+      return choose("url", url.value)
     }
     case "cover": {
       const first = groups.value[0]?.items[0]
-      if (first) useImage(coverUrl(first.file), "cover")
-      break
+      if (first) choose("cover", coverUrl(first.file), "cover")
+      return
     }
     case "bing": {
       const one = bing.value[Math.floor(Math.random() * bing.value.length)]
-      if (one) useImage(one.url, "bing")
-      break
+      if (one) await pickImage(one, "bing")
+      return
     }
+    case "picsum":
     case "gitee": {
-      const one = alcy.value[0]
-      if (one) await pickImage(one, "gitee")
-      else useImage(await alcyWallpaper(), "gitee")
-      break
+      const one = (s === "picsum" ? picsum.value : alcy.value)[0]
+      if (one) await pickImage(one, s)
+      return
     }
-    case "picsum": {
-      const one = picsum.value[0]
-      if (one) await pickImage(one, "picsum")
-      break
-    }
-    case "random": {
-      wallpaper.type = "cover"
-      wallpaper.source = "random"
-      wallpaper.value = await randomCoverUrl()
-      break
-    }
-    case "solid": {
-      wallpaper.type = "solid"
-      if (!wallpaper.value.startsWith("#")) wallpaper.value = "#0b0e14"
-      break
-    }
-    case "url": {
-      wallpaper.type = "url"
-      url.value = wallpaper.value.startsWith("http") ? wallpaper.value : ""
-      break
-    }
+    case "random": return shuffle()
   }
 }
 
-/** 换一批：先给按钮置忙，取完再换 —— 点击立刻有反馈，不做「点了没反应」 */
-async function reshuffle() {
-  if (busy.picsum) return
-  busy.picsum = true
+async function reshuffle(s: "picsum" | "gitee") {
+  if (busy[s]) return
+  busy[s] = true
   try {
-    picsum.value = await picsumShuffle()
-  } finally {
-    busy.picsum = false
-  }
-}
-
-/** 思源资源：点哪张用哪张，type 固定 siyuan，重开面板还认得回来 */
-function assetsPick(u: string) {
-  wallpaper.type = "siyuan"
-  wallpaper.value = u
-}
-
-async function reshuffleAlcy() {
-  if (busy.gitee) return
-  busy.gitee = true
-  try {
-    alcy.value = await alcyBatch()
-  } finally {
-    busy.gitee = false
-  }
+    const images = await (s === "picsum" ? picsumShuffle() : alcyBatch())
+    ;(s === "picsum" ? picsum : alcy).value = images
+  } catch (error) { toast(`取图失败：${(error as Error).message}`) }
+  finally { busy[s] = false }
 }
 
 async function shuffle() {
-  wallpaper.value = await randomCoverUrl()
+  const request = ++selection
+  const value = await randomCoverUrl()
+  if (request === selection) setWallpaper("cover", value, "random")
 }
 
 function applyUrl() {
-  const v = url.value.trim()
-  if (!v) return
-  wallpaper.value = v
-  wallpaper.type = "url"
+  const value = url.value.trim()
+  if (value) choose("url", value)
 }
 
 /* 色板（原 ui/primitives/Swatch.vue，仅此处使用） */
@@ -434,7 +387,7 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
 </script>
 
 <style scoped>
-/* 八个来源一屏看完：4 列 × 2 行 */
+/* 来源统一选择 */
 .sources {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -447,26 +400,15 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
   gap: var(--desk-sp-2);
   min-width: 0;
   padding: var(--desk-sp-2) 9px;
-  border-radius: var(--desk-r-control);
   border: 1px solid var(--desk-stroke);
-  background: transparent;
-  color: var(--desk-text-2);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition:
-    background var(--desk-dur-fast) var(--desk-ease),
-    border-color var(--desk-dur-fast) var(--desk-ease);
 }
 
-.source:hover {
-  background: color-mix(in srgb, var(--desk-accent) 8%, transparent);
-}
 
 .source.is-active {
-  color: var(--desk-text);
   border-color: var(--desk-accent);
-  background: color-mix(in srgb, var(--desk-accent) 12%, transparent);
 }
 
 /* 跟随思源：图标位直接显示主题色本身 */
@@ -512,15 +454,9 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
   gap: var(--desk-sp-2);
 }
 
-/* 中栏 550px：4 列跟来源网格同节奏，一行 4 张不碎 */
-.picker :deep(.desk-tiles) {
-  grid-template-columns: repeat(4, 1fr);
-}
-
 .picker :deep(.chips) {
   flex-wrap: nowrap;
   overflow-x: auto;
-  scrollbar-width: none;
 }
 
 /* 收藏心要绝对定位在图角落 */
@@ -555,43 +491,12 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
 }
 
 /* 收藏心：图角落，平时浮一层玻璃，收藏后实心 */
-.fav-dot {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 34%);
-  color: rgb(255 255 255 / 76%);
-  opacity: 0;
-  cursor: pointer;
-  transition:
-    opacity var(--desk-dur-fast) var(--desk-ease),
-    transform var(--desk-dur-fast) var(--desk-ease);
-}
-
-.desk-tile:hover .fav-dot,
-.swatch-item:hover .fav-dot,
-.fav-dot.is-on {
-  opacity: 1;
-}
-
-.fav-dot:hover {
-  transform: scale(1.12);
-}
-
-.fav-dot.is-on {
-  background: var(--desk-accent);
-  color: #fff;
-}
-
-.fav-dot.is-on :deep(svg) {
-  fill: currentColor;
-}
+.wallpaper-pick { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.wallpaper-pick:focus-visible { outline: var(--desk-ring); outline-offset: 2px; }
+.fav-dot { position: absolute; top: 3px; right: 3px; z-index: 1; opacity: 0; }
+.desk-tile:hover .fav-dot, .desk-tile:focus-within .fav-dot, .fav-dot.is-on { opacity: 1; }
+.fav-dot.is-on :deep(svg) { fill: currentColor; }
+@media (hover: none) { .fav-dot { opacity: 1; } }
 
 /* 思源资源可能是成百张：固定高度内滚动，不把页面撑长 */
 .asset-grid {
@@ -655,21 +560,4 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
     0 0 0 4px var(--desk-accent);
 }
 
-.set-h2 {
-  margin: 0;
-  font-size: var(--desk-fs-title);
-  font-weight: 600;
-}
-
-.set-p {
-  margin: calc(var(--desk-sp-3) * -1 + 2px) 0 0;
-  font-size: var(--desk-fs-body);
-  color: var(--desk-text-2);
-}
-
-.set-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--desk-sp-3);
-}
 </style>

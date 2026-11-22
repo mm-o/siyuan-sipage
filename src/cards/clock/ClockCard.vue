@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 /**
- * 时钟卡：黑底 + 大号时间 + 日期。
+ * 时钟卡：大号时间与日期，表面由框架统一提供。
  *
  * 三种自适配布局（只看宽高比）：
  *   竖长条（≤0.75）  时 / 分 上下两行，日期在下面分两行
@@ -35,6 +35,7 @@
  * 数字变化时用「滚动」：旧值向上滚出、新值从下方滚入（各自 overflow 裁剪）。
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
+import { pad } from "@/core/util"
 
 const props = defineProps<{ size?: string; w?: number; h?: number }>()
 
@@ -53,7 +54,6 @@ const tall = computed(() => ratio.value <= 0.75)
 /** 横条：显示秒 */
 const withSec = computed(() => ratio.value >= 1.4)
 
-const pad = (n: number) => String(n).padStart(2, "0")
 const hh = computed(() => pad(now.value.getHours()))
 const mm = computed(() => pad(now.value.getMinutes()))
 const ss = computed(() => pad(now.value.getSeconds()))
@@ -76,8 +76,7 @@ const week = computed(() => `周${"日一二三四五六"[now.value.getDay()]}`)
   width: 100%;
   height: 100%;
   padding: 4cqh 3cqw;
-  background: #101114;
-  color: #f4f4f6;
+  color: var(--desk-text);
   overflow: hidden;
 }
 
@@ -137,20 +136,20 @@ const week = computed(() => `周${"日一二三四五六"[now.value.getDay()]}`)
   margin-top: 1cqh;
   font-size: clamp(12px, 11cqh, 26px);
   font-weight: 500;
-  color: rgb(255 255 255 / 88%);
+  color: var(--desk-text-2);
 }
 
 .tall .week {
   font-size: clamp(11px, 11cqh, 28px);
   font-weight: 500;
-  color: rgb(255 255 255 / 88%);
+  color: var(--desk-text-2);
 }
 
 /* 常规：日期一行 */
 .date {
   font-size: clamp(12px, 11cqh, 26px);
   font-weight: 500;
-  color: rgb(255 255 255 / 82%);
+  color: var(--desk-text-2);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }

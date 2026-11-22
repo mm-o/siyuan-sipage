@@ -1,6 +1,7 @@
 {
   "name": "desk-cards",
   "version": "0.9.6",
+  "packageManager": "pnpm@10.33.4",
   "type": "module",
   "description": "思源桌面卡片：自适应卡片（日历 / 天气 / 时钟 / 一言 …）+ iTab 式整理补位",
   "author": "mm-o",
@@ -21,27 +22,27 @@
     "dev:card": "vite build --config vite.dev.config.ts",
     "check:dist": "node tools/verify/check-dist.mjs",
     "check:arch": "node tools/verify/check-arch.mjs",
-    "dev:reload": "vite build && node tools/reload.mjs --token bct45z7gltevi22s",
+    "dev:reload": "vite build && node tools/reload.mjs",
     "release:ship": "bash release-ship.sh",
     "check:types": "vue-tsc --noEmit -p tsconfig.json",
-    "check:bp": "node tools/verify/check-breakpoints.mjs"
+    "check:bp": "node tools/verify/check-breakpoints.mjs",
+    "check": "pnpm check:types && pnpm check:arch && pnpm check:bp && pnpm build && pnpm check:dist",
+    "check:browser": "pnpm dev:card && node tools/verify/shot-deskclock.mjs && node tools/verify/shot-arrange.mjs && node tools/verify/shot-ui.mjs && node tools/verify/shot-glass.mjs && node tools/verify/shot-surfaces.mjs && node tools/verify/shot-controls.mjs && node tools/verify/shot-shortcut.mjs"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.8.1",
     "@vitejs/plugin-vue": "^5.2.4",
     "eslint": "^9.22.0",
-    "eslint-plugin-perfectionist": "^4.2.0",
     "fast-glob": "^3.2.12",
     "lucide-vue-next": "^1.0.0",
-    "minimist": "^1.2.8",
     "playwright-core": "^1.65.0",
     "rollup-plugin-livereload": "^2.0.5",
     "siyuan": "1.1.0",
+    "typescript": "^5.9.3",
     "vite": "^6.4.6",
     "vite-plugin-static-copy": "^0.15.0",
     "vite-plugin-zip-pack": "^1.0.5",
     "vue": "^3.5.45",
-    "typescript": "^5.9.3",
     "vue-tsc": "^3.3.14"
   },
   "dependencies": {

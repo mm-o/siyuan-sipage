@@ -10,6 +10,7 @@
  *   2. 本地资源（`/appearance/**`、`data:`）直接返回，不绕代理。
  *   3. 清单/接口都有缓存，重复调用不产生额外请求；拿不到就退回内置兜底，保证离线可用。
  */
+import { post } from "@/core/util"
 
 /* ── 内核转发（唯一出口）────────────────────────────────── */
 
@@ -23,27 +24,22 @@ export async function forwardProxy(
   timeout = 12_000,
   headers: [string, string][] = [],
 ): Promise<string> {
-  const res = await fetch("/api/network/forwardProxy", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      url,
-      method: "GET",
-      timeout,
-      contentType: "",
-      headers,
-      payload: "",
-      payloadEncoding: "text",
-      responseEncoding: encoding,
-    }),
+  const data = await post<{ body?: string; contentType?: string; msg?: string }>("/api/network/forwardProxy", {
+    url,
+    method: "GET",
+    timeout,
+    contentType: "",
+    headers,
+    payload: "",
+    payloadEncoding: "text",
+    responseEncoding: encoding,
   })
-  const json = await res.json()
-  if (json?.code !== 0 || !json?.data?.body) throw new Error(json?.msg || "proxy failed")
-  if (encoding === "text") return String(json.data.body)
-  const mime = String(json.data.contentType || "").split(";")[0].trim()
+  if (!data?.body) throw new Error("proxy failed")
+  if (encoding === "text") return String(data.body)
+  const mime = String(data.contentType || "").split(";")[0].trim()
   // 接口挂了常返一张 200 + text/html 的错误页，只认真正的图
   if (!mime.startsWith("image/")) throw new Error(`not an image: ${mime || "empty"}`)
-  return `data:${mime};base64,${json.data.body}`
+  return `data:${mime};base64,${data.body}`
 }
 
 /* ── 思源头图（题头图）清单 ──────────────────────────────── */
@@ -162,7 +158,7 @@ export const THEME_BG =
  * 思源资源：直接用笔记本 assets 里的图，内核按 /assets/... 直给，
  * 零网络、零转发；value 为空时退到题头图首张。
  */
-export const SIYUAN_FALLBACK_BG = 'url("/appearance/covers/cover_001.webp")'
+const SIYUAN_FALLBACK_BG = 'url("/appearance/covers/cover_001.webp")'
 
 /** 壁纸状态 → 背景样式（唯一出口：桌面、设置预览、组件设置预览都用它） */
 export function wallpaperBg(w: { type: string; value: string; resolved?: string }): Record<string, string> {
@@ -257,9 +253,9 @@ export const picsumFirst = () => picsumBatch(PICSUM_SEEDS)
 export const picsumShuffle = () => picsumBatch(Array.from({ length: 12 }, randSeed))
 
 /** 国内图源：alcy.cc 单次直出原图 webp，实测 0.7s，国内可直连 */
-export const ALCY_API = "https://t.alcy.cc/pc"
+const ALCY_API = "https://t.alcy.cc/pc"
 
-export const alcyWallpaper = () => fetchImage(ALCY_API)
+const alcyWallpaper = () => fetchImage(ALCY_API)
 
 /** 接口每次随机、拿不到可复现地址，所以 data 本身就是这张图的身份 */
 export async function alcyBatch(count = 12): Promise<WebImage[]> {
@@ -293,19 +289,14 @@ let assetLoading: Promise<AssetImage[]> | null = null
 export function loadAssets(): Promise<AssetImage[]> {
   if (assetCache) return Promise.resolve(assetCache)
   assetLoading ??= (async () => {
-    const res = await fetch("/api/search/searchAsset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ k: "image" }),
-    })
-    const json = await res.json()
-    const raw = json?.code === 0 && Array.isArray(json.data) ? json.data : []
+    const data = await post<{ path?: string }[] | null>("/api/search/searchAsset", { k: "image" })
+    const raw = Array.isArray(data) ? data : []
     assetCache = raw
       .map((it: any) => String(it?.path || ""))
       .filter((p: string) => /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(p))
       .map((p: string) => ({ path: p, url: `/${p}` }))
     return assetCache
-  })()
+  })().finally(() => { assetLoading = null })
   return assetLoading
 }
 
@@ -352,20 +343,28 @@ function dataUrlBytes(dataUrl: string): Blob {
 /** 把任意壁纸值还原成真实图片字节：data URL 直接拆，外部地址走唯一取图口 */
 async function imageBytes(value: string): Promise<Blob> {
   if (value.startsWith("data:")) return dataUrlBytes(value)
-  const url = new URL(value, location.origin).href
-  if (url.includes("/public/")) {
+  const url = new URL(value, location.origin)
+  if (url.origin === location.origin) {
     const res = await fetch(url)
     if (!res.ok) throw new Error("read image failed")
     return await res.blob()
   }
-  return dataUrlBytes(await fetchImage(url))
+  return dataUrlBytes(await fetchImage(url.href))
+}
+
+/** multipart 上传：建目录与写文件共用（JSON 出口 post 不适用于 FormData）。 */
+async function putFile(path: string, file?: File) {
+  const fd = new FormData()
+  fd.append("path", path)
+  fd.append("isDir", file ? "false" : "true")
+  if (file) fd.append("file", file)
+  const res = await fetch("/api/file/putFile", { method: "POST", body: fd })
+  const json = await res.json().catch(() => null)
+  if (json?.code !== 0) throw new Error(json?.msg || "写文件失败")
 }
 
 async function ensureFavDir() {
-  const fd = new FormData()
-  fd.append("path", `/data/public/${FAV_DIR}`)
-  fd.append("isDir", "true")
-  await fetch("/api/file/putFile", { method: "POST", body: fd })
+  await putFile(`/data/public/${FAV_DIR}`)
 }
 
 /**
@@ -377,36 +376,19 @@ export async function saveFav(value: string): Promise<string> {
   const blob = await imageBytes(value)
   const name = favName(value)
   await ensureFavDir()
-  const fd = new FormData()
-  fd.append("path", `/data/public/${FAV_DIR}/${name}`)
-  fd.append("isDir", "false")
-  fd.append("file", new File([blob], name))
-  const res = await fetch("/api/file/putFile", { method: "POST", body: fd })
-  const json = await res.json().catch(() => null)
-  if (json?.code !== 0) throw new Error(json?.msg || "save failed")
+  await putFile(`/data/public/${FAV_DIR}/${name}`, new File([blob], name))
   return name
 }
 
 /** 删掉公开文件夹里的一张收藏 */
 export async function removeFav(name: string): Promise<void> {
-  const res = await fetch("/api/file/removeFile", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: `/data/public/${FAV_DIR}/${name}` }),
-  })
-  const json = await res.json().catch(() => null)
-  if (json && json.code !== 0) throw new Error(json.msg || "remove failed")
+  await post("/api/file/removeFile", { path: `/data/public/${FAV_DIR}/${name}` })
 }
 
 /** 扫公开文件夹：收藏的唯一真相在磁盘上，状态只是它的镜像 */
 export async function listFavs(): Promise<string[]> {
-  const res = await fetch("/api/file/readDir", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: `/data/public/${FAV_DIR}` }),
-  })
-  const json = await res.json().catch(() => null)
-  const raw = json?.code === 0 && Array.isArray(json.data) ? json.data : []
+  const data = await post<{ name?: string; isDir?: boolean }[] | null>("/api/file/readDir", { path: `/data/public/${FAV_DIR}` })
+  const raw = Array.isArray(data) ? data : []
   return raw
     .filter((it: any) => it?.isDir !== true)
     .map((it: any) => String(it?.name || ""))

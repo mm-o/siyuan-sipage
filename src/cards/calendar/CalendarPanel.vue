@@ -2,31 +2,14 @@
   <div class="cal-panel desk-seq" :class="theme">
     <!-- 左：月视图 -->
     <section class="cal-main desk-pane is-left">
+      <!-- 单行：年份 / 翻月 / 月份 / 节假日 / 今天，宁可压缩下拉也不换行 -->
       <div class="cal-toolbar">
-        <div class="cal-toolbar-group">
-          <select v-model.number="viewYear" class="cal-select" aria-label="年份">
-            <option v-for="year in yearOptions" :key="year" :value="year">{{ year }}</option>
-          </select>
-          <button class="cal-icon ariaLabel" data-position="north" data-tooltip-encoding="none" type="button" aria-label="上个月" @click="shift(-1)">
-            <ChevronLeft :size="15" :stroke-width="1.9" />
-          </button>
-          <select v-model.number="viewMonth" class="cal-select cal-select--month" aria-label="月份">
-            <option v-for="month in 12" :key="month" :value="month - 1">{{ month }}月</option>
-          </select>
-          <button class="cal-icon ariaLabel" data-position="north" data-tooltip-encoding="none" type="button" aria-label="下个月" @click="shift(1)">
-            <ChevronRight :size="15" :stroke-width="1.9" />
-          </button>
-        </div>
-
-        <div class="cal-toolbar-group">
-          <select v-model="viewFestival" class="cal-select cal-select--festival" aria-label="节假日">
-            <option value="">节假日</option>
-            <option v-for="item in festivals" :key="item.name" :value="item.name">{{ item.name }}</option>
-          </select>
-          <button class="cal-today" type="button" :disabled="isToday" @click="selected = new Date()">
-            今天
-          </button>
-        </div>
+        <GlassSelect v-model.number="viewYear" class="cal-select" label="年份" :options="yearChoices" />
+        <GlassButton :icon="ChevronLeft" label="上个月" @click="shift(-1)" />
+        <GlassSelect v-model.number="viewMonth" class="cal-select cal-select--month" label="月份" :options="monthChoices" />
+        <GlassButton :icon="ChevronRight" label="下个月" @click="shift(1)" />
+        <GlassSelect v-model="viewFestival" class="cal-select cal-select--festival" label="节假日" :options="festivalChoices" />
+        <GlassButton text label="今天" :disabled="isToday" @click="selected = new Date()" />
       </div>
 
       <ul class="cal-grid-week">
@@ -112,17 +95,14 @@
       </div>
 
       <div class="cal-actions">
-        <button class="desk-btn cal-add ariaLabel" data-position="north" data-tooltip-encoding="none" type="button" aria-label="在今日日记里新建一条待办" @click="createEvent">
-          <Plus :size="14" :stroke-width="1.9" />
-          新建日程
-        </button>
+        <GlassButton class="cal-add" text variant="primary" :icon="Plus" label="新建日程" @click="createEvent" />
       </div>
     </aside>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Segmented } from "@/ui/controls"
+import { GlassButton, GlassSelect, Segmented } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-vue-next"
 import { toast } from "@/ui/controls"
@@ -184,6 +164,8 @@ const yearOptions = computed(() => {
   const base = currentYear.value
   return Array.from({ length: 21 }, (_, index) => base - 10 + index)
 })
+const yearChoices = computed(() => yearOptions.value.map((year) => ({ label: `${year}年`, value: year })))
+const monthChoices = Array.from({ length: 12 }, (_, index) => ({ label: `${index + 1}月`, value: index }))
 
 /* ── 节日导航（扫库的节日表，按年缓存；只有这个面板用）── */
 
@@ -208,6 +190,10 @@ function festivalList(year: number) {
 }
 
 const festivals = computed(() => festivalList(currentYear.value))
+const festivalChoices = computed(() => [
+  { label: "节假日", value: "" },
+  ...festivals.value.map((item) => ({ label: item.name, value: item.name })),
+])
 const festivalIndex = computed(() => new Map(festivals.value.map((item) => [item.key, item.name])))
 
 const viewYear = computed({

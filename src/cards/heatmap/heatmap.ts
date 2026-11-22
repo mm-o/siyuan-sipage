@@ -9,9 +9,9 @@
  * 只做纯计算与一次查询，不碰 DOM、不落盘。
  */
 import { onMounted, ref } from "vue"
+import { pad, sql } from "@/core/util"
 
 /* ── 日期键（本地时区，避免 toISOString 把日期挪一天）── */
-const pad = (n: number) => String(n).padStart(2, "0")
 const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 const parseDay = (key: string) => {
   const [y, m, d] = key.split("-").map(Number)
@@ -82,16 +82,10 @@ async function loadHeatmap(weeks = WEEKS_YEAR): Promise<Map<string, number>> {
   union all
   select substr(updated, 1, 8) as day, id from blocks where updated >= '${since}'
 ) group by day order by day limit ${weeks * 7 + 7}`
-  const res = await fetch("/api/query/sql", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stmt }),
-  })
-  const json = await res.json()
-  if (json?.code !== 0) throw new Error(json?.msg || "查询失败")
+  const rows = (await sql(stmt)) as { day: string; n: number }[]
 
   const counts = new Map<string, number>()
-  for (const row of (json.data || []) as { day: string; n: number }[]) {
+  for (const row of rows) {
     const day = String(row.day || "")
     if (day.length !== 8) continue
     counts.set(keyOfYmd(day), Number(row.n) || 0)
