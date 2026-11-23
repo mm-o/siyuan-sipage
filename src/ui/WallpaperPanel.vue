@@ -476,10 +476,9 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
   transform: scale(0.97);
 }
 
+/* 选中态交给全局的玻璃高亮规则，这里只把文字提到最亮 */
 .source.is-active {
-  color: var(--desk-text);
-  border-color: var(--desk-accent);
-  background: color-mix(in srgb, var(--desk-accent) 12%, transparent);
+  color: var(--dg-ink);
 }
 
 /* 图标位：只有图标本身，不做圆角底衬；选中跟着变色 */

@@ -1,8 +1,8 @@
 <template>
-  <section class="about">
+  <section class="about set-page">
     <header class="about-head">
       <h2 class="set-h2">关于</h2>
-      <a class="about-link" :href="LOG" target="_blank" rel="noreferrer">{{ LOG_LABEL }} ↗</a>
+      <GlassButton text :icon="ExternalLink" :label="LOG_LABEL" @click="openLog" />
     </header>
     <article class="about-body" v-html="html" />
   </section>
@@ -12,9 +12,11 @@
 /**
  * 关于：展示仓库里的说明文档（随插件一起发布，离线可看）。
  * 文档跟随思源语言：中文用 README.zh-CN.md，其它语言用 README.md。
- * 更新日志不进包，标题右边给在线链接。
+ * 更新日志不进包，标题右边给在线入口。
  */
+import { GlassButton } from "@/ui/controls"
 import { computed, onMounted, ref } from "vue"
+import { ExternalLink } from "lucide-vue-next"
 import info from "../../plugin.json"
 
 const LOG = "https://github.com/mm-o/desk-cards/blob/main/CHANGELOG.md"
@@ -35,6 +37,8 @@ onMounted(async () => {
     text.value = `读取失败，请直接看插件目录里的 ${FILE}。`
   }
 })
+
+const openLog = () => window.open(LOG, "_blank", "noopener")
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 const inline = (s: string) =>
@@ -109,11 +113,8 @@ const html = computed(() => toHtml(text.value))
 
 <style scoped>
 .about {
-  display: flex;
-  flex-direction: column;
   height: 100%;
   min-height: 0;
-  gap: var(--desk-sp-3);
 }
 
 .about-head {
@@ -123,46 +124,29 @@ const html = computed(() => toHtml(text.value))
   gap: var(--desk-sp-3);
 }
 
-/* 标题右边的在线更新日志入口 */
-.about-link {
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-accent);
-  text-decoration: none;
-}
-
-.about-link:hover {
-  text-decoration: underline;
-}
-
-.set-h2 {
-  margin: 0;
-  font-size: var(--desk-fs-title);
-  font-weight: 600;
-}
-
 /* 文档本体：自己滚，头部固定 */
 .about-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   padding-right: var(--desk-sp-2);
+  color: color-mix(in srgb, var(--dg-ink) 82%, transparent);
   font-size: var(--desk-fs-body);
   line-height: 1.75;
-  color: var(--desk-text-2);
 }
 
 .about-body :deep(h1) {
   margin: 0 0 var(--desk-sp-3);
   font-size: var(--desk-fs-lg);
   font-weight: 600;
-  color: var(--desk-text);
+  color: var(--dg-ink);
 }
 
 .about-body :deep(h2) {
   margin: var(--desk-sp-4) 0 var(--desk-sp-2);
   font-size: var(--desk-fs-body);
   font-weight: 600;
-  color: var(--desk-text);
+  color: var(--dg-ink);
 }
 
 .about-body :deep(h3),
@@ -170,7 +154,7 @@ const html = computed(() => toHtml(text.value))
   margin: var(--desk-sp-3) 0 var(--desk-sp-1h);
   font-size: var(--desk-fs-caption);
   font-weight: 600;
-  color: var(--desk-text);
+  color: var(--dg-ink);
 }
 
 .about-body :deep(p) {
@@ -190,41 +174,42 @@ const html = computed(() => toHtml(text.value))
 .about-body :deep(code) {
   padding: 1px 4px;
   border-radius: var(--desk-r-xs);
-  background: color-mix(in srgb, var(--desk-text) 8%, transparent);
+  background: color-mix(in srgb, var(--dg-ink) 7%, transparent);
   font-size: var(--desk-fs-caption);
 }
 
 .about-body :deep(pre) {
   margin: 0 0 var(--desk-sp-2);
   padding: var(--desk-sp-2);
+  border: 1px solid var(--dg-content-rim);
   border-radius: var(--desk-r-md);
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
+  background: var(--dg-content-fill);
   font-size: var(--desk-fs-caption);
   line-height: 1.6;
   white-space: pre-wrap;
 }
 
 .about-body :deep(a) {
-  color: var(--desk-accent);
+  color: var(--dg-primary);
   text-decoration: none;
 }
 
 .about-body :deep(b) {
   font-weight: 600;
-  color: var(--desk-text);
+  color: var(--dg-ink);
 }
 
 .about-body :deep(.tr) {
   font-family: var(--b3-font-family-code, ui-monospace, monospace);
   font-size: var(--desk-fs-2xs);
   white-space: pre-wrap;
-  color: var(--desk-text-3);
+  color: var(--dg-field-muted);
 }
 
 .about-body :deep(hr) {
   height: 1px;
   margin: var(--desk-sp-3) 0;
   border: 0;
-  background: var(--desk-stroke);
+  background: var(--dg-track);
 }
 </style>
