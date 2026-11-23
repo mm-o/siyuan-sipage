@@ -11,46 +11,28 @@ function getApp(): any {
 
 import { computed } from "vue"
 import { persisted } from "@/core/store"
+import { post, sql } from "@/core/util"
 
 export interface PickDoc {
   id: string
   title: string
 }
 
-/** 尺寸 → 能放几个格（1x1=1，一字排开=2，方块=4，长条/高条=8） */
-const SLOTS: Record<string, number> = {
-  "1x1": 1,
-  "1x2": 2,
-  "2x1": 2,
-  "2x2": 4,
-  "4x2": 8,
-  "2x4": 8,
-}
-
 export const quickpick = persisted("desk:quickpick", { docs: [] as PickDoc[] })
 
 export const docs = computed(() => quickpick.docs)
 
-export function setSlot(index: number, doc: PickDoc | null) {
-  const next = [...quickpick.docs]
-  if (doc) next[index] = doc
-  else next.splice(index, 1)
-  quickpick.docs = next.filter(Boolean).slice(0, 8)
+/** 快捷打开最多 8 格；与卡片库一致，同一篇文档可以重复占位。 */
+export const QUICK_SLOTS = 8
+
+export function addDoc(doc: PickDoc) {
+  if (quickpick.docs.length >= QUICK_SLOTS) return
+  quickpick.docs = [...quickpick.docs, doc]
 }
 
-export function removeDoc(id: string) {
-  quickpick.docs = quickpick.docs.filter((d) => d.id !== id)
-}
-
-export async function sql(stmt: string) {
-  const res = await fetch("/api/query/sql", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stmt }),
-  })
-  const json = await res.json()
-  if (json?.code !== 0) throw new Error(json?.msg || "查询失败")
-  return (json.data || []) as Record<string, unknown>[]
+export function removeDocAt(index: number) {
+  if (index < 0 || index >= quickpick.docs.length) return
+  quickpick.docs = quickpick.docs.filter((_, i) => i !== index)
 }
 
 export async function searchDocs(keyword: string, limit = 8): Promise<PickDoc[]> {
@@ -103,13 +85,8 @@ export async function openDoc(id: string) {
   }
 
   try {
-    const res = await fetch("/api/filetree/openDocument", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    })
-    const json = await res.json()
-    if (json?.code === 0) return
+    await post("/api/filetree/openDocument", { id })
+    return
   } catch {
     /* 继续 */
   }

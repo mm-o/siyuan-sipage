@@ -1,43 +1,48 @@
-# tools/verify —— 开发期验证脚本（不参与打包）
+# 开发期验证
 
-这些 `.mjs` **不是插件代码**，也不在 `dist/` 里。它们是我用来「看到结果」的自动化脚本：
-起一个本地静态服务器加载 `dev-dist`（验证页），用 Playwright 打开、点击、量尺寸、截图。
+验证脚本不参与插件打包。浏览器测试只加载本项目 `dev-dist`，API、图片和外网内容全部使用固定 mock；不连接真实思源，也不写用户工作空间。
 
-## 脚本清单（一文件一职责）
-
-| 脚本 | 作用 |
+| 脚本 | 覆盖范围 |
 | --- | --- |
-| `check-dist.mjs` | 产物守卫：dist 只允许白名单扩展名、入口只 `require("siyuan")` |
-| `check-arch.mjs` | 分层守卫：core/ui/cards 依赖方向、primitives 只吃 props、每张卡一个 `*Card.vue`（`pnpm check:arch`） |
-| `shot-sizes.mjs` | 三张内容卡在 1x1 / 2x1 / 4x2 的版式、留白、是否被裁 + 悬浮控件 |
-| `shot-consistency.mjs` | 卡片 ↔ 详情同源（sameBg / sameText）+ 翻页牌几何与折叠帧 |
-| `shot-calendar.mjs` | 日历卡四种尺寸（1x1 / 2x2 / 2x4 / 4x2）+ 日历详情（`light` / `dark` 两个外观） |
-| `shot-calendar-live.mjs` | 真机：加日历卡 → 用卡片库尺寸标签切四种尺寸逐档截图量盒 → 开详情 → 移除并核对卡片数复原 |
-| `shot-settings.mjs` | 设置面板四个分区 + 导航/内容盒子 + 从按钮 FLIP 的关键帧 |
-| `shot-settings-live.mjs` | 真机：设置与卡片详情是同一套弹层（无标题栏 / 悬浮关闭 / inset 12 / 栏内 20）+ FLIP |
-| `shot-persist-live.mjs` | 真机：加卡并改尺寸 → 读 petal 文件 → 整页重载仍在 → 移除复原 |
-| `shot-layout.mjs` | 网格铺满（左右留白 0）+ 图标居中（svg 中心 vs 按钮中心）+ 通用全屏 |
-| `shot-layout-live.mjs` | 真机版式：列宽/左右留白、图标中心差、全屏进出 |
-| `shot-chrome.mjs` | 卡片悬浮按钮、右键菜单（断言交给思源 `Menu` 的条目/图标/坐标）、弹层关闭按钮 |
-| `shot-icons.mjs` | 4 倍放大看图标是否线性（`fill: none`） |
-| `shot-chips.mjs` | 诗词详情标签（未选中态对比度、选中态互换） |
-| `shot-flip-frames.mjs` | 翻页数字的折叠过程（CDP 暂停动画逐帧） |
-| `shot-live.mjs` | 真机（真实思源）：顶栏图标线性、卡片↔详情同源、诗词标签与翻页；加卡片→截图→移除，跑完复原 |
-| `shot-tooltip.mjs` | 真机：所有提示是否走思源 tooltip（读 `::after` 的 content / opacity，确认没有原生 title） |
-| `shot-menu-live.mjs` | 真机：右键菜单是思源 `.b3-menu`、图标线性、尺寸子菜单带勾、Esc 能关、「⋯」贴着按钮弹 |
+| `check-arch.mjs` | 分层依赖、跨卡引用、每卡一个主组件 |
+| `check-breakpoints.mjs` | 容器断点限定为 120 / 200 / 260 / 460 / 720 |
+| `check-dist.mjs` | 发布目录文件白名单与唯一外部依赖 `siyuan` |
+| `browser.mjs` | 七个浏览器脚本共用的静态服务器、Edge、网络隔离和报告输出，不单独运行 |
+| `shot-arrange.mjs` | 拖动吸附、四边缩放、上限回缩、键盘、一键整理、完成、390px 工具栏、对比度与减少透明度/动效 |
+| `shot-deskclock.mjs` | 整分钟刷新、跨日日期、时间属性、Vue 卸载时清理定时器 |
+| `shot-glass.mjs` | 公共按钮的浅深色切换、照片环境、滤镜单例、文字/图标/主要/危险状态、倒数日原生提交、键盘焦点与材质降级 |
+| `shot-surfaces.mjs` | 弹层与内内容面的日夜材质、开关的指针/空格与 aria 状态、滑轨键盘/填充/双击复位、字段的输入同步与下拉数字模型、弹窗顶栏拖动与四角缩放 |
+| `shot-controls.mjs` | 快捷方式图标保持描边、弹层无描边、下拉自绘玻璃箭头、卡片库已添加徽章与增删状态 |
+| `shot-shortcut.mjs` | 快捷方式面板：分类图标描边、同一动作可重复添加与计数徽章、右栏按次移除 |
+| `shot-ui.mjs` | 四个设置分区、15 张卡片预览及材质切换、添加/移除、外观变量、方/宽/高卡片渲染、详情/全屏/菜单点击边界、嵌套文档卡片卸载 |
 
-## 运行前提
-
-1. 先构建验证页：`pnpm dev:card`（输出到 `dev-dist`，`root: dev/`）
-2. 思源在 `127.0.0.1:6806` 运行（脚本会把 `/appearance/covers/**` 代理到真实思源）
-3. Edge 在默认路径（脚本用 `playwright-core` 直接驱动系统 Edge，无需下载浏览器）
-4. 截图输出到项目根目录的 `docs-*.png`
-
-## 与插件构建的关系
-
-```
-pnpm dev:card   → dev-dist/      验证页（这里的脚本读它）
-pnpm build      → dist/          插件产物（只有 index.js / index.css / plugin.json / icon 等）
+```powershell
+pnpm check:types
+pnpm check:arch
+pnpm check:bp
+pnpm dev:card
+node tools/verify/shot-arrange.mjs
+node tools/verify/shot-deskclock.mjs
+node tools/verify/shot-ui.mjs
+node tools/verify/shot-glass.mjs
+node tools/verify/shot-surfaces.mjs
+node tools/verify/shot-controls.mjs
+node tools/verify/shot-shortcut.mjs
+pnpm build
+pnpm check:dist
 ```
 
-`dist/` 里**没有任何 .mjs**，验证脚本不会被发布（`pnpm check:dist` 可复现这个结论）。
+要求 Windows 已安装 Edge；可用 `EDGE_PATH` 指定浏览器可执行文件。使用 `playwright-core`，无需下载浏览器。截图与 JSON 报告统一输出到 `docs/screens/`（已忽略）。测试按当前 `w/h/x/y` 网格模型构造数据；旧的固定 `size`、`.desk-hero-*` 与 `.grid` 测试已移除。
+
+## 思源内人工集成检查
+
+隔离验证页使用 `siyuan` 替身，因此以下行为在真实思源中检查：
+
+1. 重载插件后打开桌面，确认顶栏/页签图标与主题一致；右键菜单和 tooltip 来自思源，未被卡片裁切。
+2. 添加、移动、缩放卡片后整页重载，确认位置、尺寸和外观保持；使用临时桌面数据检查，结束后恢复。
+3. 依次切换壁纸来源，收藏、使用、删除图片并重载，核对桌面与收藏文件一致；检查离线与服务错误提示。
+4. 检查国内/国际天气、区县搜索、诗词翻页、英语朗读、复制与文档打开等真实接口功能。
+5. 在临时文档插入卡片，验证切换文档、撤销、移除与插件卸载后实例释放；思源块用真实 Protyle 渲染。
+6. 浅色/深色、宽窄页签下检查文字裁切；逐卡检查详情、全屏、翻页时钟与减少动效表现。
+
+浏览器脚本验证渲染与交互契约，不把 mock 结果当作外部服务、持久化或 Protyle 集成结论。

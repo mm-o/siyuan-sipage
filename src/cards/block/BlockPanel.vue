@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GlassButton } from "@/ui/controls"
+import { GlassButton, GlassField } from "@/ui/controls"
 import { onBeforeUnmount, ref, watch } from "vue"
 import { Check, Search } from "lucide-vue-next"
 import { blockState, blockTitle, setId } from "./block"
@@ -62,11 +62,11 @@ onBeforeUnmount(() => {
   <div class="bk-panel desk-seq">
     <section class="bk-top desk-pane is-mid">
       <form class="row" @submit.prevent="apply">
-        <input v-model="draft" class="input" type="text" placeholder="粘贴块 ID，回车确认" />
+        <GlassField v-model="draft" class="input" label="思源块 ID" placeholder="粘贴块 ID，回车确认" />
         <GlassButton :icon="Check" label="确认" @click="apply" />
       </form>
       <form class="row" @submit.prevent="search">
-        <input v-model="keyword" class="input" type="text" placeholder="或搜文档标题" />
+        <GlassField v-model="keyword" class="input" label="搜索文档标题" placeholder="或搜文档标题" />
         <GlassButton :icon="Search" label="搜索" @click="search" />
       </form>
       <ul v-if="hits.length" class="hits">
@@ -110,13 +110,6 @@ onBeforeUnmount(() => {
 .input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 30px;
-  padding: 0 8px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-  color: var(--desk-text);
-  font-size: var(--desk-fs-sm);
 }
 
 .hits {

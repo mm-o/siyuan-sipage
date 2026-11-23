@@ -1,5 +1,6 @@
 import { computed } from "vue"
 import { persisted } from "@/core/store"
+import { pad, sql } from "@/core/util"
 
 interface Bar {
   label: string
@@ -30,18 +31,6 @@ export const stats = computed(() => docstats.cache)
 
 const CACHE_MS = 5 * 60_000
 
-async function sql(stmt: string) {
-  const res = await fetch("/api/query/sql", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stmt }),
-  })
-  const json = await res.json()
-  if (json?.code !== 0) throw new Error(json?.msg || "查询失败")
-  return (json.data || []) as Record<string, unknown>[]
-}
-
-const pad = (n: number) => String(n).padStart(2, "0")
 const ymd = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`
 
 /**
@@ -55,7 +44,6 @@ export async function loadDocStats(force = false): Promise<DocStats> {
   const now = new Date()
   const d7 = new Date(now.getTime() - 7 * 86_400_000)
   const d30 = new Date(now.getTime() - 30 * 86_400_000)
-  const d14 = new Date(now.getTime() - 14 * 86_400_000)
   const where = "type = 'd'"
 
   const [sum] = await sql(

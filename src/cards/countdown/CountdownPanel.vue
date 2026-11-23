@@ -40,9 +40,7 @@
 
         <div class="cd-toolbar">
           <Segmented v-model="filter" :options="FILTERS" class="cd-time-tabs" />
-          <button class="cd-primary" type="button" @click="startCreate">
-            <Plus :size="15" :stroke-width="2" />新建<span class="cd-new-full">倒数日</span>
-          </button>
+          <GlassButton class="cd-primary" :icon="Plus" label="新建" variant="primary" text @click="startCreate" />
         </div>
 
         <ul v-if="list.length" class="cd-scroll cd-items">
@@ -50,7 +48,7 @@
             v-for="(item, i) in list"
             :key="item.event.id"
             class="cd-item"
-            :class="{ 'is-hero': i === 0, 'is-selected': item.event.id === selectedId }"
+            :class="{ 'is-hero': i === 0, 'desk-content-surface': i !== 0, 'is-selected': item.event.id === selectedId }"
             :style="i === 0 ? { backgroundImage: coverStyleOf(item.event) } : undefined"
             @click="select(item.event.id)"
           >
@@ -82,7 +80,7 @@
 
         <div v-else class="cd-empty">
           <p class="cd-empty-title">还没有倒数日</p>
-          <button class="cd-primary" type="button" @click="startCreate">新建第一个</button>
+          <GlassButton class="cd-primary" :icon="Plus" label="新建第一个" variant="primary" text @click="startCreate" />
         </div>
       </section>
 
@@ -117,9 +115,9 @@
  * 编辑不弹二级弹层：详情栏整块切成表单（标题 / 日期 / 分类胶囊 / 重复 / 置顶），保存后回到详情。
  * 数据全在 `core/store.ts` 的 `countdown` 里，这里只做筛选、排序、单位换算（`./countdown.ts`）。
  */
-import { Segmented } from "@/ui/controls"
+import { GlassButton, Segmented } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
-import { CalendarDays, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-vue-next"
+import { ChevronRight, Plus } from "lucide-vue-next"
 import {
   addCountdownEvent,
   countdown,
@@ -135,22 +133,13 @@ import {
   categoryOf,
   coverStyleOf,
   draftValid,
-  EVENT_CATEGORIES,
   FILTERS,
-  REPEAT_LABEL,
-  repeatText,
   softOf,
-  UNITS,
   viewOf,
   visibleViews,
   type CountdownFilter,
   type CountdownUnit,
 } from "./countdown"
-
-const REPEAT_OPTIONS = [
-  { label: "不重复", value: "none" },
-  { label: "每年", value: "year" },
-]
 
 /* ── 筛选与选择 ───────────────────────────────────────── */
 const category = ref<"all" | CountdownCategory>("all")
@@ -287,7 +276,7 @@ function backToList() {
   min-height: 0;
 }
 
-/* 三栏的公共外观：白面 + 1px 边 + 20px 圆角 */
+/* 三栏仅定义布局，材质与圆角统一由 desk-pane 提供。 */
 .cd-card {
   min-height: 0;
   overflow: hidden;
@@ -309,12 +298,9 @@ function backToList() {
   flex-direction: column;
   gap: var(--desk-sp-0);
   overflow-y: auto;
-  scrollbar-width: none;
 }
 
-.cd-nav::-webkit-scrollbar {
-  display: none;
-}
+.cd-nav
 
 .cd-nav-btn {
   display: flex;
@@ -322,37 +308,15 @@ function backToList() {
   gap: var(--desk-sp-2h);
   width: 100%;
   padding: var(--desk-sp-2h) 12px;
-  border: 0;
-  border-radius: 12px;
-  background: none;
-  color: var(--desk-text);
   font: inherit;
   font-size: var(--desk-fs-lg);
   text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--desk-dur-fast) var(--desk-ease),
-    color var(--desk-dur-fast) var(--desk-ease);
-}
-
-.cd-nav-btn:hover {
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-}
-
-.cd-nav-btn.is-active {
-  color: var(--desk-accent);
-  background: color-mix(in srgb, var(--desk-text) 6%, transparent);
 }
 
 .cd-nav-icon {
   flex: none;
   display: grid;
   place-items: center;
-  color: var(--desk-text-2);
-}
-
-.cd-nav-btn.is-active .cd-nav-icon {
-  color: var(--desk-accent);
 }
 
 .cd-nav-name {
@@ -381,14 +345,11 @@ function backToList() {
 .cd-cat-chips {
   display: none;
   gap: var(--desk-sp-1h);
-  padding: var(--desk-sp-2h) 12px 0;
+  padding: var(--desk-sp-3) var(--desk-sp-3) 0;
   overflow-x: auto;
-  scrollbar-width: none;
 }
 
-.cd-cat-chips::-webkit-scrollbar {
-  display: none;
-}
+.cd-cat-chips
 
 .cd-cat-chip {
   display: inline-flex;
@@ -396,15 +357,10 @@ function backToList() {
   gap: var(--desk-sp-1);
   height: 30px;
   padding: 0 10px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--desk-text) 4%, transparent);
-  color: var(--desk-text-2);
   font: inherit;
   font-size: var(--desk-fs-sm);
   white-space: nowrap;
   flex-shrink: 0;
-  cursor: pointer;
 }
 
 .cd-cat-chip em {
@@ -412,18 +368,12 @@ function backToList() {
   opacity: 0.7;
 }
 
-.cd-cat-chip.is-active {
-  color: var(--desk-accent);
-  border-color: var(--desk-accent);
-  background: var(--desk-surface);
-}
-
 .cd-toolbar {
   flex: none;
   display: flex;
   align-items: center;
   gap: var(--desk-sp-2);
-  padding: var(--desk-sp-3) 12px 8px;
+  padding: var(--desk-sp-3) var(--desk-sp-3) 0;
 }
 
 .cd-time-tabs {
@@ -431,68 +381,42 @@ function backToList() {
   min-width: var(--desk-aside-w);
 }
 
-/* 药丸主按钮：本体不带外边距，靠右只在工具栏里给（空态里这颗要居中） */
+/* 按钮只保留布局，材质与状态统一由 GlassButton 提供。 */
 .cd-primary {
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--desk-sp-1);
-  height: 28px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--desk-accent);
-  color: #fff;
-  font: inherit;
-  font-size: var(--desk-fs-body);
-  cursor: pointer;
 }
 
 .cd-toolbar .cd-primary {
   margin-left: auto;
 }
 
-.cd-primary:hover {
-  opacity: 0.92;
-}
-
 .cd-scroll {
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none;
 }
 
-.cd-scroll::-webkit-scrollbar {
-  display: none;
-}
+.cd-scroll
 
 .cd-items {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--desk-sp-3);
+  gap: var(--desk-sp-2);
   margin: 0;
-  padding: 0 0 12px;
+  padding: 0 var(--desk-sp-3) var(--desk-sp-3);
   list-style: none;
 }
 
-/* 主事件大卡（.dma-hero：圆角 12、内边距 16、封面、投影） */
+/* 主事件大卡：照片封面，圆角与内容行一致。 */
 .cd-item.is-hero {
-  margin: var(--desk-sp-2) 12px 0;
   padding: var(--desk-sp-4);
-  border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--desk-r-control);
   color: #fff;
   background-color: #0f172a;
   background-size: cover;
   /* 宽而扁的块裁封面：往上偏一点，别正好裁到图片最暗的中段 */
   background-position: center 32%;
-  box-shadow: 0 0 16px rgb(0 0 0 / 9%);
   cursor: pointer;
-}
-
-.cd-item.is-hero.is-selected {
-  box-shadow: 0 0 16px color-mix(in srgb, var(--desk-accent) 40%, transparent);
 }
 
 .cd-hero-inner {
@@ -549,17 +473,8 @@ function backToList() {
   display: flex;
   align-items: center;
   gap: var(--desk-sp-3);
-  margin: 0 12px;
-  padding: var(--desk-sp-2h) 12px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: 12px;
-  background: var(--desk-surface);
-  box-shadow: 0 0 16px rgb(0 0 0 / 4%);
+  padding: var(--desk-sp-2h) var(--desk-sp-3);
   cursor: pointer;
-}
-
-.cd-item:not(.is-hero).is-selected {
-  box-shadow: 0 0 16px color-mix(in srgb, var(--desk-accent) 40%, transparent);
 }
 
 .cd-tile {
@@ -637,84 +552,13 @@ function backToList() {
 
 /* ── 右：详情 ──────────────────────────────────────────── */
 
-
-
-
 /* 返回：只有窄屏（详情盖在列表上时）才出现 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* 底部动作条（.dma-detail 的 p-3 border-t） */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ── 编辑表单 ─────────────────────────────────────────── */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* 开关（对齐 el-switch：40×22 药丸） */
-
-
-
-
-
-
-
 
 /* ── 窄屏（<760px）：分类收进胶囊行，详情盖在列表上 ────── */
 @container (max-width: 720px) {
@@ -726,11 +570,9 @@ function backToList() {
     display: flex;
   }
 
-  .cd-new-full {
-    display: none;
+  .cd-panel :deep(.cd-detail-back) {
+    display: inline-flex;
   }
-
-
 
   .cd-panel.is-detail .cd-detail {
     display: flex;
@@ -739,7 +581,6 @@ function backToList() {
     z-index: 20;
     width: auto;
   }
-
 
 }
 </style>

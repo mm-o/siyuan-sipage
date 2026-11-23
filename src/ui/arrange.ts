@@ -23,14 +23,12 @@ interface Drag {
  *   step   → 段落式：落到 step 的倍数上（5×5 直接跳成 6×6）
  *   min/max→ 边长夹取
  */
-export function fitDims(lim: CardConstrain | undefined, w: number, h: number, from = { w, h }) {
+export function fitDims(lim: CardConstrain | undefined, w: number, h: number) {
   const min = lim?.min ?? 1
   const max = lim?.max ?? 16
-  const clamp = (n: number) => Math.min(max, Math.max(min, Math.round(n)))
-
-  const snap = (n: number) => (lim?.step ? Math.round(n / lim.step) * lim.step : n)
-  const keep = (n: number, was: number) => (lim?.step ? clamp(Math.max(lim.step, snap(n))) : clamp(n))
-  return { w: keep(snap(w), from.w), h: keep(snap(h), from.h) }
+  const step = lim?.step || 1
+  const fit = (n: number) => Math.min(max, Math.max(min, step, Math.round(n / step) * step))
+  return { w: fit(w), h: fit(h) }
 }
 
 /**
@@ -62,8 +60,9 @@ export function useDeskGrid(viewport: Ref<number>) {
   const drag = ref<Drag | null>(null)
 
   function grab(index: number, e: PointerEvent, resize: Edge | null = null) {
-    if (!arranging.value) return
+    if (!arranging.value || e.button !== 0 || !e.isPrimary || drag.value) return
     const card = desk.cards[index]
+    if (!card) return
     /* 一旦手动拖动/缩放，位置就交还给用户（面板不再自动居中 / 靠右） */
     if (card.auto) card.auto = false
     ;(e.currentTarget as Element).setPointerCapture?.(e.pointerId)
@@ -98,7 +97,7 @@ export function useDeskGrid(viewport: Ref<number>) {
 
       const lim = getCard(card.cardId)?.constrain
       if (lim) {
-        const fit = fitDims(lim, w, h, { w: d.bw, h: d.bh })
+        const fit = fitDims(lim, w, h)
         w = fit.w
         h = fit.h
       }
@@ -130,5 +129,44 @@ export function useDeskGrid(viewport: Ref<number>) {
     if (!arranging.value) drag.value = null
   }
 
-  return { arranging, grid, drag, grab, onMove, endMove, toggle }
+  /** 指针与键盘共用尺寸约束；方向表不在每次按键时重新创建。 */
+  const arrows: Record<string, { x: number; y: number }> = {
+    ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
+    ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 },
+  }
+
+  function arrangeKey(index: number, e: KeyboardEvent) {
+    const delta = arrows[e.key]
+    if (!arranging.value || drag.value || e.target !== e.currentTarget || !delta) return
+    e.preventDefault()
+    e.stopPropagation()
+    const c = desk.cards[index]
+    const lim = getCard(c.cardId)?.constrain
+    if (e.shiftKey && !c.cardId.startsWith("@")) {
+      const step = lim?.step || 1
+      Object.assign(c, fitDims(lim, c.w + delta.x * step, c.h + delta.y * step))
+    } else {
+      c.x = Math.max(0, Math.min(Math.max(0, grid.value.cols - c.w), c.x + delta.x))
+      c.y = Math.max(0, c.y + delta.y)
+    }
+    c.auto = false
+  }
+
+  function resizeKey(index: number, edge: Edge, e: KeyboardEvent) {
+    const delta = arrows[e.key]
+    if (!arranging.value || drag.value || !delta) return
+    e.preventDefault()
+    const c = desk.cards[index]
+    const lim = getCard(c.cardId)?.constrain
+    const step = lim?.step || 1
+    const next = fitDims(lim,
+      c.w + (edge === "e" ? delta.x : edge === "w" ? -delta.x : 0) * step,
+      c.h + (edge === "s" ? delta.y : edge === "n" ? -delta.y : 0) * step)
+    if (edge === "w") c.x = Math.max(0, c.x + c.w - next.w)
+    if (edge === "n") c.y = Math.max(0, c.y + c.h - next.h)
+    Object.assign(c, next)
+    c.auto = false
+  }
+
+  return { arranging, grid, drag, grab, onMove, endMove, toggle, arrangeKey, resizeKey }
 }

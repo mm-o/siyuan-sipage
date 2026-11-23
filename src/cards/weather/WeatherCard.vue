@@ -34,7 +34,7 @@
 
     <div v-else class="state">
       <span>{{ error || "加载中…" }}</span>
-      <button v-if="error" type="button" @click.stop="reload">重试</button>
+      <GlassButton v-if="error" :icon="RotateCcw" label="重试" text tone="photo" @click.stop="reload" />
     </div>
   </div>
 </template>
@@ -45,7 +45,8 @@
  * 上：地名 + 大温度 / 天气 + 高低温；下：未来 6 天。字号全部 cqmin，等比放大不变形。
  */
 import { computed } from "vue"
-import { MapPin } from "lucide-vue-next"
+import { MapPin, RotateCcw } from "lucide-vue-next"
+import { GlassButton } from "@/ui/controls"
 import { describe, skyBackdrop, useWeather } from "./weather"
 
 const { place, data, error, reload } = useWeather()
@@ -195,7 +196,9 @@ function weekOf(date: string, i: number) {
   font-variant-numeric: tabular-nums;
 }
 
-.h-icon {
+/* 图标尺寸：今日与未来几天同一档 */
+.h-icon,
+.d-icon {
   width: min(9cqmin, 9cqh);
   height: min(9cqmin, 9cqh);
 }
@@ -223,11 +226,6 @@ function weekOf(date: string, i: number) {
 
 .d-week {
   font-size: min(8.5cqmin, 5.5cqh);
-}
-
-.d-icon {
-  width: min(9cqmin, 9cqh);
-  height: min(9cqmin, 9cqh);
 }
 
 .d-temp {

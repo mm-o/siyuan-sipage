@@ -64,85 +64,29 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
   gap: var(--desk-sp-2);
-}
-
-.cal-toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-1);
+  /* 一律单行：空间不够时压缩下拉，不换行 */
+  flex-wrap: nowrap;
 }
 
 .cal-select {
-  height: var(--desk-hit);
-  padding: 0 var(--desk-sp-2);
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-  color: var(--desk-text);
-  font: inherit;
-  font-size: var(--desk-fs-caption);
-  cursor: pointer;
-  outline: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  width: 100px;
 }
 
-.cal-select:hover {
-  background: color-mix(in srgb, var(--desk-text) 9%, transparent);
+/* 触发器铺满外层宽度，压到极限时由 .gs-value 省略 */
+.cal-select .gs-trigger {
+  width: 100%;
+  min-width: 0;
 }
 
 .cal-select--month {
-  width: 64px;
+  width: 84px;
 }
 
 .cal-select--festival {
-  max-width: 104px;
-}
-
-.cal-icon {
-  width: var(--desk-hit);
-  height: var(--desk-hit);
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--desk-text-2);
-  cursor: pointer;
-  transition:
-    background var(--desk-dur-fast) var(--desk-ease),
-    color var(--desk-dur-fast) var(--desk-ease);
-}
-
-.cal-icon:hover {
-  background: color-mix(in srgb, var(--desk-text) 8%, transparent);
-  color: var(--desk-text);
-}
-
-.cal-today {
-  height: var(--desk-hit);
-  padding: 0 var(--desk-sp-3);
-  border: 1px solid color-mix(in srgb, var(--desk-accent) 40%, transparent);
-  border-radius: var(--desk-r-pill);
-  background: color-mix(in srgb, var(--desk-accent) 10%, transparent);
-  color: var(--desk-accent);
-  font: inherit;
-  font-size: var(--desk-fs-caption);
-  cursor: pointer;
-  transition: background var(--desk-dur-fast) var(--desk-ease);
-}
-
-.cal-today:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--desk-accent) 18%, transparent);
-}
-
-.cal-today:disabled {
-  color: var(--desk-text-3);
-  border-color: var(--desk-stroke);
-  background: transparent;
-  cursor: default;
+  width: 108px;
 }
 
 .cal-grid > li {
@@ -218,11 +162,6 @@
   padding: var(--desk-detail-pad);
 
   overflow: auto;
-  scrollbar-width: none;
-}
-
-.cal-aside::-webkit-scrollbar {
-  display: none;
 }
 
 .cal-aside-badge {

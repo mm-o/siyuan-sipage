@@ -1,0 +1,215 @@
+/** 当前 UI 回归：设置/卡片库/材质/全部卡片/详情全屏/文档内嵌生命周期。 */
+import assert from 'node:assert/strict'
+import path from 'node:path'
+import { openBrowser, panels, out, report } from './browser.mjs'
+
+const cards = [
+  ['clock', '时钟', true], ['calendar', '日历', true], ['english', '每日英语', false],
+  ['yiyan', '每日一言', false], ['shici', '每日诗词', false], ['weather', '天气', false],
+  ['countdown', '倒数日', true], ['heatmap', '写作热力图', true], ['pomodoro', '番茄钟', true],
+  ['memo', '备忘录', true], ['docstats', '文档统计', true], ['quickopen', '快捷打开', true],
+  ['recent', '最近文档', true], ['shortcut', '快捷方式', true], ['block', '思源块', true],
+]
+const harness = await openBrowser({ storage: { 'desk-cards:desk': { cards: panels } } })
+const { page, errors } = harness
+const checks = []
+const screenshots = process.env.VERIFY_NO_SCREENSHOTS ? [] : ['ui-library.png', 'ui-desktop-dark.png']
+const dialog = page.locator('.desk-sheet')
+const nav = page.locator('.set-nav')
+async function openLibrary() {
+  await page.locator('.tools').hover()
+  await page.getByRole('button', { name: '添加卡片', exact: true }).click()
+  await page.locator('.lib-list').waitFor()
+}
+async function closeSheet() {
+  await dialog.locator('.desk-sheet-close').click()
+  await dialog.waitFor({ state: 'detached' })
+}
+try {
+  await harness.goto()
+  await openLibrary()
+  assert.equal(await page.locator('.lib-row').count(), cards.length, 'Add card opens the library directly')
+  const preview = page.locator('.set-card-live .frame')
+  for (const [, name, solid] of cards) {
+    await page.locator('.lib-row').filter({ has: page.locator('b', { hasText: new RegExp(`^${name}$`) }) }).click()
+    await page.waitForFunction(({ name, solid }) => {
+      const frame = document.querySelector('.set-card-live .frame')
+      return document.querySelector('.set-card-name')?.textContent === name && frame?.classList.contains('is-solid') === solid
+    }, { name, solid })
+    assert.equal(await preview.locator('.body > *').count(), 1, `${name} preview renders`)
+    assert.equal(await preview.locator(':scope > button.gb').count(), 0, 'Previews have no floating controls')
+  }
+  checks.push('all 15 library previews render and switch solid/glass materials reactively')
+
+  await page.locator('.lib-row').filter({ has: page.locator('b', { hasText: /^日历$/ }) }).click()
+  await page.getByRole('button', { name: '添加到桌面', exact: true }).click()
+  assert.equal(await page.evaluate(() => globalThis.__deskDesk.cards.filter(c => c.cardId === 'calendar').length), 1)
+  await page.getByRole('button', { name: '移除一张', exact: true }).click()
+  assert.equal(await page.evaluate(() => globalThis.__deskDesk.cards.filter(c => c.cardId === 'calendar').length), 0)
+  checks.push('library add/remove changes exactly one card')
+
+  for (const name of ['壁纸', '组件设置', '关于', '卡片库']) {
+    await nav.getByRole('button', { name: new RegExp(`^${name}`) }).click()
+    assert.equal(await page.locator('.set-main h2').textContent(), name)
+  }
+  await preview.click()
+  assert.equal(await dialog.count(), 1, 'Preview cannot open another detail')
+  if (screenshots.length) await page.screenshot({ path: path.join(out, 'ui-library.png') })
+  await nav.getByRole('button', { name: '组件设置', exact: true }).click()
+  const radius = page.locator('.slider').filter({ has: page.locator('.slider-label', { hasText: /^圆角$/ }) }).locator('input')
+  await radius.focus()
+  await radius.press('Home')
+  await radius.press('ArrowRight')
+  await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--desk-r-card').trim() === '2px')
+  assert.equal(await page.locator('.set-preview-card').evaluate(el => getComputedStyle(el).borderRadius), '2px')
+  await page.getByRole('button', { name: '恢复默认', exact: true }).click()
+  await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--desk-r-card').trim() === '18px')
+  checks.push('all settings tabs work; appearance slider updates shared CSS variables and reset restores defaults')
+
+  // 每次注入旧运行时图像，再用真实来源按钮切换，验证统一入口清理缓存。
+  await nav.getByRole('button', { name: '壁纸', exact: true }).click()
+  const source = name => page.locator('.source').filter({ has: page.locator('strong', { hasText: new RegExp(`^${name}$`) }) })
+  const oldImage = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>').toString('base64')
+  const prime = () => page.evaluate(value => { globalThis.__deskWallpaper.resolved = value }, oldImage)
+  const wall = () => page.evaluate(() => ({ ...globalThis.__deskWallpaper, background: getComputedStyle(document.querySelector('.desk-wallpaper')).background, image: getComputedStyle(document.querySelector('.desk-wallpaper')).backgroundImage }))
+  const assertSource = async type => {
+    await page.waitForFunction(type => globalThis.__deskWallpaper.type === type && globalThis.__deskWallpaper.resolved === undefined, type)
+    const state = await wall()
+    assert.ok(!state.image.includes(oldImage), `${type}: previous resolved image is gone`)
+    return state
+  }
+  const fixtureImage = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="36"><path fill="#567" d="M0 0h64v36H0z"/></svg>'
+  await page.route('**/api/search/searchAsset', route => route.fulfill({ json: { code: 0, data: [{ path: 'assets/verify-wallpaper.png' }] } }))
+  await page.route('**/assets/verify-wallpaper.png', route => route.fulfill({ contentType: 'image/svg+xml', body: fixtureImage }))
+  await page.route('https://fixture.invalid/wallpaper.png', route => route.fulfill({ contentType: 'image/svg+xml', body: fixtureImage }))
+  await prime()
+  await source('纯色').click()
+  const solidWall = await assertSource('solid')
+  assert.equal(solidWall.image, 'none')
+  assert.ok(solidWall.background, 'Solid color reaches the desktop background')
+  await prime()
+  await source('跟随思源').click()
+  assert.match((await assertSource('theme')).image, /radial-gradient/)
+  await prime()
+  await source('思源头图').click()
+  assert.match((await assertSource('cover')).image, /\/appearance\/covers\//)
+  await prime()
+  await source('思源资源').click()
+  assert.match((await assertSource('siyuan')).image, /\/assets\/verify-wallpaper\.png/)
+  await prime()
+  await source('图片链接').click()
+  await page.locator('.url-row input').fill('https://fixture.invalid/wallpaper.png')
+  await prime()
+  await page.locator('.url-row').getByRole('button', { name: '使用', exact: true }).click()
+  assert.match((await assertSource('url')).image, /fixture\.invalid\/wallpaper\.png/)
+  checks.push('solid/theme/cover/assets/URL selections clear stale resolved data and update desktop background')
+
+  // 第二张原图故意晚返回，第三张先返回；最终选择必须保留第三张。
+  let releaseSlow
+  let sawSlow
+  const slowStarted = new Promise(resolve => { sawSlow = resolve })
+  const proxyHandler = async route => {
+    const request = route.request().postDataJSON()
+    if (!String(request.url).includes('picsum.photos')) return route.fallback()
+    if (String(request.url).includes('/ridge/1920/1080')) {
+      sawSlow()
+      await new Promise(resolve => { releaseSlow = resolve })
+    }
+    const body = Buffer.from(fixtureImage.replace('#567', request.url.includes('harbor') ? '#789' : '#345')).toString('base64')
+    return route.fulfill({ json: { code: 0, data: { contentType: 'image/svg+xml', body } } })
+  }
+  await page.route('**/api/network/forwardProxy', proxyHandler)
+  await source('Picsum').click()
+  await page.waitForFunction(() => globalThis.__deskWallpaper.source === 'picsum')
+  await page.getByRole('button', { name: 'Picsum · ridge', exact: true }).click()
+  await slowStarted
+  await page.getByRole('button', { name: 'Picsum · harbor', exact: true }).click()
+  await page.waitForFunction(() => globalThis.__deskWallpaper.value.includes('/harbor/'))
+  const slowResponse = page.waitForResponse(response => response.url().endsWith('/api/network/forwardProxy') && response.request().postDataJSON().url.includes('/ridge/1920/1080'))
+  releaseSlow()
+  await slowResponse
+  await page.waitForTimeout(100)
+  assert.match((await wall()).value, /\/harbor\//)
+  assert.ok((await wall()).resolved?.startsWith('data:image/'))
+  await page.unroute('**/api/network/forwardProxy', proxyHandler)
+  checks.push('delayed Picsum responses cannot overwrite the last image selection')
+
+  // 收藏镜像也只存在本测试页；模拟内核拒绝删除，确认项目不会先丢掉收藏状态。
+  await page.evaluate(() => globalThis.__deskFavorites.push('verify-kept.png'))
+  await page.route('**/api/file/removeFile', route => route.fulfill({ json: { code: -1, msg: 'fixture deletion failed' } }))
+  const deleteResponse = page.waitForResponse(response => response.url().endsWith('/api/file/removeFile'))
+  await page.locator('.set-fav-item').first().getByRole('button', { name: '删除收藏', exact: true }).click({ force: true })
+  await deleteResponse
+  await page.waitForFunction(() => [...document.querySelectorAll('body > div')].some(el => el.textContent.includes('删除收藏失败')))
+  assert.ok(await page.evaluate(() => globalThis.__deskFavorites.includes('verify-kept.png')))
+  assert.equal(await page.locator('.set-fav-item').count(), 1)
+  await page.evaluate(() => globalThis.__deskFavorites.splice(0))
+  checks.push('failed favorite deletion preserves both the favorites mirror and visible item')
+  await closeSheet()
+
+  await page.evaluate(({ cards, panels }) => {
+    globalThis.__deskDesk.cards = [...panels, ...cards.map(([cardId], index) => ({ uid: `verify-${cardId}`, cardId, w: 6, h: 6, x: 1 + index % 6 * 8, y: 8 + Math.floor(index / 6) * 8 }))]
+  }, { cards, panels })
+  const frames = page.locator('.desk-root .item:not(.is-panel) > .frame')
+  await page.waitForFunction(() => document.querySelectorAll('.desk-root .item:not(.is-panel) > .frame').length === 15)
+  for (const [w, h] of [[6, 6], [12, 6], [6, 12]]) {
+    await page.evaluate(({ w, h }) => {
+      for (const card of globalThis.__deskDesk.cards) if (!card.cardId.startsWith('@')) { card.w = w; card.h = h }
+    }, { w, h })
+    await page.waitForTimeout(280)
+    const boxes = await frames.evaluateAll(elements => elements.map(frame => {
+      const content = frame.querySelector('.body > *')
+      const box = content?.getBoundingClientRect()
+      return { content: !!content, width: box?.width, height: box?.height }
+    }))
+    assert.ok(boxes.every(box => box.content && box.width > 0 && box.height > 0), `All cards have nonzero content boxes at ${w}×${h}`)
+  }
+  checks.push('all 15 desktop cards render square, wide and tall content boxes without runtime errors')
+  // 操作较小的日历，避免测试点击落到视口外。
+  await page.evaluate(() => {
+    for (const c of globalThis.__deskDesk.cards) if (!c.cardId.startsWith('@')) { c.w = 6; c.h = 6 }
+  })
+  await page.waitForTimeout(280)
+  const calendar = frames.nth(1)
+  await calendar.scrollIntoViewIfNeeded()
+  await calendar.hover()
+  await calendar.getByRole('button', { name: '全屏', exact: true }).click()
+  await page.locator('.desk-full').waitFor()
+  assert.equal(await dialog.count(), 0, 'Fullscreen button does not bubble into detail')
+  await page.getByRole('button', { name: '退出全屏（Esc）', exact: true }).click()
+  await page.locator('.desk-full').waitFor({ state: 'detached' })
+  await calendar.hover()
+  await calendar.getByRole('button', { name: '更多', exact: true }).click()
+  assert.equal(await dialog.count(), 0, 'More button does not bubble into detail')
+  const menu = await page.evaluate(() => globalThis.__siyuanMenus.at(-1))
+  assert.deepEqual(menu.items.map(item => item.label).filter(Boolean), ['打开', '刷新', '移除'])
+  await calendar.locator('.body').click({ position: { x: 50, y: 50 } })
+  await dialog.waitFor()
+  assert.equal(await dialog.locator('.desk-sheet-head-title').textContent(), '日历')
+  await dialog.getByRole('button', { name: '全屏', exact: true }).click()
+  await page.locator('.desk-full').waitFor()
+  await dialog.waitFor({ state: 'detached' })
+  assert.equal(await dialog.count(), 0, 'Detail fullscreen closes the sheet')
+  await page.keyboard.press('Escape')
+  await page.locator('.desk-full').waitFor({ state: 'detached' })
+  checks.push('card click opens detail; more/fullscreen do not bubble; native menu contract and Escape exit work')
+
+  // 验证框架销毁嵌套内嵌实例：保留 DOM 引用后移除整个父容器。
+  await page.evaluate(() => {
+    const host = document.createElement('section')
+    host.id = 'verify-embed-host'
+    host.innerHTML = '<div data-desk-card="clock" data-size="2x2"></div>'
+    document.body.append(host)
+    globalThis.__verifyEmbed = host.firstElementChild
+  })
+  await page.waitForFunction(() => !!globalThis.__verifyEmbed?.__vue_app__)
+  await page.evaluate(() => document.querySelector('#verify-embed-host').remove())
+  await page.waitForFunction(() => !globalThis.__verifyEmbed.__vue_app__)
+  checks.push('removing a parent container unmounts its nested document card')
+
+  await page.evaluate(() => document.body.classList.add('body--dark'))
+  if (screenshots.length) await page.screenshot({ path: path.join(out, 'ui-desktop-dark.png') })
+  report(process.env.VERIFY_NO_SCREENSHOTS ? 'ui-isolated' : 'ui', checks, errors, screenshots)
+} finally {
+  await harness.close()
+}

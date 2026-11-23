@@ -5,6 +5,7 @@
 node_modules
 dist
 dev-dist
+dev-dist-plugin
 package.zip
 .env
 tmp

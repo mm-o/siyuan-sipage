@@ -1,12 +1,9 @@
 <template>
   <article
     ref="frameRef"
-    class="frame"
-    :class="[`is-${tier}`, { 'is-big': big, pressed, 'is-solid': solid }]"
-    @mousedown="pressed = true"
-    @mouseup="pressed = false"
-    @mouseleave="pressed = false"
-    @click="onClick"
+    class="frame desk-surface"
+    :class="[`is-${tier}`, { 'is-big': big, 'is-solid': solid }]"
+    @click.stop="onClick"
     @contextmenu.prevent.stop="openMenu($event)"
   >
     <!-- 内容铺满整张卡片（无标题栏） -->
@@ -15,8 +12,8 @@
     </div>
 
     <!-- 悬浮控件：全屏 / 更多，按注册表开关决定是否渲染（hover 才出现） -->
-    <GlassButton v-if="can.full" class="fs" :icon="Maximize2" label="全屏" @click="emit('fullscreen')" />
-    <GlassButton v-if="can.menu" class="more" :icon="MoreHorizontal" label="更多" @click="openMenu" />
+    <GlassButton v-if="can.full" class="fs" :icon="Maximize2" label="全屏" :tone="solid ? 'auto' : 'photo'" @click.stop="emit('fullscreen')" />
+    <GlassButton v-if="can.menu" class="more" :icon="MoreHorizontal" label="更多" :tone="solid ? 'auto' : 'photo'" @click.stop="openMenu" />
   </article>
 </template>
 
@@ -35,10 +32,10 @@ import { GlassButton } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { Maximize2, MoreHorizontal } from "lucide-vue-next"
 import { Menu } from "siyuan"
-import { getCard, type CardSize } from "@/core/registry"
+import { getCard } from "@/core/registry"
 
 /** preview=true 时只做静态展示（设置里的卡片预览用），不渲染悬浮控件、不弹菜单 */
-const props = defineProps<{ cardId: string; size: string; w: number; h: number; preview?: boolean }>()
+const props = defineProps<{ cardId: string; w: number; h: number; preview?: boolean }>()
 
 const emit = defineEmits<{
   expand: [DOMRect]
@@ -48,7 +45,7 @@ const emit = defineEmits<{
   fullscreen: []
 }>()
 
-const def = getCard(props.cardId)
+const def = computed(() => getCard(props.cardId))
 /**
  * 形状档：宽高比决定 wide / tall / square，面积 ≤2 格算 mini。
  * 只此一处，不再单开一个 sizes 模块。
@@ -62,21 +59,20 @@ const tier = computed(() => {
   return "square"
 })
 const big = computed(() => props.w * props.h >= 8)
-/** 纯色面：信息型卡片（日历）对齐 参考实现 的白卡，不吃外观里的不透明度 */
-const solid = def?.surface === "solid"
-/** 控件开关：注册表没写就当全开 */
-const can = {
-  expand: !props.preview && def?.controls?.expand !== false,
-  menu: !props.preview && def?.controls?.menu !== false,
-  full: !props.preview && def?.controls?.full !== false,
-}
-const pressed = ref(false)
+/** 信息卡使用较厚的玻璃面，保留文字对比度。 */
+const solid = computed(() => def.value?.surface === "solid")
+/** 控件开关：注册表没写就当全开。 */
+const can = computed(() => ({
+  expand: !props.preview && def.value?.controls?.expand !== false,
+  menu: !props.preview && def.value?.controls?.menu !== false,
+  full: !props.preview && def.value?.controls?.full !== false,
+}))
 const frameRef = ref<HTMLElement>()
 
 const rect = (): DOMRect | undefined => frameRef.value?.getBoundingClientRect()
 
 function onClick() {
-  if (!can.expand || props.preview) return
+  if (!can.value.expand) return
   emit("expand", rect() as DOMRect)
 }
 
@@ -108,12 +104,10 @@ function anchorOf(target: EventTarget | null) {
   min-height: 0;
   overflow: hidden;
   cursor: pointer;
-  border-radius: var(--desk-r-card, 16px);
-  background: color-mix(in srgb, var(--desk-glass-fill) calc(var(--desk-card-opacity, 0.62) * 100%), transparent);
-  backdrop-filter: blur(var(--desk-blur-regular, 24px)) saturate(var(--desk-saturate, 1.4));
-  -webkit-backdrop-filter: blur(var(--desk-blur-regular, 24px)) saturate(var(--desk-saturate, 1.4));
-  border: 1px solid var(--desk-stroke);
-  box-shadow: 0 10px 30px rgb(0 0 0 / var(--desk-card-shadow, 0.34));
+  --dg-surface-radius: var(--desk-r-card);
+  --dg-surface-fill: var(--dg-card-fill);
+  --dg-surface-blur: var(--desk-blur-regular);
+  --dg-surface-shadow: 0 6px 18px rgb(12 28 48 / calc(var(--desk-card-shadow, .34) * .5));
 }
 
 .body {
@@ -123,15 +117,8 @@ function anchorOf(target: EventTarget | null) {
   overflow: hidden;
 }
 
-/* 纯色面（surface: "solid"）：不透明、不模糊，阴影换成 参考实现 的轻投影
-   —— 白卡压在壁纸上靠的是细边和浅影，不是玻璃。 */
-.frame.is-solid {
-  background: var(--desk-surface);
-  border-color: var(--desk-surface-stroke);
-  box-shadow: var(--desk-surface-shadow);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
+/* 信息卡使用同一材质的高可读变体。 */
+.frame.is-solid { --dg-surface-fill: var(--dg-card-regular); }
 
 /* 框架约定：卡槽里的卡片必须铺满（第三方/搬来的卡片常忘记写 100%） */
 .body > * {
@@ -140,24 +127,16 @@ function anchorOf(target: EventTarget | null) {
 }
 
 /* 更多：默认隐形，hover/键盘聚焦出现（外观由 GlassButton 提供） */
-.more {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 2;
-  opacity: 0;
-  transition: opacity var(--desk-dur) var(--desk-ease);
-}
-
-/* 全屏：左上角，和「更多」成对角 */
+.more,
 .fs {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: var(--desk-sp-2);
   z-index: 2;
   opacity: 0;
   transition: opacity var(--desk-dur) var(--desk-ease);
 }
+.more { right: var(--desk-sp-2); }
+.fs { left: var(--desk-sp-2); }
 
 .frame:hover .more,
 .frame:hover .fs,
@@ -166,10 +145,4 @@ function anchorOf(target: EventTarget | null) {
   opacity: 0.92;
 }
 
-/* 纯色面上的两个按钮：默认那层 32% 黑在纯色底上会糊掉，换成按材质给的一层 */
-.frame.is-solid .more,
-.frame.is-solid .fs {
-  border-color: var(--desk-surface-ctl-stroke);
-  background: var(--desk-surface-ctl);
-}
 </style>

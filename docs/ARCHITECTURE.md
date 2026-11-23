@@ -1,210 +1,84 @@
-# 架构（v2.8 · 收敛版）
+# 架构
 
-> 原则：**简洁高效、易于维护**。三层职责不变，新增能力必须归位到已有层，不新开层。
+原则：保留清楚的职责边界；共享真实重复的行为，不为行数把不同功能强行合并。
 
-## 一、三层 + 两个延伸
+## 目录与职责
 
-```
-index.ts                 入口（页签 / 顶栏 / 命令 / 内嵌启动 / 品牌标）
-icons.ts（无）           品牌标已并入 index.ts
-
-├─ core/                 与 UI 无关的骨架（5 个文件）
-│  ├─ registry.ts        CardDef + CardSize + 15 张卡的注册（唯一扩展点）
-│  ├─ store.ts           状态 + 存储 + 缓存 + 排版：
-│  │                     用户状态 → 思源 petal；派生缓存 → localStorage(desk-cache:)；
-│  │                     旧键迁移、flowDesk / alignPanels 也在这里
-│  ├─ image.ts           图片与跨域请求唯一入口（forwardProxy）
-│  ├─ daily.ts           每日内容序列（三张照片卡共用）
-│  └─ quickdocs.ts       快速打开用的文档索引
-│
-├─ ui/                   设计系统（9 个文件）
-│  ├─ DeskShell.vue      桌面壳（壁纸 + 时钟 + 画布 + 整理模式 + 弹层）
-│  ├─ SettingsSheet.vue  设置外壳（左导航 + 三页：壁纸 / 组件设置 / 关于）
-│  ├─ CardFrame.vue      卡片外框（材质 / hover / 菜单 / 形状档类 is-<tier>）
-│  ├─ Sheet.vue          统一弹层（一套结构 + 从 origin FLIP）
-│  ├─ styles/index.css             共享样式（面板骨架 / 按钮 / 控件外观全在这里）
-│  ├─ controls.ts        基础控件 GlassButton·SeriesNav·Segmented·Chips + 纯 DOM 工具 toast/copyText/docColor/docRows
-│  ├─ arrange.ts         拖拽 / 缩放状态机（useDeskGrid）
-│  ├─ primitives/Slider.vue   唯一还需要组件文件的控件（拖拽态 + v-model）
-│  └─ settings/          WallpaperPanel | CardsPanel（含卡片库）
-│
-├─ cards/                每张卡片 = 一个自包含目录
-│  ├─ calendar/          CalendarCard.vue + CalendarPanel.vue + styles.css
-│  ├─ weather/           WeatherCard / WeatherPanel +
-│  │                      types.ts(形状) codes.ts(码表/渐变) net.ts(缓存+两后端)
-│  │                      locate.ts(区县定位+索引) hooks.ts(useWeather) weather.ts(汇总出口)
-│  ├─ clock/ countdown/ heatmap/ docstats/ memo/ pomodoro/ quickpick/ recent/
-│  ├─ block/ shortcut/ yiyan/ english/ shici/
-│
-├─ embed/
-│  └─ cards.ts           文档内嵌（data-desk-card + MutationObserver）+ 插入卡片命令
-│
-└─ styles/               index.css（令牌 + 断点刻度 + 插件根）
+```text
+src/index.ts             插件注册：存储、页签、顶栏、命令
+src/core/
+  util.ts                共用底座：post()/sql() 内核出口与 pad()，几行的通用件不单独成文件
+  registry.ts            15 种卡片、组件、材质、尺寸约束的唯一装配点
+  store.ts               桌面/壁纸/外观状态、思源存储、缓存、网格排版
+  image.ts               图片清单、跨域代理、壁纸样式、图片收藏文件
+  daily.ts               每日内容的共享序列、背景与翻页
+  quickdocs.ts           文档索引与打开行为
+src/ui/
+  DeskShell.vue          画布、面板组装、整理入口、每卡一个详情弹窗与全屏宿主
+  DeskClock.vue          桌面大时间：分钟刷新、日期、样式、生命周期
+  arrange.ts             指针/键盘移动缩放、fitDims 唯一尺寸约束
+  CardFrame.vue          卡片材质、形状类、原生菜单、详情/全屏事件
+  Sheet.vue              统一标题栏、弹层、钉住、顶栏拖动/四角缩放与 FLIP
+  SettingsSheet.vue      壁纸/组件设置/卡片库/关于，统一预览与重置
+  WallpaperPanel.vue     壁纸来源选择
+  CardsPanel.vue         外观参数
+  LibraryPanel.vue       卡片选择
+  controls.ts            基础控件、显示工具与 iconDeskCards 图形注册定义
+  Slider.vue             原生滑轨封装
+src/cards/<id>/          每卡一个 *Card.vue，详情/算法/专属样式留在本目录
+src/embed/cards.ts       文档占位挂载、DOM 观察、插入卡片命令与卸载
+src/styles/index.css     设计令牌、共享控件、设置骨架、整理模式与插件根样式
 ```
 
-## 二、六条硬规则
+## 依赖边界
 
-1. **卡片目录不得 import 另一张卡片**
-   `core/` 只放**多张卡共用**的骨架：状态与存储、图片出口、每日内容序列、文档索引、注册表。
-   只有一张卡用的算法（月视图 / 节气 / 节日 / 星座 / 月相 / 干支日）放它自己的目录
-   （`cards/calendar/calendar-data.ts`）。`cards/` 只依赖 `core/` 和 `ui/`。
+- `core` 不依赖 `ui/cards/embed`；`registry.ts` 是装配点，允许引用卡片组件。
+- 内核接口只从 `core/util` 走：`post()` 统一 POST/JSON/`code` 校验，`sql()` 是它的 SQL 特化；图片走 `post`，multipart 上传走 `image.ts` 内部唯一的 `putFile`。
+- `ui` 不直接依赖 `cards`；通过注册表取得组件。
+- 不同卡片目录互不导入。某张卡专用算法留在自身目录。
+- 基础控件只接受 props 和事件，不读取业务状态、不依赖注册表。
+- 详情通过 `registry.detail` 提供；省略时复用主组件并传 `mode="detail"`。
+- 卡片只提供内容；外框、菜单、弹层和全屏由框架管理。
 
-2. **详情只有一种表达**
-   `registry.detail?` 指定专用面板；没写则框架用同一组件并注入 `mode="detail"`。
-   卡片内不要再出现 `detail?: boolean` 这类自定义开关。
+`pnpm check:arch` 校验上述模块边界；`pnpm check:types` 同时禁止无用导入、局部变量与参数。
 
-3. **视觉只改两处**
-   - 全局材质/圆角/字号/动效 → `styles/index.css`
-   - 面板内的按钮/行/输入/瓦片 → `styles/index.css`
-   卡片自己的排版写在自己的 `<style scoped>`，但字号层级用 `clamp(...cqh)` 跟随尺寸。
-   卡片**面**（玻璃还是纯色）不归卡片管：写在 `registry` 的 `surface?: "glass" | "solid"` 上，由 `CardFrame` 统一切类（见 `DESIGN.md`「卡片材质」）。
+## 尺寸与排版
 
-4. **单选控件按数量选**
-   ≤4 项且等宽 → `Segmented`；多项可换行 → `Chips`。
+桌面实例的 `x/y/w/h` 是唯一几何状态，单位为格。`computeGrid()` 仅依据可用宽度与 `appearance.cell` 计算列数与单格像素，手动移动不会触发避让重排。
 
-5. **菜单一律用思源的**
-   右键菜单、更多菜单、插入卡片菜单全部 `new Menu(id)` + `addItem/addSeparator` + `open({x,y})`
-   （`siyuan` 包，已经是唯一外部依赖）。不自绘菜单：自绘就得 `Teleport` 到 body，
-   一出去就落到思源全局 `svg { fill: currentColor }` 的射程里，线性图标会被填成实心块。
+- 单格目标范围来自 `CELL_MIN/CELL_MAX`，默认 27px。
+- `registry.constrain` 定义 `step/min/max`；`arrange.fitDims()` 处理吸附与边界。
+- 快捷方式以 2 格、文档统计以 3 格为步长；日历、天气自由缩放。
+- 容器断点只使用 120/200/260/460/720px，`pnpm check:bp` 校验。
+- 一键整理大卡先放、小卡补缝；时钟下空 2 格，卡片间及左右各留 1 格。
+- 内嵌保留 `data-size` 标识，并解析为 `w/h` 传给组件。
 
-6. **框架能力下沉，卡片只画内容**
-   全屏、材质、右键菜单、弹层、网格排版、图标居中，全部由 `CardFrame` / `DeskShell` / `Sheet` 提供：
+## 状态与资源
 
-   | 能力 | 谁给 | 卡片要做什么 |
-   | --- | --- | --- |
-   | 全屏 | `CardFrame` 左上角按钮 + `DeskShell` 的 `.desk-full` 层 | 什么都不做（内容靠容器查询自动放大） |
-   | 材质（玻璃/纯色） | `registry.surface` → `CardFrame.is-solid` | 什么都不做 |
-   | 菜单 | `siyuan` 的 `Menu` | 什么都不做 |
-   | 弹层 / 展开 | `Sheet` + `origin` FLIP | 提供详情组件或 `mode="detail"` |
-   | 网格排版 | `core/store.ts` 的 `flowDesk()` | 什么都不做 |
-   | 图标居中 | `styles/index.css` 的 `button > svg { display: block }` + `line-height: 0` | 什么都不做 |
+`store.ts` 的 reactive 是状态来源；思源插件存储通过 `loadData/saveData` 读取与防抖写入。先完成启动读取，再允许写盘。桌面、壁纸、外观、天气地点与倒数日状态保存到思源插件存储；部分卡片偏好通过 `persisted()` 保存到本地存储，派生缓存使用 `desk-cache:` 前缀。
 
-## 二之二、组件边界（什么可以抽成共享组件）
+外观参数通过一处监听同步为 CSS 变量，卡片、预览与 Teleport 弹层使用同一配置。壁纸身份与运行时图片只通过 `setWallpaper()` 一起替换，避免切换来源后残留旧 `resolved`；`resolved` 不落盘。快速连续选择只接受最后一次异步结果。
 
-「一个卡片一个 Vue」指的是**卡片主组件**：每张卡在 `cards/<id>/` 里有且只有一个 `*Card.vue`，
-它的子组件（`FlipDigit` / `CalendarPanel`）和 `styles.css` 留在同一个目录里。
-**共享组件不是把三张卡合成一个**，而是把「长相与行为完全相同的一小块控件」抽出去。
+图片收藏的真实文件位于思源 `data/public/siyuan-desk-cards`，内存列表是磁盘镜像；删除成功后再更新列表。本地图片直接读取，外部数据经 `forwardProxy()` 获取。
 
-判断能不能抽成共享控件（放进 `ui/controls.ts`），过这四问：
+状态复用 `globalThis` 避免重复 bundle 的多份默认状态。修改兼容或持久化逻辑时，要额外验证思源整页重载与已有数据恢复。
 
-| 问题 | 可以抽 | 不能抽 |
-| --- | --- | --- |
-| 是否与某张卡的数据/文案绑定？ | 只吃 props，或只吃一个**结构化契约**（如 `{ step(dir) }`） | 需要知道 cardId、要发请求、要读 registry |
-| 是否有自己的样式特例？ | 无 scoped 样式，外观来自 `styles/index.css` + 令牌 | 为某张卡写特例选择器 |
-| 抽出去之后卡片还剩什么？ | 卡片仍拥有自己的内容、排版、取数（`load(offset)`） | 卡片只剩一行 `<SharedCard />` |
-| 会不会反向依赖？ | 只依赖 vue / lucide / 同级控件 / 样式 | import `core/` 或 `cards/` |
+## 生命周期
 
-按这四问，现在的共享组件是合规的：
+- 桌面时间只在整分钟唤醒，卸载清理定时器。
+- 图谱事件通过 `AbortController` 一次释放；异步查询返回后先检查是否已卸载。
+- 内嵌实例集中登记；移除占位或外层容器时完整卸载，DOM 搬移保持实例，插件退出释放全部实例。
+- 新增监听、定时器、观察器都必须有对应的释放路径。
 
-| 组件 | 类型 | 卡片还剩什么 |
-| --- | --- | --- |
-| `GlassButton` | 纯控件（icon + label） | 全部内容 |
-| `SeriesNav` | 复合控件（‹ › + `step(dir)` 契约） | 内容、排版、`load(offset)`、背景规则 |
-| `Chips` / `Segmented` / `Slider` / `Swatch` | 纯控件 | 全部内容 |
-
-对应的三条「不许」：不许把整张卡的模板搬进 controls；不许 controls import `core/`；
-不许在 controls 里写某张卡的文案分支（需要不同文案时，说明它不该共用）。
-
-这条规则由 `pnpm check:arch` 机器校验（见第五节），不靠自觉。
-
-## 二之三、尺寸模型（v0.5 起）
-
-卡片**没有尺寸档位表**，桌面按格数自由缩放；版式只认「形状」不认精确格数：
-
-| 概念 | 实现 |
-| --- | --- |
-| 实际尺寸 | `CardInstance` 的 `w/h`（格数），桌面壳按视口算出单格像素 |
-| 大卡 | `isBig()`：面积 ≥ 8 格，用来放大字号、增加行数 |
-| 段落 | `registry.constrain.step`（快捷方式 2 / 统计 3，其余 1） |
-| 容器断点 | 只用五个刻度：120 / 200 / 260 / 460 / 720（`pnpm check:bp` 守卫） |
-
-```ts
-// 卡片里的写法
-const tier = sizeTier(props.w ?? 4, props.h ?? 2)   // 版式分支
-// 样式里只用语义类
-.is-wide .quote { -webkit-line-clamp: 2 }
-.is-big .desk-photo-text { font-size: var(--desk-fs-card-text-wide) }
-```
-
-**不要**再按精确格数写选择器（`.is-4x2` 这类）：卡片一旦被拖成 8×4 就永不命中，
-这正是 v0.5 之前「拖大之后样式没跟上」的根因。
-
-## 三、扩展成本
-
-| 需求 | 改动 | 文件数 |
-| --- | --- | --- |
-| 加一张卡片 | `cards/<id>/XCard.vue` + `registry.ts` 一行 | **2** |
-| 加一个设置分区 | `ui/settings/XPanel.vue` + `SECTIONS` 一行 | **2** |
-| 加一种壁纸来源 | `core/image.ts` 一个函数 + `WallpaperPanel` 一项 | **2** |
-| 换主题色/圆角/间距 | `styles/index.css` | **1** |
-| 调整卡片材质 | `CardFrame.vue` + `styles/index.css` | **2** |
-
-## 四、v2.8 的收敛（本轮瘦身）
-
-| 项 | 之前 | 现在 |
-| --- | --- | --- |
-| 样式文件 | `tokens.css` + `cards.css` + `index.scss` + `desk.css`(1233 行) | **`styles/index.css`（令牌 + 插件根）+ `desk.css`（只留桌面壳用到的）** |
-| Tailwind | `@tailwind utilities` + tailwind/postcss/autoprefixer 三个依赖 | **整条链删除**（模板里从来没写过工具类） |
-| 卡片配置层 | `registry.defaultConfig` + `store` 里的 configs + `mount` 注入 `provide/inject` | **删除**：没有一张卡读过它，挂载器只传 props |
-| 死代码 | 农历/节气/日历/封面里 12 个未使用的导出、`randomCover`、`clearLunarCache` 等 | **全部删除**；仅内部使用的符号不再 `export` |
-| 重复常量 | 单格 88 / 间距 12 在 `layout.ts` 与 `store.ts` 各写一份 | **只在 `layout.ts` 声明**，store 引用 |
-| 重复组件 | 壁纸面板手写 `.desk-chip`，与 `Chips` 组件两套 | **统一走 `Chips`**，删掉 40 行 CSS |
-| 提示条 | 插入文档、新建日程各写一份 toast | **`ui/view.ts` 的 `toast()` 一处** |
-| 验证脚本 | 28 个（v3…v18 的历史快照脚本） | **10 个**，一文件一职责 |
-
-量化：`src/` 从 **6817 行 → 5575 行**；产物 CSS 从 **67.7 kB → 41.6 kB**（gzip 12.0 → 7.6 kB），JS 基本不变（162 → 161 kB）。
-
-## 四之二、v2.9 的收敛（继续压）
-
-| 项 | 之前 | 现在 |
-| --- | --- | --- |
-| 三张卡的取数/翻页/背景 | 每张卡各写一份 cache + cursor + step + 背景随机（一言 20 行、英语/诗词没有翻页） | **`core/daily.ts` 的 `dailySeries()` 一处**：三张卡只提供 `load(offset)`，翻页/缓存/共享状态/背景全由它管 |
-| 复制到剪贴板 | 三张卡各写一份 clipboard + execCommand 兜底（每份 ~12 行） | **`ui/view.ts` 的 `copyText()`** |
-| 提示条 | 早期曾单独一个文件 | 已与 `copyText` 合并进 **`ui/view.ts`**（两个纯 DOM 工具） |
-| 背景样式 | 三张卡各写 `url(cover \|\| 兜底)` | **`photoBg(cover, picture?)`** 一处 |
-| 设置面板骨架 | 四个面板各写 `.panel { flex column; gap }` | **`styles/index.css` 的 `.desk-panel`** |
-| 预览条 | 壁纸 / 组件设置各写一份 `.preview`（132px + 描边 + 圆角） | **`.desk-preview` + `.desk-preview-tag`** |
-| 卡片菜单开关 | `CardFrame` 的 `menu?: { expand, refresh, size, remove }` 四开关（无人传） | **删除**，菜单固定四项 |
-
-功能增量：每日英语 / 每日诗词的详情现在也有「上一条 / 下一条」（英语用本地 24 句句库循环，诗词按 `?date=` 走前一天/后一天）。
-
-## 五、存储层（`core/store.ts`）
-
-状态存**思源的插件存储**，不存 localStorage：
-
-| | 走哪儿 | 说明 |
-| --- | --- | --- |
-| 读 | `plugin.loadData(key)` | `bootStore()` 里 await 一次，**直接赋给 reactive**，不存副本 |
-| 缓存 | `cacheGet/cacheSet`（本文件内） | 只有派生数据（天气、区县索引）落 localStorage，命名空间 `desk-cache:`，读失败当没有 |
-| 写 | `plugin.saveData(key, value)` | 状态一变就写（滑轨这类高频变化合并 100ms，只合并请求、不缓存数据） |
-| 落地 | `<工作空间>/data/storage/petal/desk-cards/{desk,wallpaper,appearance}` | 重启、换设备同步都在；键名会变成文件名，不能带冒号 |
-
-**没有缓存层、没有队列、没有 flush**：内存里的 reactive 就是唯一真源，读一次写到底，不存在「缓存和磁盘谁对」的同步问题。
-
-三条必须记住的坑：
-
-1. **思源会把插件 bundle 载入多次**（同一文档实测 20 次 `onload`）。所以 `core/store.ts` 的状态与监听器挂在 `globalThis` 上做单例（`__deskDesk` / `__deskWallpaper` / `__deskAppearance` / `__deskWatching` / `__deskBooted`）——否则 20 份副本各拿自己的默认值写盘，用户加的卡片会被覆盖回种子。
-2. **装载之前不许写**：`bootStore()` 读完才把 `ready` 置真，否则每个副本启动时都会把默认值写回去。
-3. **兼容旧数据**：新存储没有该键时回退读旧 localStorage 键（`desk-cards:*`），老用户的数据一次性迁过来。
-
-验证：`node tools/verify/shot-persist-live.mjs`（加卡 → 读 petal 文件 → 整页重载 → 复原）。
-
-## 六、验证清单
+## 构建与验证
 
 ```bash
-pnpm check:types     # tsc：类型契约（CardSize、props 形状）
-pnpm check:dist      # 产物只允许依赖 siyuan
-pnpm check:arch      # 分层：core→ui→cards，每卡一个 Card.vue，跨卡依赖为 0
-pnpm check:bp        # 断点只用 120/200/260/460/720
-pnpm build           # 构建插件
-pnpm release:ship "说明"   # 四道门禁 → 构建 → 提交 → tag → push → Release
+pnpm check          # 类型/未用符号、分层、断点、构建、产物完整性
+pnpm check:browser  # 独立验证页与 5 组浏览器回归
 ```
 
-人工过一遍：
+`pnpm dev` 监听输出到 `.env` 指定工作空间的插件目录；未配置时输出 `dev-dist-plugin/`，避免覆盖验证页源码。`pnpm build` 固定输出 `dist/` 和 `package.zip`；验证页输出 `dev-dist/`，不会混入插件。
 
-- [ ] 卡片拖到任意尺寸：版式跟随形状档变化，文字不裁、不折行错位
-- [ ] 任意卡片拖到任意尺寸都不溢出；形态随容器断点切换
-- [ ] 整理模式：壁纸压暗、圆角格网、时钟下方空两格、卡片间 1 格、向右下可继续滚动
-- [ ] 天气详情：区县定位准确、逐时 24h、7 日、左右两栏同底
-- [ ] 重启（整页重载）后卡片与尺寸都在；petal 有 desk/wallpaper/appearance；localStorage 只有 `desk-cache:` 前缀
-- [ ] 跨卡片 import 为 0（`pnpm check:arch` 自证）
+产物守卫要求入口、样式、清单非空，版本与源码一致；入口唯一宿主依赖为 `siyuan`。浏览器回归使用隔离数据与 API 替身；真实天气、Protyle、自定义块、原生菜单和持久化需在思源内复核，详见 `tools/verify/README.md`。
+
+`release.js` 只更新版本；显式运行 `release:ship` 才进入检查、提交、标签、推送与 GitHub Release 管线。

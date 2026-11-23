@@ -153,7 +153,6 @@ onMounted(refresh)
 
 <style scoped>
 
-
 .ds-col {
   display: flex;
   flex-direction: column;
@@ -174,7 +173,6 @@ onMounted(refresh)
 .ds-col.is-right {
   flex: 0 0 232px;
   overflow: auto;
-  scrollbar-width: none;
 }
 
 .ds-bar {
@@ -264,8 +262,6 @@ onMounted(refresh)
 .ds-arc:hover {
   opacity: 0.75;
 }
-
-
 
 .ds-legend li {
   display: flex;

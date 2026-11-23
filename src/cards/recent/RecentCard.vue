@@ -35,7 +35,6 @@ const rows = docRows(
   list,
   computed(() => {
     const h = props.h ?? 2
-    const w = props.w ?? 4
     /* 行数 = 高度 + 2（留一行给「更多」），夹在 3~6 行 */
     return Math.min(6, Math.max(3, Math.floor(h) + 2))
   }),

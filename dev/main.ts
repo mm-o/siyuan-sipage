@@ -1,15 +1,13 @@
 /** 框架验证页：桌面壳 + 文档内嵌卡片 */
+import "@/styles/index.css"
 import { createApp } from "vue"
 import { appearance, bootStore, countdown, desk } from "@/core/store"
 import DeskShell from "@/ui/DeskShell.vue"
 import { hydrateCards, startCardObserver } from "@/embed/cards"
+import { DESK_ICON } from "@/ui/controls"
 
-// 真插件里由 Plugin.addIcons() 注册；验证页手动注入同一份 symbol，
-// 这样桌面壳右上角的 <use href="#iconDeskCards"> 才有图形可显示。
-document.body.insertAdjacentHTML(
-  "afterbegin",
-  `<svg width="0" height="0" style="position:absolute" aria-hidden="true"></svg>`,
-)
+// 与真实插件使用同一份 symbol。
+document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${DESK_ICON}</svg>`)
 
 // 验证页专用：插件本体只读思源的插件存储，这里用 localStorage 预置一份桌面给截图脚本
 await bootStore()

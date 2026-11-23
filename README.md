@@ -21,6 +21,8 @@ Three equivalent entries:
 - the command palette → "Open Desk Cards";
 - bind a hotkey: **Settings → Keymap**, search for "Open Desk Cards".
 
+The desk has its own clock panel on the left (same grid layer as the tool group), cards fill the rest.
+
 ## Working with the desk
 
 ### Add cards
@@ -31,21 +33,25 @@ Three equivalent entries:
 
 ### Card menu, details, fullscreen
 
-- **Click a card** → detail popover; `Esc` closes it.
+- **Click a card** → detail panel; `Esc` closes it.
 - **Fullscreen button (top-left)** → the card fills the whole screen; click again or press `Esc` to leave.
 - **⋯ (top-right)** or right-click the card → Open / Refresh / Remove.
-- The detail popover has its own fullscreen button: the popover closes first, then the card expands — no flicker.
+- **Panels can be dragged, resized and pinned**:
+  - drag the title bar to move, double-click it to re-center;
+  - drag a corner to resize;
+  - click the **pin** in the title bar: the backdrop stops dimming and clicking outside no longer closes it. Several panels can be pinned at once, so you can keep the desk usable beside them.
 
 ### Arrange mode and sizes
 
-1. Click the **grid** button in the tool group (or right-click → Arrange desk) to enter arrange mode; grid guides appear.
+1. Click the **grid** button in the tool group (or right-click → Arrange desk): a dot grid appears and a floating glass toolbar shows the card count and the tidy action.
 2. **Drag the card body** to move it; **drag the dots on the four edges** to resize, one cell per step.
-3. When an edge hits its limit the dot fades, but you can still drag back.
-4. Click the **check** button (or right-click → Done) to leave.
+3. Keyboard works too: **arrow keys** move, **Shift + arrow keys** resize.
+4. When an edge hits its limit the dot fades, but you can still drag back.
+5. **`Esc`** or the check button leaves arrange mode.
 
 ### Tidy up
 
-Right-click the desk → **Tidy up**: cards are packed in order using 2D fitting — two empty cells are kept below the clock, one cell between cards, one cell on each side; rows that don't fit stay empty and cards are never stretched. A toast reports how many cards were arranged.
+**Tidy up** in the toolbar (or right-click the desk → Tidy up): cards are packed in order using 2D fitting — two empty cells are kept below the clock, one cell between cards, one cell on each side; rows that don't fit stay empty and cards are never stretched. A toast reports how many cards were arranged.
 
 ## Cards
 
@@ -67,11 +73,11 @@ Right-click the desk → **Tidy up**: cards are packed in order using 2D fitting
 | Shortcuts | Reuses common toolbar actions, one per cell |
 | SiYuan block | Renders any SiYuan block as-is (document block / custom block) |
 
-Sizes: 2×2 cells by default. Clock / calendar / weather can be dragged between 2 and 16 cells; doc stats moves in steps of 3 (from 3×3); shortcuts move in steps of 2 (from 2×2).
+Sizes: 2×2 cells by default. Clock / calendar / weather can be dragged between 2 and 16 cells; doc stats moves in steps of 3 (from 3×3); shortcuts move in steps of 2 (from 2×2). The pixel size of one cell comes from **Settings → Cards → Cell size** (24–36px).
 
 ## Wallpaper
 
-**Settings → Wallpaper**, eight sources on one screen:
+**Settings → Wallpaper**, nine sources on one screen:
 
 | Source | Where it comes from | Notes |
 | --- | --- | --- |
@@ -83,6 +89,7 @@ Sizes: 2×2 cells by default. Clock / calendar / weather can be dragged between 
 | Picsum | picsum.photos | Random, "Shuffle 12", needs a proxy in China |
 | Local random | Random cover | A different cover each time |
 | Solid | 24-swatch palette | Common colors |
+| Image URL | Any URL | Paste an address, press Enter |
 
 SiYuan assets / covers show **3 rows × 4 = 12 per screen**: "Load more" adds a row, "Collapse" returns to one screen. "Shuffle one" on SiYuan assets picks a random image from the current search result.
 
@@ -102,7 +109,7 @@ SiYuan assets / covers show **3 rows × 4 = 12 per screen**: "Load more" adds a 
 
 Applies to the whole desk:
 
-- **Layout**: cell size 48–72px, controls grid density.
+- **Layout**: cell size 24–36px, controls grid density.
 - **Motion**: entrance animation switch, duration, per-block stagger, per-character stagger.
 - **Cards**: radius, glass blur, glass opacity, shadow, hover lift.
 - **Panels**: pane opacity.
@@ -141,19 +148,30 @@ You can also write the block by hand:
 - **Weather unavailable**: foreign places use Open-Meteo, Chinese places use district codes; if locating fails, search and add a city in the weather details.
 - **Favoriting does nothing / errors**: make sure `<workspace>/data/public` is writable.
 - **Nothing changed after an update**: reload the page; if that is not enough, restart SiYuan.
-- **Language**: this document follows SiYuan's language — Chinese shows this file, other languages show `README.md`.
+- **Language**: this document follows SiYuan's language — Chinese shows `README.zh-CN.md`, other languages show this file.
 
 ## Development
 
+Node.js 20.19+ or 22.12+, pnpm pinned to 10.33.4.
+
 ```bash
-pnpm i
-pnpm dev          # watch build (set VITE_SIYUAN_WORKSPACE_PATH in .env)
-pnpm build        # dist/ and package.zip
-pnpm check:types  # vue-tsc
-pnpm check:dist   # dist guard
+pnpm install --frozen-lockfile
+pnpm build           # dist/ and package.zip
+pnpm dev             # watch build into the plugin dir from .env
+pnpm dev:reload      # build, copy, then ask SiYuan to reload the UI
+pnpm check           # types / unused symbols / layering / breakpoints / dist
+pnpm check:browser   # build the harness and run five isolated browser suites
 ```
 
+Copy `.env.example` to `.env` and set the workspace path (Windows accepts forward slashes, e.g. `E:/sy`). `dev:reload` reads `SIYUAN_URL` / `SIYUAN_TOKEN` or script flags; browser suites use system Edge unless `EDGE_PATH` is set.
+
 Layout: `src/core` (state / images / registry), `src/cards` (15 cards), `src/ui` (desk shell / settings / controls), `src/embed` (document embeds), `src/styles` (the single global stylesheet).
+
+## Releasing
+
+`pnpm release:patch` / `release:minor` / `release:major` / `release:manual` only bump the version in both manifests.
+
+`pnpm release:ship "note"` runs checks, builds, commits, tags, pushes and creates a GitHub Release (needs Git Bash and an authenticated GitHub CLI).
 
 ## License
 

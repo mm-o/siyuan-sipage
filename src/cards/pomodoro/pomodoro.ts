@@ -1,5 +1,6 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue"
 import { persisted } from "@/core/store"
+import { pad } from "@/core/util"
 
 type Phase = "focus" | "rest"
 
@@ -54,7 +55,7 @@ function remainingMs(now = Date.now()) {
 
 export function clockText(ms: number) {
   const total = Math.ceil(ms / 1000)
-  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`
+  return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`
 }
 
 let audio: HTMLAudioElement | null = null

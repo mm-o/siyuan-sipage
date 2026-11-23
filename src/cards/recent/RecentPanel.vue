@@ -1,6 +1,6 @@
 <template>
   <div class="rc-panel desk-seq">
-    <div class="rc-pane desk-pane">
+    <div class="rc-pane desk-pane is-solo">
       <header class="rc-bar">
         <span class="rc-title">最近打开 · 16 篇</span>
         <GlassButton :icon="RotateCcw" label="刷新" @click="load" />
@@ -10,7 +10,7 @@
         <button
           v-for="(doc, i) in cells"
           :key="i"
-          class="rc-cell"
+          class="rc-cell desk-content-surface"
           :class="{ 'is-empty': !doc }"
           type="button"
           :title="doc ? `${doc.title} · ${doc.notebook} · ${doc.updated}` : '暂无'"
@@ -35,18 +35,14 @@
 import { GlassButton } from "@/ui/controls"
 import { computed, onMounted, ref } from "vue"
 import { RotateCcw } from "lucide-vue-next"
-import { openDoc, recentDocs, sql, type PickDoc } from "@/core/quickdocs"
+import { openDoc, recentDocs, type PickDoc } from "@/core/quickdocs"
+import { post, sql } from "@/core/util"
 
 /** 笔记本名：官方接口，模块级缓存，整页只请求一次 */
 let notebookPromise: Promise<Map<string, string>> | null = null
 function notebookNames() {
-  notebookPromise ||= fetch("/api/notebook/lsNotebooks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: "{}",
-  })
-    .then((r) => r.json())
-    .then((j) => new Map(((j?.data?.notebooks || []) as { id: string; name: string }[]).map((n) => [n.id, n.name])))
+  notebookPromise ||= post<{ notebooks?: { id: string; name: string }[] }>("/api/notebook/lsNotebooks")
+    .then((data) => new Map((data?.notebooks || []).map((n) => [n.id, n.name])))
     .catch(() => new Map<string, string>())
   return notebookPromise
 }
@@ -92,7 +88,6 @@ onMounted(load)
 }
 
 .rc-pane {
-  border-radius: var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane) var(--desk-r-pane);
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
@@ -132,18 +127,9 @@ onMounted(load)
   padding: var(--desk-sp-2);
   min-width: 0;
   min-height: 0;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: color-mix(in srgb, var(--desk-text) 5%, transparent);
-  color: var(--desk-text);
   text-align: left;
   cursor: pointer;
   overflow: hidden;
-}
-
-.rc-cell:hover {
-  background: color-mix(in srgb, var(--desk-accent) 13%, transparent);
-  border-color: color-mix(in srgb, var(--desk-accent) 40%, transparent);
 }
 
 .rc-cell:active {

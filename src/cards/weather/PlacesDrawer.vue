@@ -2,11 +2,9 @@
   <aside class="wx-places desk-pane is-right" :class="{ 'is-open': open }" :style="{ backgroundImage: sky }">
         <h2 class="wx-places-title">天气列表</h2>
 
-        <input v-model="keyword" class="wx-search" placeholder="输入城市、区县、乡镇" @input="onInput" />
+        <GlassField v-model="keyword" class="wx-search" label="搜索天气地点" tone="photo" placeholder="输入城市、区县、乡镇" @input="onInput" />
 
-        <button class="wx-locate" type="button" :disabled="locating" @click="locate">
-          {{ locating ? "定位中…" : "使用我的位置" }}
-        </button>
+        <GlassButton class="wx-locate" :icon="LocateFixed" :label="locating ? '定位中…' : '使用我的位置'" text variant="primary" tone="photo" :disabled="locating" @click="locate" />
 
         <p v-if="searching" class="wx-places-hint">搜索中…</p>
         <p v-else-if="searchError" class="wx-places-hint">{{ searchError }}</p>
@@ -38,26 +36,8 @@
               </span>
             </button>
             <span class="wx-loc-acts">
-              <button
-                v-if="!isFirst(loc)"
-                class="wx-loc-act"
-                type="button"
-                title="置顶"
-                aria-label="置顶"
-                @click.stop="pinWeatherPlace(loc.id)"
-              >
-                <Pin :size="13" :stroke-width="2" />
-              </button>
-              <button
-                v-if="locations.length > 1"
-                class="wx-loc-act is-del"
-                type="button"
-                title="删除"
-                aria-label="删除"
-                @click.stop="removeWeatherPlace(loc.id)"
-              >
-                <Trash2 :size="13" :stroke-width="2" />
-              </button>
+              <GlassButton v-if="!isFirst(loc)" :icon="Pin" label="置顶" tone="photo" @click.stop="pinWeatherPlace(loc.id)" />
+              <GlassButton v-if="locations.length > 1" :icon="Trash2" label="删除" variant="danger" tone="photo" @click.stop="removeWeatherPlace(loc.id)" />
             </span>
           </li>
         </ul>
@@ -72,7 +52,7 @@
  * 只对外抛两件事：`select(id)` 切换地点、`pick(place)` 新地点加入。
  */
 import { computed, onBeforeUnmount, ref } from "vue"
-import { Pin, Trash2 } from "lucide-vue-next"
+import { LocateFixed, Pin, Trash2 } from "lucide-vue-next"
 import {
   addWeatherPlace,
   pinWeatherPlace,
@@ -80,6 +60,7 @@ import {
   selectWeatherPlace,
   type WeatherPlace,
 } from "@/core/store"
+import { GlassButton, GlassField } from "@/ui/controls"
 import { preciseLocate, searchPlaces } from "./weather"
 import type { WeatherData } from "./weather"
 
@@ -187,23 +168,6 @@ const locations = computed(() => props.places)
 
 .wx-search {
   flex: 0 0 auto;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: var(--desk-r-sm);
-  border: 0;
-  background: rgb(255 255 255 / 20%);
-  color: #fff;
-  font: inherit;
-  font-size: var(--desk-fs-sm);
-  outline: none;
-}
-
-.wx-search::placeholder {
-  color: rgb(255 255 255 / 55%);
-}
-
-.wx-search:focus {
-  box-shadow: 0 0 0 2px rgb(255 255 255 / 40%);
 }
 
 .wx-places-hint {
@@ -219,12 +183,9 @@ const locations = computed(() => props.places)
   padding: 0;
   list-style: none;
   overflow-y: auto;
-  scrollbar-width: none;
 }
 
-.wx-hits::-webkit-scrollbar {
-  display: none;
-}
+.wx-hits
 
 .wx-hit {
   display: flex;
@@ -233,18 +194,12 @@ const locations = computed(() => props.places)
   width: 100%;
   padding: 5px 8px;
   border: 0;
-  border-radius: var(--desk-r-sm);
-  background: transparent;
-  color: #efefef;
   font: inherit;
   font-size: var(--desk-fs-sm);
   text-align: left;
   cursor: pointer;
 }
 
-.wx-hit:hover {
-  background: rgb(255 255 255 / 14%);
-}
 
 .wx-hit-name {
   flex: 0 0 auto;
@@ -258,9 +213,8 @@ const locations = computed(() => props.places)
   text-overflow: ellipsis;
 }
 
-/* 地点卡片（参考实现的 section.wx-locs::-webkit-scrollbar {
-  display: none;
-}
+/* 地点列表滚动条与悬浮动作。 */
+.wx-locs
 
 .wx-loc-acts {
   position: absolute;
@@ -273,45 +227,18 @@ const locations = computed(() => props.places)
 }
 
 /* 只有鼠标悬停才出现（选中态不显示，保持干净） */
-.wx-loc:hover .wx-loc-acts {
+.wx-loc:hover .wx-loc-acts,
+.wx-loc:focus-within .wx-loc-acts {
   opacity: 1;
 }
 
-.wx-loc-act {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border: 0;
-  border-radius: var(--desk-r-sm);
-  background: rgb(255 255 255 / 18%);
-  color: #fff;
-  cursor: pointer;
-  transition: background var(--desk-dur-fast) var(--desk-ease);
-}
-
-.wx-loc-act:hover {
-  background: rgb(255 255 255 / 32%);
-}
-
-.wx-loc-act.is-del:hover {
-  background: var(--desk-danger);
-}
-  .wx-locate {
+.wx-locate {
+  flex: 0 0 auto;
   width: 100%;
-  height: 26px;
-  margin-top: 6px;
-  border: 0;
-  border-radius: 8px;
-  background: rgb(255 255 255 / 14%);
-  color: #fff;
-  font-size: 12px;
-  cursor: pointer;
-  }
+  margin-top: var(--desk-sp-1h);
+}
 
-  .wx-locate:disabled { opacity: 0.6; cursor: default; }
-
-  .wx-loc {
+.wx-loc {
   position: relative;
   flex: 0 0 auto;
   border-radius: 12px;

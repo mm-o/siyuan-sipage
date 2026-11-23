@@ -42,7 +42,7 @@ const inline = (s: string) =>
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
     /* 只认站外链接：文档里的相对链接（比如 README 的 English）点了没有意义 */
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (all, text: string, href: string) =>
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text: string, href: string) =>
       /^https?:/i.test(href) ? `<a href="${href}" target="_blank" rel="noreferrer">${text}</a>` : text,
     )
 

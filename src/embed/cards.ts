@@ -1,5 +1,6 @@
 import { Menu } from "siyuan"
-import { CARDS } from "@/core/registry"
+import { CARDS, getCard, type CardSize } from "@/core/registry"
+import { post } from "@/core/util"
 import { toast } from "@/ui/controls"
 import { createApp, h, type App } from "vue"
 /**
@@ -10,18 +11,18 @@ import { createApp, h, type App } from "vue"
  *   2. 启动时扫描 DOM，把每个占位挂载成真实卡片
  *   3. MutationObserver 监听后续新增/移除（切文档、粘贴、撤销都能覆盖）
  */
-import type { CardSize } from "@/core/registry"
-
 const ATTR = "data-desk-card"
 const SIZES = new Set(["1x1", "1x2", "2x1", "2x2", "2x4", "4x2"])
-const mounted = new WeakMap<HTMLElement, Mounted>()
+const mounted = new Map<HTMLElement, App>()
 
 /** 占位高度：1x1 用矮的，其余用标准高度 */
 const heightOf = (size: string) => (size === "1x1" ? 220 : 320)
 
 /** 扫描并挂载某个根节点下的所有占位 */
 export function hydrateCards(root: ParentNode = document) {
-  root.querySelectorAll<HTMLElement>(`[${ATTR}]`).forEach((el) => {
+  const elements = [...root.querySelectorAll<HTMLElement>(`[${ATTR}]`)]
+  if (root instanceof HTMLElement && root.hasAttribute(ATTR)) elements.unshift(root)
+  elements.forEach((el) => {
     if (mounted.has(el)) return
     const cardId = el.getAttribute(ATTR) || ""
     if (!cardId) return
@@ -32,17 +33,20 @@ export function hydrateCards(root: ParentNode = document) {
     el.style.width = el.style.width || "100%"
     el.style.height = el.style.height || `${heightOf(size)}px`
 
-    const m = mountCard(el, cardId, { size })
+    const [w, h] = size.split("x").map(Number)
+    const m = mountCard(el, cardId, { size, w, h })
     if (m) mounted.set(el, m)
   })
 }
 
 /** 卸载某个根节点下的卡片（节点被移除时调用） */
 function dehydrateCards(root: ParentNode) {
-  root.querySelectorAll<HTMLElement>(`[${ATTR}]`).forEach((el) => {
-    mounted.get(el)?.destroy()
-    mounted.delete(el)
-  })
+  for (const [el, app] of mounted) {
+    if (el === root || root.contains(el)) {
+      app.unmount()
+      mounted.delete(el)
+    }
+  }
 }
 
 let observer: MutationObserver | null = null
@@ -55,17 +59,13 @@ export function startCardObserver() {
       r.addedNodes.forEach((n) => {
         if (n.nodeType !== 1) return
         const el = n as HTMLElement
-        if (el.matches?.(`[${ATTR}]`)) hydrateCards(el.parentElement || document)
-        else if (el.querySelector?.(`[${ATTR}]`)) hydrateCards(el)
+        if (el.isConnected) hydrateCards(el)
       })
       // 被移除的节点：清理 Vue 实例，避免泄漏
       r.removedNodes.forEach((n) => {
         if (n.nodeType !== 1) return
         const el = n as HTMLElement
-        if (el.matches?.(`[${ATTR}]`)) {
-          mounted.get(el)?.destroy()
-          mounted.delete(el)
-        }
+        if (!el.isConnected) dehydrateCards(el)
       })
     }
   })
@@ -76,25 +76,16 @@ export function startCardObserver() {
 export function stopCardObserver() {
   observer?.disconnect()
   observer = null
-  dehydrateCards(document)
+  for (const app of mounted.values()) app.unmount()
+  mounted.clear()
 }
 
-/** 生成文档内嵌用的片段（插入文档时用） */
-
-import { getCard } from "@/core/registry"
-
-interface Mounted {
-  app: App
-  el: HTMLElement
-  destroy: () => void
-}
-
-/** 挂一张卡片到指定元素 */
+/** 挂一张卡片到指定元素。 */
 function mountCard(
   el: HTMLElement,
   cardId: string,
   props: Record<string, unknown> = {},
-): Mounted | null {
+): App | null {
   const def = getCard(cardId)
   if (!def) {
     el.textContent = `未注册的卡片：${cardId}`
@@ -110,17 +101,9 @@ function mountCard(
 
   app.mount(el)
 
-  return {
-    app,
-    el,
-    destroy: () => {
-      try {
-        app.unmount()
-      } catch {}
-    },
-  }
+  return app
 }
-export function cardBlockHtml(cardId: string, size = "2x2") {
+function cardBlockHtml(cardId: string, size = "2x2") {
   return `<div ${ATTR}="${cardId}" data-size="${size}" class="desk-embed-card" style="height:${heightOf(size)}px"></div>`
 }
 
@@ -164,17 +147,14 @@ async function insertCardBlock(cardId: string) {
     return
   }
 
-  const res = await fetch("/api/block/insertBlock", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+  try {
+    await post("/api/block/insertBlock", {
       dataType: "htmlblock",
       data: cardBlockHtml(cardId, "2x2"),
       previousID: currentBlockId(),
-    }),
-  })
-  const json = await res.json().catch(() => null)
-  if (json?.code !== 0) {
+    })
+    toast("已插入卡片")
+  } catch {
     toast("插入失败，可在文档里用 /htmlblock 手动粘贴")
     return
   }

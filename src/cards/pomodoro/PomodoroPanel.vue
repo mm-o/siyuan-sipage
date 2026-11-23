@@ -2,7 +2,7 @@
   <div class="pm-panel desk-seq desk-panel-row">
     <div
       class="pm-pane desk-pane is-left"
-      :class="{ 'is-cover': !!pomodoro.cover }"
+      :class="{ 'is-cover': !!pomodoro.cover, 'on-photo': !!pomodoro.cover }"
       :style="pomodoro.cover ? { backgroundImage: `linear-gradient(rgb(0 0 0 / 28%), rgb(0 0 0 / 28%)), url(${pomodoro.cover})` } : null"
     >
       <div class="pm-ring" :style="{ '--pm-p': percent }">
@@ -37,6 +37,7 @@
         <GlassButton
           v-for="n in NOISES"
           :key="n.id"
+          text
           :label="n.label"
           :active="pomodoro.noise === n.id"
           @click="toggleNoise(n.id)"
@@ -67,7 +68,6 @@ const { running, left, percent } = usePomodoro()
 
 <style scoped>
 
-
 .pm-pane {
   display: flex;
   flex-direction: column;
@@ -75,7 +75,6 @@ const { running, left, percent } = usePomodoro()
   padding: var(--desk-detail-pad);
   min-height: 0;
   overflow: auto;
-  scrollbar-width: none;
 }
 
 .pm-pane.is-left {
@@ -151,7 +150,7 @@ const { running, left, percent } = usePomodoro()
 }
 
 .pm-cover.is-on {
-  outline: 2px solid var(--desk-accent);
+  outline: var(--desk-ring);
   outline-offset: 1px;
 }
 
@@ -171,6 +170,5 @@ const { running, left, percent } = usePomodoro()
   justify-content: space-between;
   gap: var(--desk-sp-2);
 }
-
 
 </style>

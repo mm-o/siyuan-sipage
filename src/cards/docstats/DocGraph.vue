@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue"
 import { openDoc } from "@/core/quickdocs"
+import { sql } from "@/core/util"
 
 /**
  * 全局文档关系图（自绘 canvas，零第三方依赖）。
@@ -25,8 +26,6 @@ interface Node {
   box: string
   x: number
   y: number
-  vx?: number
-  vy?: number
   hue: number
   z: number
 }
@@ -34,17 +33,8 @@ interface Node {
 const HUES = [212, 262, 190, 42, 330, 160, 90, 280]
 const LABEL_MAX = 60
 
-async function sql(stmt: string) {
-  const res = await fetch("/api/query/sql", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stmt }),
-  })
-  const json = await res.json()
-  return (json.data || []) as Record<string, unknown>[]
-}
-
-let redraw: (() => void) | null = null
+const events = new AbortController()
+const signal = events.signal
 
 onMounted(async () => {
   const canvas = cv.value
@@ -52,6 +42,7 @@ onMounted(async () => {
   const ctx = canvas.getContext("2d")!
 
   const docs = await sql("select id, content as title, box from blocks where type = 'd' limit 240").catch(() => [])
+  if (signal.aborted) return
   if (!docs.length) {
     hint.value = "还没有文档"
     return
@@ -82,6 +73,7 @@ onMounted(async () => {
   })
   const ids = new Set(nodes.map((n) => n.id))
   const refRows = await sql("select block_id as a, def_block_root_id as b from refs limit 800").catch(() => [])
+  if (signal.aborted) return
   const links = refRows
     .map((r) => [String(r.a), String(r.b)] as const)
     .filter(([a, b]) => ids.has(a) && ids.has(b))
@@ -204,7 +196,6 @@ onMounted(async () => {
     }
   }
 
-  redraw = draw
   draw()
 
   const hitTest = (mx: number, my: number) =>
@@ -220,10 +211,10 @@ onMounted(async () => {
     dragging = true
     lastX = e.clientX
     lastY = e.clientY
-  })
+  }, { signal })
   window.addEventListener("mouseup", () => {
     dragging = false
-  })
+  }, { signal })
   canvas.addEventListener("mousemove", (e) => {
     const rect = canvas.getBoundingClientRect()
     const mx = e.clientX - rect.left
@@ -242,12 +233,12 @@ onMounted(async () => {
       canvas.style.cursor = hit ? "pointer" : "grab"
       draw()
     }
-  })
+  }, { signal })
   canvas.addEventListener("click", (e) => {
     const rect = canvas.getBoundingClientRect()
     const hit = hitTest(e.clientX - rect.left, e.clientY - rect.top)
     if (hit) void openDoc(hit.id)
-  })
+  }, { signal })
   canvas.addEventListener(
     "wheel",
     (e) => {
@@ -255,13 +246,11 @@ onMounted(async () => {
       zoom = Math.min(4, Math.max(0.4, zoom - e.deltaY * 0.0015))
       draw()
     },
-    { passive: false },
+    { passive: false, signal },
   )
 })
 
-onBeforeUnmount(() => {
-  redraw = null
-})
+onBeforeUnmount(() => events.abort())
 </script>
 
 <style scoped>

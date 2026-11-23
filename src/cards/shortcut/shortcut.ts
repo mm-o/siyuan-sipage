@@ -5,6 +5,7 @@ import {
   Menu, Network, PanelLeft, RefreshCw, ScrollText, Search, Settings, Sun, Tag, Terminal, ZoomIn,
 } from "lucide-vue-next"
 import { persisted } from "@/core/store"
+import { post } from "@/core/util"
 
 /**
  * 快捷方式：优先复用思源图标 sprite（`#iconXxx`）与它自己的按钮，
@@ -30,7 +31,7 @@ const click = (el: Element | null) => {
 }
 
 const reload = () => {
-  void fetch("/api/ui/reloadUI", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+  void post("/api/ui/reloadUI").catch(() => {})
 }
 
 const fullscreen = () => {
@@ -91,15 +92,15 @@ export function runShortcut(s: Shortcut) {
   s.run?.()
 }
 
-export function toggleShortcut(id: string) {
-  const list = shortcutState.enabled
-  shortcutState.enabled = list.includes(id) ? list.filter((x) => x !== id) : [...list, id]
+/** 追加到启用列表末尾：与卡片库一致，同一个动作可以重复添加。 */
+export function addShortcut(id: string) {
+  shortcutState.enabled = [...shortcutState.enabled, id]
 }
 
-/** 追加到启用列表末尾（中间栏的「＋」） */
-export function addShortcut(id: string) {
-  if (shortcutState.enabled.includes(id)) return
-  shortcutState.enabled = [...shortcutState.enabled, id]
+/** 移除指定位置的一次出现（右栏垃圾桶）。 */
+export function removeShortcutAt(index: number) {
+  if (index < 0 || index >= shortcutState.enabled.length) return
+  shortcutState.enabled = shortcutState.enabled.filter((_, i) => i !== index)
 }
 
 /** 分类配色：卡片与弹窗共用（图标块 = 同色 14% 浅底 + 同色图标） */

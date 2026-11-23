@@ -31,7 +31,7 @@
         <!-- 预览卡：外观 / 壁纸分区 -->
         <template v-if="current === 'wallpaper' || current === 'cards'">
           <div class="set-preview" :style="previewBg">
-            <div class="set-preview-card" :style="previewCard">
+            <div class="set-preview-card desk-surface">
               <span class="pc-date">11.13 星期五</span>
               <span class="pc-big">13</span>
               <span class="pc-line" />
@@ -50,19 +50,10 @@
           <template v-if="current === 'wallpaper'">
             <h4 class="set-side-sub">收藏 {{ favorites.length }} 张</h4>
             <div v-if="favorites.length" class="set-fav">
-              <button
-                v-for="name in favorites"
-                :key="name"
-                class="set-fav-item"
-                :class="{ 'is-active': wallpaper.value === favUrl(name) }"
-                :style="{ backgroundImage: `url(${favUrl(name)})` }"
-                :aria-label="`用这张收藏 · ${name}`"
-                @click="useFav(favUrl(name))"
-              >
-                <span class="set-fav-x" role="button" title="删除收藏" @click.stop="dropFav(name)">
-                  <X :size="11" :stroke-width="2.4" />
-                </span>
-              </button>
+              <div v-for="name in favorites" :key="name" class="set-fav-item" :class="{ 'is-active': wallpaper.value === favUrl(name) }" :style="{ backgroundImage: `url(${favUrl(name)})` }">
+                <button class="set-fav-pick" type="button" :aria-label="`用这张收藏 · ${name}`" @click="setWallpaper('cover', favUrl(name), 'cover')" />
+                <GlassButton class="set-fav-x" :icon="X" label="删除收藏" tone="photo" variant="danger" @click.stop="dropFav(name)" />
+              </div>
             </div>
             <p v-else class="desk-hint">点壁纸右上角的 ♥ 或桌面右键「收藏当前壁纸」，图会存进思源 public 文件夹。</p>
           </template>
@@ -73,17 +64,17 @@
           <div v-if="picked" class="set-card-preview">
             <!-- 真卡片：同一份组件、同一个外框，只是这里不响应点击 -->
             <div class="set-card-live">
-              <CardFrame :card-id="picked.id" :size="`${pv.w}x${pv.h}`" :w="pv.w" :h="pv.h" preview>
+              <CardFrame :card-id="picked.id" :w="pv.w" :h="pv.h" preview>
                 <component :is="picked.component" :size="`${pv.w}x${pv.h}`" :w="pv.w" :h="pv.h" />
               </CardFrame>
             </div>
             <b class="set-card-name">{{ picked.name }}</b>
             <small class="set-card-desc">{{ picked.desc }}</small>
-            <span class="set-count">桌面已有 {{ countOf(picked.id) }} 张</span>
-            <button class="set-add" type="button" @click="add(picked.id)">添加到桌面</button>
-            <button v-if="countOf(picked.id)" class="set-remove" type="button" @click="removeOne(picked.id)">
-              移除一张
-            </button>
+            <span class="set-count desk-badge" :class="{ 'is-on': countOnDesk(picked.id) }">
+              {{ countOnDesk(picked.id) ? `已添加 ${countOnDesk(picked.id)} 张` : "尚未添加" }}
+            </span>
+            <GlassButton class="set-add" text :variant="countOnDesk(picked.id) ? 'default' : 'primary'" :icon="Plus" label="添加到桌面" @click="addToDesk(picked.id)" />
+            <GlassButton v-if="countOnDesk(picked.id)" class="set-remove" text variant="danger" :icon="Minus" label="移除一张" @click="removeOne(picked.id)" />
           </div>
         </template>
 
@@ -98,7 +89,7 @@
           <div class="set-about-reset">
             <b>重置桌面</b>
             <small>清空卡片，回到默认一张</small>
-            <button class="desk-btn" type="button" @click="resetDesk()">重置</button>
+            <GlassButton text label="重置" @click="resetDesk()" />
           </div>
         </template>
 
@@ -112,7 +103,7 @@
         </dl>
 
         <div class="set-side-foot">
-          <button class="desk-btn" type="button" @click="resetAll">恢复默认</button>
+          <GlassButton text label="恢复默认" @click="resetAll" />
         </div>
       </aside>
     </div>
@@ -132,7 +123,7 @@
  */
 import { computed, ref, watch } from "vue"
 import { getFrontend } from "siyuan"
-import { Grid2x2, Image as ImageIcon, Info, SlidersHorizontal, X } from "lucide-vue-next"
+import { Grid2x2, Image as ImageIcon, Info, Minus, Plus, SlidersHorizontal, X } from "lucide-vue-next"
 import { Settings as SettingsIcon } from "lucide-vue-next"
 import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
@@ -140,13 +131,14 @@ import AboutPanel from "./AboutPanel.vue"
 import WallpaperPanel from "./WallpaperPanel.vue"
 import CardsPanel from "./CardsPanel.vue"
 import LibraryPanel from "./LibraryPanel.vue"
-import { appearance, desk, favorites, resetAppearance, resetDesk, wallpaper, addToDesk, countOnDesk, removeFromDesk, dropFavorite } from "@/core/store"
+import { appearance, desk, favorites, resetAppearance, resetDesk, wallpaper, setWallpaper, addToDesk, countOnDesk, removeFromDesk, dropFavorite } from "@/core/store"
+import { GlassButton, toast } from "./controls"
 import { SOURCE_LABEL, favUrl, wallpaperBg, wallSource } from "@/core/image"
 import { CARDS } from "@/core/registry"
 import pkg from "../../package.json"
 
-const props = defineProps<{ open: boolean; tab?: string; origin?: DOMRect | null }>()
-const emit = defineEmits<{ "update:open": [boolean] }>()
+const props = defineProps<{ tab?: string; origin?: DOMRect | null }>()
+const open = defineModel<boolean>("open", { required: true })
 
 const SECTIONS = [
   { label: "壁纸", value: "wallpaper", component: WallpaperPanel, icon: ImageIcon },
@@ -155,14 +147,9 @@ const SECTIONS = [
   { label: "关于", value: "about", icon: Info },
 ]
 
-const open = ref(props.open)
-watch(() => props.open, (v) => (open.value = v))
-watch(open, (v) => emit("update:open", v))
-
 const current = ref(props.tab || "wallpaper")
-/* 旧的 library 名字保留兼容：现在它重新是独立分区，直接可用 */
 watch(
-  () => [props.open, props.tab] as const,
+  () => [open.value, props.tab] as const,
   ([isOpen, tab]) => {
     if (isOpen && tab) current.value = tab
   },
@@ -178,13 +165,6 @@ const frontend = getFrontend()
 
 /* 预览：用真实壁纸做底（图片 / 纯色 / 跟随思源三态统一由 wallpaperBg 给出） */
 const previewBg = computed(() => wallpaperBg(wallpaper))
-const previewCard = computed(() => ({
-  borderRadius: `${appearance.radius}px`,
-  backdropFilter: `blur(${appearance.blur}px) saturate(1.4)`,
-  WebkitBackdropFilter: `blur(${appearance.blur}px) saturate(1.4)`,
-  background: `color-mix(in srgb, var(--desk-glass-fill) ${appearance.opacity * 100}%, transparent)`,
-  boxShadow: `0 10px 30px rgb(0 0 0 / ${appearance.shadow})`,
-}))
 const tag = computed(
   () => `圆角 ${appearance.radius} · 模糊 ${appearance.blur} · 玻璃 ${Math.round(appearance.opacity * 100)}%`,
 )
@@ -193,9 +173,8 @@ const tag = computed(
 const sourceLabel = computed(() => SOURCE_LABEL[wallSource(wallpaper)])
 const wallSize = ref("")
 watch(
-  /* resolved 也要看：先上缩略图、原图回来替换，尺寸得跟着更新到真像素 */
-  [() => wallpaper.type, () => wallpaper.value, () => wallpaper.resolved],
-  () => {
+  [() => wallpaper.type, () => wallpaper.resolved || wallpaper.value],
+  (_, __, onCleanup) => {
     if (wallpaper.type === "theme") {
       wallSize.value = "主题色"
       return
@@ -214,6 +193,8 @@ watch(
       return
     }
     const img = new Image()
+    wallSize.value = ""
+    onCleanup(() => { img.onload = img.onerror = null })
     img.onload = () => (wallSize.value = `${img.naturalWidth}×${img.naturalHeight}`)
     img.onerror = () => (wallSize.value = "加载失败")
     img.src = src
@@ -221,14 +202,10 @@ watch(
   { immediate: true },
 )
 
-/* 收藏：点一下换成这张，右上角叉删掉（同时清 public 里的文件） */
-function useFav(url: string) {
-  wallpaper.type = "cover"
-  wallpaper.source = "cover"
-  wallpaper.value = url
+async function dropFav(name: string) {
+  try { await dropFavorite(name) }
+  catch (error) { toast(`删除收藏失败：${(error as Error).message}`) }
 }
-
-const dropFav = (name: string) => void dropFavorite(name)
 
 /**
  * 预览尺寸：用注册表的约束推出来，不另写一套。
@@ -242,14 +219,8 @@ const pv = computed(() => {
 })
 
 /* 卡片库：选中一张卡，右栏预览并添加 */
-const selected = ref("")
-const picked = computed(() => CARDS.find((c) => c.id === (selected.value || firstCardId())) ?? null)
-const firstCardId = () => CARDS[0]?.id ?? ""
-const countOf = (id: string) => countOnDesk(id)
-
-function add(id: string) {
-  addToDesk(id)
-}
+const selected = ref(CARDS[0]?.id ?? "")
+const picked = computed(() => CARDS.find((c) => c.id === selected.value))
 
 function removeOne(id: string) {
   for (let i = desk.cards.length - 1; i >= 0; i -= 1) {
@@ -476,38 +447,22 @@ function resetAll() {
 }
 
 /* 删除叉：只在悬停/选中时露出来，不挡缩略图 */
-.set-fav-x {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  display: grid;
-  place-items: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 46%);
-  color: #fff;
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity var(--desk-dur-fast) var(--desk-ease);
-}
-
-.set-fav-item:hover .set-fav-x {
-  opacity: 1;
-}
-
-.set-fav-x:hover {
-  background: var(--desk-accent);
-}
+.set-fav-pick { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.set-fav-pick:focus-visible { outline: var(--desk-ring); outline-offset: 2px; }
+.set-fav-x { position: absolute; top: 2px; right: 2px; opacity: 0; }
+.set-fav-item:hover .set-fav-x, .set-fav-item:focus-within .set-fav-x { opacity: 1; }
+@media (hover: none) { .set-fav-x { opacity: 1; } }
 
 .set-preview-card {
+  --dg-surface-fill: var(--dg-card-fill);
+  --dg-surface-radius: var(--desk-r-card);
+  --dg-surface-blur: var(--desk-blur-regular);
+  --dg-surface-shadow: 0 6px 18px rgb(12 28 48 / calc(var(--desk-card-shadow, .34) * .5));
   display: flex;
   flex-direction: column;
   gap: 5px;
   width: 66%;
   padding: var(--desk-sp-2h) var(--desk-sp-3);
-  border: 1px solid var(--desk-stroke);
-  color: #fff;
 }
 
 .pc-date {
@@ -523,13 +478,13 @@ function resetAll() {
 
 .pc-line {
   height: 1px;
-  background: rgb(255 255 255 / 26%);
+  background: color-mix(in srgb, currentColor 18%, transparent);
 }
 
 .pc-quote {
   height: 5px;
   border-radius: var(--desk-r-xs);
-  background: rgb(255 255 255 / 34%);
+  background: color-mix(in srgb, currentColor 18%, transparent);
 }
 
 .set-preview-tag {
@@ -574,55 +529,14 @@ function resetAll() {
 }
 
 .set-count {
+  align-self: flex-start;
   margin-top: var(--desk-sp-1);
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-2);
 }
 
-.set-add {
-  width: 100%;
-  height: 30px;
-  margin-top: var(--desk-sp-2);
-  border: 0;
-  border-radius: var(--desk-r-control);
-  background: var(--desk-accent);
-  color: #fff;
-  font-size: var(--desk-fs-body);
-  cursor: pointer;
-}
-
-.set-add:hover { filter: brightness(1.06); }
-
-.set-remove {
-  width: 100%;
-  height: 28px;
-  border: 1px solid var(--desk-stroke);
-  border-radius: var(--desk-r-control);
-  background: transparent;
-  color: var(--desk-text-2);
-  font-size: var(--desk-fs-caption);
-  cursor: pointer;
-}
-
-.set-remove:hover {
-  color: var(--desk-danger);
-  border-color: color-mix(in srgb, var(--desk-danger) 46%, transparent);
-}
+.set-add { width: 100%; min-height: 30px; margin-top: var(--desk-sp-2); }
+.set-remove { width: 100%; }
 
 /* 关于：说明 + 键值表 */
-.set-h2 {
-  margin: 0 0 var(--desk-sp-1);
-  font-size: var(--desk-fs-title);
-  font-weight: 600;
-}
-
-.set-p {
-  margin: 0 0 var(--desk-sp-3);
-  font-size: var(--desk-fs-body);
-  line-height: 1.6;
-  color: var(--desk-text-2);
-}
-
 .set-kv {
   display: grid;
   grid-template-columns: 84px minmax(0, 1fr);
@@ -665,7 +579,7 @@ function resetAll() {
   color: var(--desk-text-3);
 }
 
-.set-about-reset .desk-btn {
+.set-about-reset .gb {
   margin-top: var(--desk-sp-1);
 }
 </style>
