@@ -191,7 +191,7 @@ export function categoryCounts(events: CountdownEvent[]) {
   return counts
 }
 
-/** 分类软色：分类色 12% 铺底（iTab 的 --cat-soft） */
+/** 分类软色：分类色 12% 铺底（参考实现 的 --cat-soft） */
 export const softOf = (color: string) => (color ? `color-mix(in srgb, ${color} 14%, transparent)` : "transparent")
 
 /** 空表单 */

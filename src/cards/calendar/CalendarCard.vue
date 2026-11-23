@@ -1,6 +1,6 @@
 <template>
   <div class="cal">
-    <!-- 今日格（iTab CalendarDay）：日号 + 农历 + 星期 + 班/休 -->
+    <!-- 今日格（参考实现 CalendarDay）：日号 + 农历 + 星期 + 班/休 -->
     <div class="day">
       <i v-if="v.rest" class="mark">休</i>
       <b class="num" :class="`wk${v.wk}`">{{ v.day }}</b>
@@ -8,7 +8,7 @@
       <span class="week">{{ v.week }}</span>
     </div>
 
-    <!-- 整月网格（iTab widget-calendar）：够宽才出，等比放大后是同一套版式 -->
+    <!-- 整月网格（参考实现 widget-calendar）：够宽才出，等比放大后是同一套版式 -->
     <div class="month">
       <ul class="row head">
         <li v-for="(w, i) in WEEK" :key="w" :class="{ 'is-end': i >= 5 }">{{ w }}</li>
@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 /**
- * 日历卡（对齐 iTab：CalendarDay + widget-calendar）
+ * 日历卡（对齐 参考实现：CalendarDay + widget-calendar）
  * 字号全部 cqmin → 8x4 / 10x5 / 12x6 等比例放大时是同一套版式。
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"

@@ -255,7 +255,7 @@ function removeSelected() {
   if (editingId.value === id) cancelEdit()
 }
 
-/* ── 窄屏：详情盖在列表上（对齐 iTab 的 568px 行为） ──── */
+/* ── 窄屏：详情盖在列表上（对齐 参考实现 的 568px 行为） ──── */
 const narrowOpen = ref(false)
 const narrowDetail = computed(() => narrowOpen.value || editing.value)
 function backToList() {

@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 /**
- * 天气卡（对齐 iTab app-weather）
+ * 天气卡（对齐 参考实现 app-weather）
  * 上：地名 + 大温度 / 天气 + 高低温；下：未来 6 天。字号全部 cqmin，等比放大不变形。
  */
 import { computed } from "vue"

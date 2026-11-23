@@ -51,14 +51,15 @@
 /**
  * 每日诗词
  *
- * 接口 `${DAILY_API}/todayShici` 支持 ?date=YYYY-MM-DD，
+ * 接口 `${API_BASE}/todayShici` 支持 ?date=YYYY-MM-DD，
  * 所以「上一首 / 下一首」= 前一天 / 后一天的诗，缓存后不重复请求。
  * 序列与背景由 core/daily 统一管理：卡片与详情永远同一首诗、同一张图。
  */
 import { GlassButton, SeriesNav, Chips } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { Check, Copy, Image as ImageIcon } from "lucide-vue-next"
-import { DAILY_API, dailySeries } from "@/core/daily"
+import { dailySeries } from "@/core/daily"
+import { API_BASE } from "@/core/api"
 import { photoBg } from "@/ui/controls"
 import { copyText } from "@/ui/controls"
 
@@ -75,7 +76,7 @@ interface Poem {
   tags?: string[]
 }
 
-const API = `${DAILY_API}/todayShici`
+const API = `${API_BASE}/todayShici`
 const TABS = [
   { label: "全文", value: "content" },
   { label: "译文", value: "translate" },

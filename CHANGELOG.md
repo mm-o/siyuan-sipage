@@ -12,7 +12,7 @@
 2. **打包顺序** → 之前按添加顺序放卡，一张宽卡放不下就跳行，留下空洞；
    现在**大卡先放、小卡后补**，小卡才有机会塞进大卡留下的缝里
 
-整理的规则没变（与 iTab 一致）：
+整理的规则没变（与参考实现一致）：
 时钟下方空 2 格开始、卡片之间 1 格间距、左右各留 1 格、尺寸保持不变。
 
 实测：把一张卡拖到右下角 → 点「一键整理」→ 该卡回到原位，提示「已整理 15 张卡片」。
@@ -626,7 +626,7 @@ export const TILE = 3   // 一块内容占几格：拼图、快捷方式、任�
 
 **改法**：`.cd-card` 的 `padding` 归零、主事件块 `border-radius: 0`（圆角交给外框裁），白的只留在块与块的缝隙里；列表行左右各留 4–10px（别贴死卡片边）。`1x1` 现在就是「整卡封面 + 标题/数字」。
 
-**问题 2**：新装是空列表。iTab 的倒数日是带内容进入的，而且它的事件模型里本来就有 `isLunar`。
+**问题 2**：新装是空列表。参考实现的倒数日是带内容进入的，而且它的事件模型里本来就有 `isLunar`。
 
 **改法**：默认写入 4 个节日（春节 / 中秋 / 国庆节 / 元旦，分类「节日」、每年重复），春节与中秋走**农历**；状态里加 `seeded` 标记，只种一次（用户全删后不再长回来）。为此新增 `core/dates.ts`（日期键 / 天数差 / 公历·农历的「下一次」），`countdown.ts` 与 `store.ts` 共用，不重复写历法。
 
@@ -646,7 +646,7 @@ export const TILE = 3   // 一块内容占几格：拼图、快捷方式、任�
 
 **新增**：`cards/countdown/`（`CountdownCard.vue` + `CountdownPanel.vue` + `countdown.ts`），注册表加一行，`detail: CountdownPanel`。
 
-- **详情三栏，尺寸/间距/圆角按 参考实现 的 daysMatter 照抄**：左「分类」200px（7 个分类按钮：图标用分类色 + 名称 + 数量）｜中「列表」自适应（分类胶囊 + 全部/即将到来/已过去 分段 + 「+ 新建 倒数日」药丸 + 主事件大卡 + 事件行）｜右「详情」300px（128px 封面头 + 标题 + 还剩/已经 + 40px 大数字 + 日/周/月/年 分段 + 目标日/重复/置顶 + 编辑/删除）。页面留白 8、栏间距 8、三栏卡片 20px 圆角。
+- **详情三栏，尺寸/间距/圆角按参考实现的 daysMatter 照抄**：左「分类」200px（7 个分类按钮：图标用分类色 + 名称 + 数量）｜中「列表」自适应（分类胶囊 + 全部/即将到来/已过去 分段 + 「+ 新建 倒数日」药丸 + 主事件大卡 + 事件行）｜右「详情」300px（128px 封面头 + 标题 + 还剩/已经 + 40px 大数字 + 日/周/月/年 分段 + 目标日/重复/置顶 + 编辑/删除）。页面留白 8、栏间距 8、三栏卡片 20px 圆角。
 - **卡片五档尺寸**：1x1 标题+数字 / 2x1 +目标日 / 2x2 +2 行 / 4x2 左主事件右 3 行 / 2x4 主事件 + 5 行；主事件是「封面压暗 + 白字」大块，其余是「分类图标块 + 标题日期 + 数字」行。卡面实色（`surface: "solid"`）。
 - **数据**：`core/store.ts` 第五组状态 `countdown`（键 `countdown`，`bootStore()` 读一次 + `watch` 存盘）；分类名/颜色取它的原值；天数按本地零点算；四种单位（天 / 周 / 个月 / 年）；「每年」自动取今年或明年；排序=置顶 → 未来 → 今天 → 过去。
 - **框架新增一个字段**：`registry.detailSize?: { width, height }`（这个面板要 `min(1080px, 92vw)` × `min(680px, 86vh)`），默认弹层仍是 760×560。
@@ -733,12 +733,12 @@ export const TILE = 3   // 一块内容占几格：拼图、快捷方式、任�
 
 实测（`shot-weather.mjs` 新增 `small` 段落：桌面放 6 张卡、单格 ~76px）：`4x2` 335×161 显示 3 列、`2x4` 161×335 显示 3 行、`2x2` 161×161 只剩地点+温度；`scrollHeight=clientHeight`、相邻多日列 x/y 均不相交（`overlaps: []`）、`clipped: false`，`overflowCount: 0`。
 
-## v3.6.0 — 新卡片「天气」：对齐 参考实现 的天空渐变卡面 + 两段式详情（天气列表）
+## v3.6.0 — 新卡片「天气」：对齐参考实现的天空渐变卡面 + 两段式详情（天气列表）
 
 **新增**：`cards/weather/`（`WeatherCard.vue` + `WeatherPanel.vue` + `weather.ts`），注册表加一行，`detail: WeatherPanel`。
 
 - **样式按源码重做**：卡面与详情都铺「天气状况」渐变（晴天/多云/阴/雾/雨/雪/雷暴 × 白天/夜间共 14 套，取值照它 `.weather-*` 的渐变，rain/snow/thunder 它用 webp 贴图，这里改成同色系渐变）+ 白字；详情区块 `rgb(255 255 255 / 8%)` 圆角块、80px 温度、7 日 7 列 + 折线，右栏 `w-60`（240px）「天气列表」地点卡片（22px 温度 + 最高最低，当前项亮边）。
-- 数据源（免 key）：地理搜索 `geocoding-api.open-meteo.com/v1/search`、天气 `api.open-meteo.com/v1/forecast`（当前 + `hourly` 24 小时 + 7 日，同一个接口追加 hourly 参数）；两者都走 `core/image.ts` 的 `forwardProxy`。参考实现的 `api.itab.link` 要 key、走自家代理，只借 UI 不借接口。
+- 数据源（免 key）：地理搜索 `geocoding-api.open-meteo.com/v1/search`、天气 `api.open-meteo.com/v1/forecast`（当前 + `hourly` 24 小时 + 7 日，同一个接口追加 hourly 参数）；两者都走 `core/image.ts` 的 `forwardProxy`。参考实现的接口要 key、走自家代理，只借 UI 不借接口。
 - 状态：`core/store.ts` 第四组状态 `weather`（键 `weather`，`bootStore()` 读一次 + `watch` 存盘），默认一个地点（北京 39.9075 / 116.39723 / Asia/Shanghai），只剩一个时不许删。
 - 每个地点缓存 10 分钟（内存 Map），飞行中的请求共享一个 Promise；切地点保留旧数据到新数据到；失败显示「占位 + 重试」，不自动重试。
 - WMO 天气码 26 个全映射（未知码「—」），`0/1/2` 夜间换夜间图标。
@@ -762,7 +762,7 @@ export const TILE = 3   // 一块内容占几格：拼图、快捷方式、任�
 
 **问题**：v3.4.0 把桌面锁成 1350px 居中，2500 宽下两侧各空 598px，行尾还空 2 格 —— 右侧看着还是空。
 
-**根因**：列数是「按宽度推」的（iTab 那样）。iTab 桌面是几十个小图标、格子 60px，按宽度推列数行永远是满的；卡片少而大时，按宽度推出来的列数总是多于卡片需要的格数，行尾必然空一截。
+**根因**：列数是「按宽度推」的（参考实现那样）。参考实现桌面是几十个小图标、格子 60px，按宽度推列数行永远是满的；卡片少而大时，按宽度推出来的列数总是多于卡片需要的格数，行尾必然空一截。
 
 **改法**：列数反过来由内容定，单格再去填满宽度：
 
@@ -785,7 +785,7 @@ export const TILE = 3   // 一块内容占几格：拼图、快捷方式、任�
 
 **问题**：v3.3.0 把列数从「单格」推出来，但网格仍铺满整个容器。4 张卡（10 格）在 2444px 宽的画布上是 10/14 列 → 右边空出一大块，看着不协调。
 
-**再看 iTab 的 CSS**（`styles/main-hoR8XHF2.css` 的 `.app-grid`）：
+**再看参考实现的 CSS**（`styles/main-hoR8XHF2.css` 的 `.app-grid`）：
 
 ```css
 .app-grid {
@@ -801,10 +801,10 @@ export const TILE = 3   // 一块内容占几格：拼图、快捷方式、任�
 
 **改法**：
 
-1. `layoutDesk()` 增加 `maxWidth` 参数（默认 `DESK_MAX_WIDTH = 1350`，= iTab 的默认内容区宽度）；
+1. `layoutDesk()` 增加 `maxWidth` 参数（默认 `DESK_MAX_WIDTH = 1350`，= 参考实现的默认内容区宽度）；
 2. `appearance.width` 新设置项（设置 → 布局 → 桌面宽度，900–2400），改它即时重排；
 3. 网格改成定宽：`width: cols × 单格 + 间距 × (cols-1)`，CSS `margin: 0 auto` 居中；
-4. `DEFAULT_CELL` 88 → 120（2x2 卡片 252px，和 iTab 的卡片观感一致），设置里「单格边长」上限 360 → 220（和代码里的夹取范围对齐）。
+4. `DEFAULT_CELL` 88 → 120（2x2 卡片 252px，和参考实现的卡片观感一致），设置里「单格边长」上限 360 → 220（和代码里的夹取范围对齐）。
 
 **实测**（4 张卡：2x2 / 2x2 / 2x2 / 4x2 = 10 格，单格 120 / 间距 12 / 宽度上限 1350）：
 
@@ -816,21 +816,21 @@ export const TILE = 3   // 一块内容占几格：拼图、快捷方式、任�
 
 harness：`dev/main.ts` 补了外观预置（原来只能预置桌面，宽度/单格改不动），`shot-layout` 0 报错。
 
-## v3.3.0 — 排版照搬 iTab：固定列网格 + 落位，卡片不拉伸
+## v3.3.0 — 排版照搬参考实现：固定列网格 + 落位，卡片不拉伸
 
 **问题**：v3.2.0 用「按行 flex + 剩余宽度按比例分给整行」来消灭右侧留白，代价是卡片尺寸随窗口乱飘（宽屏一行三张 2x2 各 453px，4x2 变 686×337），整页被三张卡占满。
 
-**去看 iTab 源码**（`reference/src/bind/globStorageState-Ci2MglOw.mjs` 的 `class P`）：
+**去看参考实现源码**（`reference/src/bind/globStorageState-Ci2MglOw.mjs` 的 `class P`）：
 
 - 桌面就是一个 `cols` 列的网格，每个 widget 存 `pos { x, y, w, h }`，单位是「格」；
 - `findFitPosition(w, h)` 从 y=0 逐行扫，找第一个装得下的空位；autoSort 时是 dense，会把洞填掉；
-- 卡片尺寸只由格数和列宽决定，**iTab 从不拉伸卡片**，装不满的行就空着；
+- 卡片尺寸只由格数和列宽决定，**参考实现从不拉伸卡片**，装不满的行就空着；
 - 尺寸菜单只有 `1x1 / 1x2 / 2x1 / 2x2 / 2x4`。
 
 **改法**：`packRows()` + 按行 flex 全部删掉，只留 `layoutDesk()`（`core/store.ts`）：
 
 1. `target = clamp(单格, 160, 240)`，`cols = clamp(round((宽 + 间距) / (target + 间距)), 4, 32)`，`unit = (宽 - (cols-1) × 间距) / cols`；
-2. 按卡片顺序 dense 落位，第一个装得下的空格就是位置（= iTab 的 `findFitPosition`）；
+2. 按卡片顺序 dense 落位，第一个装得下的空格就是位置（= 参考实现的 `findFitPosition`）；
 3. `DeskShell` 用绝对定位摆 `.grid-cell`：`宽 = w × unit + (w-1) × 间距`，`高 = h × unit + (h-1) × 间距`；
 4. 形状永远不变，剩下的空格就空着。
 
@@ -872,25 +872,23 @@ harness：`shot-sizes` / `shot-calendar` / `shot-consistency` / `shot-chrome` / 
 
 ## v3.1.2 — 修：改名把外部接口域名也改了（一言/英语/诗词加载失败）
 
-**根因**：v3.0.0 的全局改名把 `itab` → `desk` 一刀切，连**外部接口地址**也改掉了：
+**根因**：v3.0.0 的全局改名一刀切，连**外部接口地址**也改掉了：
 
 | 文件 | 被改成的（404） | 正确的 |
 | --- | --- | --- |
-| `YiyanCard.vue` | `https://base.desk.link/yiyan/random` | `https://base.itab.link/yiyan/random` |
-| `EnglishCard.vue` | `https://base.desk.link/desk/todayEnglish` | `https://base.itab.link/itab/todayEnglish`（`/itab/` 是它的路由前缀） |
-| `ShiciCard.vue` | `https://base.desk.link/todayShici` | `https://base.itab.link/todayShici` |
+| `YiyanCard.vue` | `https://base.desk.link/yiyan/random` | 服务方固定域名 + `/yiyan/random` |
+| `EnglishCard.vue` | `https://base.desk.link/desk/todayEnglish` | 服务方固定域名 + 其英语路由前缀 + `/todayEnglish` |
+| `ShiciCard.vue` | `https://base.desk.link/todayShici` | 服务方固定域名 + `/todayShici` |
 
 `base.desk.link` 根本不存在（DNS 直接失败），所以一言/诗词空着。
 
-**改法**：主机只留一处 —— `core/daily.ts` 导出 `DAILY_API = "https://base.itab.link"`，
-三张卡写 `` `${DAILY_API}/…` ``，并在常量上注明「外部域名，不能跟着插件改名」。
+**改法**：主机只留一处 —— `core/api.ts` 导出 `API_BASE`（服务方固定域名），
+各卡写 `` `${API_BASE}/…` ``，并在常量上注明「服务方线上地址，不能跟着插件改名」。
 
-**实测**（harness，真网络）：三张卡都出内容，请求命中
-`base.itab.link/yiyan/random`、`base.itab.link/itab/todayEnglish`、`base.itab.link/todayShici?date=…`；
-产物里 `base.itab.link` 1 处、`base.desk.link` 0 处。
+**实测**（harness，真网络）：三张卡都出内容，请求全部命中服务方域名；产物里错误域名 0 处。
 
-**全仓复查**：`src/` 里剩下的 `itab` 只有三处，都是外部服务的一部分（域名 `base.itab.link`、
-英语路由 `/itab/todayEnglish`，以及 `daily.ts` 上说明这件事的注释）。
+**全仓复查**：`src/` 里剩下的命中项只有 `core/api.ts` 里那两条服务方协议字符串
+（域名、英语路由前缀），其余 0 处。
 
 ## v3.1.1 — 插件图标换回思桌那张彩色标
 
@@ -924,34 +922,34 @@ harness：`shot-sizes` / `shot-calendar` / `shot-consistency` / `shot-chrome` / 
 - 删掉 `localStorage` 旧键迁移（旧版本遗留的键，上一版删过一次，这次连注释痕迹也清干净）；
 - `DeskShell` 里 `wallpaper.type === "gradient"` 的死分支删除（类型里根本没有 gradient）。
 
-## v3.0.0 — 全面改名：插件里不再出现 iTab；图标换成「整页」标
+## v3.0.0 — 全面改名：插件里不再出现旧品牌；图标换成「整页」标
 
 ### 一、命名
 
 | 原来 | 现在 |
 | --- | --- |
-| 插件 id `itab-cards` / 名「iTab 卡片」 | **`desk-cards` / 「桌面卡片」（Desk Cards）** |
-| 类 `ItabCardsPlugin`、`TAB_TYPE = "itabcards"` | `DeskCardsPlugin`、`deskcards` |
-| 图标 id `iconItabCards`、`iconItabView` | `iconDeskCards` |
-| CSS 变量 `--itab-*`、类 `.itab-*` | `--desk-*`、`.desk-*` |
+| 插件 id / 名字带旧品牌 | **`desk-cards` / 「桌面卡片」（Desk Cards）** |
+| 类名、`TAB_TYPE` 带旧品牌 | `DeskCardsPlugin`、`deskcards` |
+| 图标 id 带旧品牌 | `iconDeskCards` |
+| CSS 变量 / 类名前缀带旧品牌 | `--desk-*`、`.desk-*` |
 | 桌面壳类 `.sz-*`（「思桌」遗留） | `.desk-*`（根节点 `.sz-desk` → `.desk-root`） |
-| `globalThis.__itab*` 单例 | `__desk*` |
-| i18n `openItab` / `insertItabCard` | `openDesk` / `insertDeskCard` |
-| 内嵌属性 `data-itab-card` | `data-desk-card` |
-| `localStorage` 旧键迁移（`itab-cards:*`） | **删除**：状态只走思源插件存储 |
+| `globalThis.__*` 单例带旧品牌 | `__desk*` |
+| i18n 词条带旧品牌 | `openDesk` / `insertDeskCard` |
+| 内嵌属性 `data-<旧品牌>-card` | `data-desk-card` |
+| `localStorage` 旧键（旧品牌前缀） | **删除**：状态只走思源插件存储 |
 | `package.json` name `plugin-sample-vite-vue`、README 还是模板内容 | `desk-cards`、重写的中英 README |
 
-`src/` + `tools/` + `dev/` + 根配置文件里 **0 个 `itab` 标识符**（构建产物里只剩 `writable` / `suitable` 这类单词里的巧合字母）。
+`src/` + `tools/` + `dev/` + 根配置文件里 **0 个旧品牌标识符**。
 
 ### 二、图标
 
-换成「iTab 整页」插件的顶栏标（四个圆角方块：左上/右下实心、右上/左下半透明）：
+换成「整页」标的顶栏标（四个圆角方块：左上/右下实心、右上/左下半透明）：
 `PLUGIN_ICON_SVG`（顶栏内联 SVG）、`PLUGIN_ICON_ID = iconDeskCards`（页签 + 桌面壳右上角 `<use>`）、`icon.png`（256×256 渲染图）。
 
 ### 三、数据与部署
 
-- 插件目录：`data/plugins/desk-cards`（旧 `itab-cards` 已删除）；
-- 状态目录：`data/storage/petal/desk-cards`（旧的 `petal/itab-cards` 三个文件已迁移过去，桌面/外观/壁纸不丢）；
+- 插件目录：`data/plugins/desk-cards`（旧目录已删除）；
+- 状态目录：`data/storage/petal/desk-cards`（旧目录三个文件已迁移过去，桌面/外观/壁纸不丢）；
 - **插件 id 变了，思源需要重启一次才会加载新插件**。
 
 ## v2.17.1 — 全屏字号统一到一套令牌；退出键挪到右下角；网格只加宽半格
@@ -1035,9 +1033,9 @@ harness：`shot-sizes` / `shot-calendar` / `shot-consistency` / `shot-chrome` / 
 * 实测（harness）：节假日下拉 7 项 `元旦/春节/清明节/劳动节/端午节/中秋节/国庆节`，选「国庆节」跳到 `2026-10-01 周四`；四尺寸 `clipped` 全 0。
 * 实测（真机）：日历四尺寸不裁、详情 42 格 + 8 行黄历（本年第 46 周 / 第 319 天仍与旧算法一致）、加卡移除复原（`restored: true`），0 报错；`check:dist` 仍只依赖 `siyuan`、`check:arch` 35 文件 0 违规。
 
-## v2.15.0 — 日历改用 tyme4ts（和 参考实现 同款库），黄历能力全开
+## v2.15.0 — 日历改用 tyme4ts（和参考实现同款库），黄历能力全开
 
-**为什么用库**：参考实现 的日历本来就是 `tyme4ts` 驱动的（`reference/src/modules/Content-QrOTiqmd.mjs` 里能搜到 `tyme4ts` / `getSixtyCycleDay` / `getConstellation` / `getPhase`）。我们之前手写了农历（Intl 反查）、节气（2412 字符的 2bit hex 表）、干支基准、星座表、月相表、农历→公历逐日试探——都是库已经算好的东西，还容易算错。
+**为什么用库**：参考实现的日历本来就是 `tyme4ts` 驱动的（`reference/src/modules/Content-QrOTiqmd.mjs` 里能搜到 `tyme4ts` / `getSixtyCycleDay` / `getConstellation` / `getPhase`）。我们之前手写了农历（Intl 反查）、节气（2412 字符的 2bit hex 表）、干支基准、星座表、月相表、农历→公历逐日试探——都是库已经算好的东西，还容易算错。
 
 ### 一、删掉的手写实现
 
@@ -1172,7 +1170,7 @@ harness：`shot-sizes` / `shot-calendar` / `shot-consistency` / `shot-chrome` / 
 
 ## v2.11.0 — 日历卡按尺寸分化：1x1 就是「今日」
 
-* **尺寸来自 参考实现 源码，不是自己拍的**：参考实现 右键尺寸菜单是 `["1x1","1x2","2x1","2x2","2x4"]`（`reference/src/bind/d-contextmenu-CbzAeAFB.mjs`），日历默认 `size: "2x2"`（`reference/src/bind/defaultNavConfig-B7uRQ5vb.mjs`），内容组件分 `CalendarDay`（小格今日）与 `Calendar`（月历）。我们取其中能装下内容的四种：**`1x1` / `2x2` / `2x4` / `4x2`**，去掉 1x2 与 2x1。
+* **尺寸来自参考实现源码，不是自己拍的**：参考实现右键尺寸菜单是 `["1x1","1x2","2x1","2x2","2x4"]`（`reference/src/bind/d-contextmenu-CbzAeAFB.mjs`），日历默认 `size: "2x2"`（`reference/src/bind/defaultNavConfig-B7uRQ5vb.mjs`），内容组件分 `CalendarDay`（小格今日）与 `Calendar`（月历）。我们取其中能装下内容的四种：**`1x1` / `2x2` / `2x4` / `4x2`**，去掉 1x2 与 2x1。
 * **`CalendarCard.vue` 重写为尺寸感知**：
   - `1x1` = 今日卡（对齐 `CalendarDay`）：日号 + 周几 + 农历，无月历、无年份；
   - `2x2` = 只月历：年月头 + 7×6 网格；
@@ -1188,13 +1186,13 @@ harness：`shot-sizes` / `shot-calendar` / `shot-consistency` / `shot-chrome` / 
 * **顺手压一遍 CSS**：`calendar.css` 540 → 511 行。卡片 mini 网格与详情大网格本来是两份重复声明（7 列 × 6 行、周末红、列表归零），合并成一组 `.cal-mini-week, .cal-grid-week` / `.cal-mini-grid, .cal-grid`；`.cal-day` 与 `.cal-side` 共用「居中竖排 + 三行不许压缩」一组规则。合并后 CSS 41.99 → 41.45 kB，四档截图与量盒数字逐项不变。
 * 文档：`DESIGN.md` 新增「日历卡尺寸」章节（四种版式对照表 + 类名不重名规则）；`ARCHITECTURE.md` 验证清单补一条四尺寸不裁切。
 
-### 卡片材质：日历改成 参考实现 的纯白卡（不再半透明）
+### 卡片材质：日历改成参考实现的纯白卡（不再半透明）
 
 * **问题**：日历卡是玻璃面（白 76% × 外观不透明度 0.62 ≈ 47%），压在壁纸上发灰——4x2 左栏的大日号、月历的 1px 格线全被壁纸透上来糊掉。
-* **参考实现 是怎么做的**（`reference/src/bind/content.mjs`）：`.light{--bg-card:#fff}` / `.dark{--bg-card:#222}`，widget 内容区 `--d-bg-page`（`#f2f2f7` / `#111`）、面板 `--d-bg-panel`（`#ffffff` / `#1c1c1e`）——**卡片面是不透明的白/深灰**，没有 backdrop blur。
+* **参考实现是怎么做的**（`reference/src/bind/content.mjs`）：`.light{--bg-card:#fff}` / `.dark{--bg-card:#222}`，widget 内容区 `--d-bg-page`（`#f2f2f7` / `#111`）、面板 `--d-bg-panel`（`#ffffff` / `#1c1c1e`）——**卡片面是不透明的白/深灰**，没有 backdrop blur。
 * **做法**：`CardDef` 新增 `surface?: "glass" | "solid"`（默认 `glass`），日历标 `solid`；`CardFrame` 按它切 `.frame.is-solid`：
   - 面 = `--desk-surface`（浅 `#fff` / 深 `#222`），`backdrop-filter: none`；
-  - 阴影换成 参考实现 的轻投影 `0 1px 3px rgb(0 0 0/8%), 0 4px 16px rgb(0 0 0/4%)`（深色 `40% / 24%`），描边 `--desk-surface-stroke`；
+  - 阴影换成参考实现的轻投影 `0 1px 3px rgb(0 0 0/8%), 0 4px 16px rgb(0 0 0/4%)`（深色 `40% / 24%`），描边 `--desk-surface-stroke`；
   - 纯色面不吃「玻璃不透明度 / 玻璃模糊」，设置面板文案改成「玻璃不透明度」。
 * **顺带修掉白卡上的控件**：悬浮「⋯」原来是 32% 黑玻璃，白底上糊成一片；纯色面改用 `--desk-surface-ctl`（浅色深灰 62% + 6% 黑边、深色白 16% + 白 18% 边）。
 * **纯色面上的分隔线**：2x4 的上下分界、4x2 的左右分界从 `--desk-stroke`（8% 黑 ≈ #ebebeb）提到 `--desk-stroke-strong`（16% 黑），白底上才看得见；详情面板里的分隔线保持原样不动。

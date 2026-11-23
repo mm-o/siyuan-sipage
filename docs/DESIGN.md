@@ -293,13 +293,13 @@ Sheet（壳，无底色/描边/投影/模糊）
 
 ## 网格排版（`core/store.ts` 的 `flowDesk()` / `alignPanels()`）
 
-iTab 的「网格落位」+ **按内容定列数**。卡片少而大，照抄 iTab「按宽度推列数」会让行尾空一大块，所以列数反过来由卡片决定：
+参考实现的「网格落位」+ **按内容定列数**。卡片少而大，照抄参考实现「按宽度推列数」会让行尾空一大块，所以列数反过来由卡片决定：
 
 1. **列数 = 卡片总格数**（`cols = clamp(Σw, 4, 16)`）：桌面有多少格就开多少列，一行正好装完。
 2. **单格 = 可用宽 / 列数**，上限 `appearance.cell`（设置里的「单格边长」，默认 180）：
    `unit = max(48, min(cell, (容器宽 - 间距×(列-1)) / 列))`。
-3. **落位**：按卡片顺序 dense 装（先最小 y，再从左往右）= iTab 的 `findFitPosition()`。
-4. **尺寸**：卡片 = 格数 × 单格 + 间距，形状永远不变（iTab 也不拉伸）。
+3. **落位**：按卡片顺序 dense 装（先最小 y，再从左往右）= 参考实现的 `findFitPosition()`。
+4. **尺寸**：卡片 = 格数 × 单格 + 间距，形状永远不变（参考实现也不拉伸）。
 5. **居中**：单格顶到上限、或总格数超过 16 列时，网格比容器窄，`margin: 0 auto` 居中（对称留白）。
 
 实测（5 张卡：2x2 ×4 + 4x2 = 12 格，间距 12）：
@@ -356,10 +356,10 @@ iTab 的「网格落位」+ **按内容定列数**。卡片少而大，照抄 iT
 
 | 地点类型 | 后端 | 提供 |
 | --- | --- | --- |
-| 国内（有 9 位 AREAID） | `base.itab.link/api/getWeather` + `/api/weather/24` | 当前、逐时 24、7 日、日出日落 |
+| 国内（有 9 位 AREAID） | 服务方固定域名 + `/api/getWeather` + `/api/weather/24` | 当前、逐时 24、7 日、日出日落 |
 | 其它（只有坐标） | `api.open-meteo.com/v1/forecast` | 当前、逐时 24、7 日 |
 
-**定位**只有一条路：`preciseLocate()` → `base.itab.link/api/getLocation`（服务端按 IP 查区县库）。
+**定位**只有一条路：`preciseLocate()` → 同一家的 `/api/getLocation`（服务端按 IP 查区县库）。
 浏览器 `navigator.geolocation` 与 `ip-api` 都已删除（桌面端前者只给 IP 级精度，后者落在出口城市）。
 
 **版式按容器查询切**，不再有尺寸档表：
@@ -386,7 +386,7 @@ iTab 的「网格落位」+ **按内容定列数**。卡片少而大，照抄 iT
 | `4x2` | 左主事件、右列表 | + 3 行 |
 | `2x4` | 主事件在上、列表在下 | + 5 行 |
 
-**详情三栏**（结构、尺寸、间距照 参考实现 的 daysMatter）：
+**详情三栏**（结构、尺寸、间距照参考实现的 daysMatter）：
 
 | 栏 | 宽 | 内容 |
 | --- | --- | --- |
@@ -406,7 +406,7 @@ iTab 的「网格落位」+ **按内容定列数**。卡片少而大，照抄 iT
 - 分类名与颜色取它的原值：纪念日 `#ef4444`、节日 `#f59e0b`、生活 `#8b5cf6`、工作 `#3b82f6`、目标 `#22c55e`、其他 `#6b7280`。
 - 天数：目标日 − 今天（本地零点，`Math.round` 差值，绕开夏令时）；未来「还剩」，过去「已经」，当天「今天」。
 - 四种单位：天 / 周（÷7 取整）/ 个月 / 年（日历整月、整年，向下取整）。
-- 「每年」+「按农历」：`lunar: true` 时把存的日期换成农历月/日，再找今年/明年最近的一次（iTab 的事件本来就带 `isLunar`，这里对齐）；详情「重复」会显示「每年（农历）」。
+- 「每年」+「按农历」：`lunar: true` 时把存的日期换成农历月/日，再找今年/明年最近的一次（参考实现的事件本来就带 `isLunar`，这里对齐）；详情「重复」会显示「每年（农历）」。
 - 排序：置顶优先 → 未来（近的在前）→ 今天 → 过去（近的在前）。
 - 封面不引入图片上传：按事件 id 从思源题头图里稳定挑一张（卡片与详情同一张），压暗层用它的两套（大卡横向、封面头纵向）。
 
@@ -579,9 +579,9 @@ menu.open({ x, y })
 | surface | 谁用 | 面 | 依据 |
 | --- | --- | --- | --- |
 | `glass`（默认） | 照片卡（一言 / 英语 / 诗词）、时钟 | `color-mix(白 76% × 外观不透明度)` + `backdrop-filter: blur(24px) saturate(1.4)` | `liquid-glass.md`：fill 60–80%、blur 20–40px |
-| `solid` | 日历 | `--desk-surface`：浅 `#fff` / 深 `#222`，`backdrop-filter: none`，阴影换 `--desk-surface-shadow`（1px/3px + 4px/16px） | 参考实现 的 `--bg-card`（`reference/src/bind/content.mjs`：`.light{--bg-card:#fff}` / `.dark{--bg-card:#222}`） |
+| `solid` | 日历 | `--desk-surface`：浅 `#fff` / 深 `#222`，`backdrop-filter: none`，阴影换 `--desk-surface-shadow`（1px/3px + 4px/16px） | 参考实现的 `--bg-card`（`reference/src/bind/content.mjs`：`.light{--bg-card:#fff}` / `.dark{--bg-card:#222}`） |
 
-**为什么日历不用玻璃**：参考实现 的 widget 一律白卡（内容区 `--d-bg-page`、面板 `--d-bg-panel`）。日历里全是小号文字和 1px 分隔线，半透明面压在壁纸上会把字和线一起糊掉（之前 4x2 左栏的日号发灰、格线发虚就是这个原因）。照片卡相反——它自带一张照片，玻璃只是让照片边缘融进壁纸。
+**为什么日历不用玻璃**：参考实现的 widget 一律白卡（内容区 `--d-bg-page`、面板 `--d-bg-panel`）。日历里全是小号文字和 1px 分隔线，半透明面压在壁纸上会把字和线一起糊掉（之前 4x2 左栏的日号发灰、格线发虚就是这个原因）。照片卡相反——它自带一张照片，玻璃只是让照片边缘融进壁纸。
 
 两条附带规则：
 
@@ -594,15 +594,15 @@ menu.open({ x, y })
 
 ## 日历卡尺寸（`cards/calendar/CalendarCard.vue`）
 
-尺寸取自 参考实现 源码，不是自己拍的：
+尺寸取自参考实现源码，不是自己拍的：
 
-- 参考实现 通用右键尺寸菜单是 `["1x1","1x2","2x1","2x2","2x4"]`（`reference/src/bind/d-contextmenu-CbzAeAFB.mjs`）；
+- 参考实现通用右键尺寸菜单是 `["1x1","1x2","2x1","2x2","2x4"]`（`reference/src/bind/d-contextmenu-CbzAeAFB.mjs`）；
 - 日历卡默认 `size: "2x2"`（`reference/src/bind/defaultNavConfig-B7uRQ5vb.mjs`）；
 - 日历内容组件分两套：`CalendarDay.vue`（小格「今日」）与 `Calendar.vue`（月历）。
 
 我们只保留**四种**（`core/registry.ts` 的 `sizes`），去掉 1x2 / 2x1 两个「月历塞不进去、只剩半行」的尺寸：
 
-| 尺寸 | 版式 | 内容 | 对应 参考实现 |
+| 尺寸 | 版式 | 内容 | 对应参考实现 |
 | --- | --- | --- | --- |
 | `1x1` | 单列居中 | 日号（34cqh）+ 周几 + 农历 | `CalendarDay` |
 | `2x2` | 只月历 | 年月头 + 7×6 网格 | `Calendar` |

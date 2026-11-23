@@ -86,7 +86,7 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
 
 <style scoped>
 /* 实色卡：和日历一样是「纸面」，不吃外观的玻璃底色。
-   卡片不留外圈留白 —— 主事件直接铺满，白的只出现在块与块的缝隙里（iTab 的 widget 也是这样）。 */
+   卡片不留外圈留白 —— 主事件直接铺满，白的只出现在块与块的缝隙里（参考实现 的 widget 也是这样）。 */
 .cd-card {
   container-type: size;
   position: relative;
@@ -174,7 +174,7 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
   grid-auto-rows: minmax(0, 1fr);
   gap: clamp(3px, 1.4cqh, 8px);
   margin: 0;
-  /* 行不贴死卡片边：白的只在这里露一圈，和 iTab 卡片里的行一致 */
+  /* 行不贴死卡片边：白的只在这里露一圈，和 参考实现 卡片里的行一致 */
   padding: 0 clamp(4px, 2cqw, 10px) clamp(4px, 2cqh, 10px);
   min-height: 0;
   list-style: none;

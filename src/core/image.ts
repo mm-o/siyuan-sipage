@@ -84,6 +84,17 @@ const CATEGORY_LABEL: Record<string, string> = {
   coverRoadAhead: "前路",
 }
 
+/**
+ * 分类标签顺序：按 SiYuan 自己那张分类表排（上面的 CATEGORY_LABEL 就是它），
+ * 不跟 manifest 的书写顺序走 —— 标签行读起来才是稳定的一套。
+ */
+const CATEGORY_ORDER: string[] = Object.keys(CATEGORY_LABEL)
+
+const rankOf = (key: string) => {
+  const at = CATEGORY_ORDER.indexOf(key)
+  return at < 0 ? CATEGORY_ORDER.length : at
+}
+
 /** 内置兜底（manifest 拿不到时用，保证离线也能用） */
 export const COVERS = [
   "/appearance/covers/cover_001.webp",
@@ -118,11 +129,13 @@ export async function loadCoverGroups(): Promise<CoverGroup[]> {
         map.get(key)!.push(item)
       }
 
-      groupCache = [...map.entries()].map(([key, items]) => ({
-        key,
-        label: CATEGORY_LABEL[key] || key.replace(/^cover/, ""),
-        items,
-      }))
+      groupCache = [...map.entries()]
+        .sort((a, b) => rankOf(a[0]) - rankOf(b[0]))
+        .map(([key, items]) => ({
+          key,
+          label: CATEGORY_LABEL[key] || key.replace(/^cover/, ""),
+          items,
+        }))
       return groupCache
     } catch {
       groupCache = [{ key: "fallback", label: "内置", items: COVERS.map((f) => ({ file: f.split("/").pop()!, category: "fallback" })) }]

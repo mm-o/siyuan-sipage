@@ -170,24 +170,13 @@ export function docRows(list: Ref<{ id?: string; title: string }[]>, h: Ref<numb
 
 /* ── 轻量 DOM 反馈 ────────────────────────────────────── */
 
-/** 屏幕顶部的一行提示（不依赖思源 showMessage） */
+/** 屏幕顶部的一行提示（不依赖思源 showMessage）：淡入 → 停留 → 淡出 */
 export function toast(message: string, duration = 2200) {
   const el = document.createElement("div")
+  el.className = "desk-toast"
   el.textContent = message
-  el.style.cssText = [
-    "position:fixed",
-    "left:50%",
-    "top:16px",
-    "transform:translateX(-50%)",
-    "z-index:99999",
-    "padding:6px 14px",
-    "border-radius:8px",
-    "background:#1f2937",
-    "color:#fff",
-    "font-size:12px",
-    "pointer-events:none",
-  ].join(";")
   document.body.append(el)
+  window.setTimeout(() => el.classList.add("is-out"), Math.max(duration - 200, 0))
   window.setTimeout(() => el.remove(), duration)
 }
 

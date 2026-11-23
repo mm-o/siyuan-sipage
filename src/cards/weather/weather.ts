@@ -2,13 +2,14 @@
  * 天气模块（一个文件装完：形状 / 码表 / 取数 / 定位 / 钩子）
  *
  * 两条数据通路：
- *   国内（有 9 位 AREAID）→ iTab 天气接口（当前 + 逐时 24 + 7 日）
+ *   国内（有 9 位 AREAID）→ 国内天气接口（当前 + 逐时 24 + 7 日）
  *   其它（有坐标）        → Open-Meteo（当前 + 逐时 24 + 7 日）
- * 定位只有一条：iTab 的 /api/getLocation（服务端按 IP 查区县库）。
+ * 定位只有一条：同一家的 /api/getLocation（服务端按 IP 查区县库）。
  * 缓存：内存 10 分钟 + localStorage（core/store 的 cacheGet/cacheSet）。
  */
 import type { Component } from "vue"
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue"
+import { API_BASE } from "@/core/api"
 import { Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudMoon, CloudRain, CloudSnow, CloudSun, Cloudy, Moon, Sun } from "lucide-vue-next"
 import { cacheGet, cacheSet, placeId, weather, type WeatherPlace } from "@/core/store"
 import { COVERS, forwardProxy } from "@/core/image"
@@ -256,12 +257,12 @@ async function loadOpenMeteo(place: WeatherPlace): Promise<WeatherData> {
   return parse(await forwardProxy(url, "text", TIMEOUT))
 }
 
-/** 国内源（iTab 天气接口）：当前 + 24 小时 + 7 日，区县级可用 */
+/** 国内源（国内天气接口）：当前 + 24 小时 + 7 日，区县级可用 */
 async function loadCn(code: string): Promise<WeatherData> {
-  const head: [string, string][] = [["mode", "itab"], ["version", "1.8.3"], ["lang", "cn"]]
+  const head: [string, string][] = [["version", "1.8.3"], ["lang", "cn"]]
   const [nowRaw, hourRaw] = await Promise.all([
-    forwardProxy(`https://base.itab.link/api/getWeather?location=${code}&lang=cn`, "text", TIMEOUT, head),
-    forwardProxy(`https://base.itab.link/api/weather/24?location=${code}&unit=m&lang=cn`, "text", TIMEOUT, head),
+    forwardProxy(`${API_BASE}/api/getWeather?location=${code}&lang=cn`, "text", TIMEOUT, head),
+    forwardProxy(`${API_BASE}/api/weather/24?location=${code}&unit=m&lang=cn`, "text", TIMEOUT, head),
   ])
 
   const now = JSON.parse(nowRaw)?.data
@@ -462,12 +463,11 @@ async function searchCnPlaces(q: string): Promise<WeatherPlace[]> {
 }
 
 /**
- * 精确定位：iTab 的定位接口（服务端按 IP 走区县级地理库，返回区县名 + 经纬度 + 天气 ID）。
+ * 精确定位：该服务方的定位接口（服务端按 IP 走区县级地理库，返回区县名 + 经纬度 + 天气 ID）。
  * 比 ip-api 准得多：同一个 IP，ip-api 给「广州」，它给「海原」。
  */
 export async function preciseLocate(): Promise<WeatherPlace> {
-  const raw = await forwardProxy("https://base.itab.link/api/getLocation?lang=cn", "text", 10_000, [
-    ["mode", "itab"],
+  const raw = await forwardProxy(`${API_BASE}/api/getLocation?lang=cn`, "text", 10_000, [
     ["version", "1.8.3"],
     ["lang", "cn"],
   ])

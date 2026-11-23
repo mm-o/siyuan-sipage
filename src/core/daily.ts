@@ -13,15 +13,6 @@
 import { ref, type Ref } from "vue"
 import { randomCoverUrl } from "./image"
 
-/**
- * 每日内容的接口主机
- *
- * 这是 iTab 的官方服务（`base.itab.link`）——**外部域名，不能跟着插件改名**，
- * 改了就是 DNS 失败（`base.desk.link` 根本不存在）。下面各卡的路径同理，
- * 例如英语接口的 `/itab/todayEnglish` 里，`itab` 是它的路由前缀，不是我们的名字。
- */
-export const DAILY_API = "https://base.itab.link"
-
 interface DailySeries<T> {
   /** 当前内容（卡片与详情共享） */
   item: Ref<T>

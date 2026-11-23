@@ -37,14 +37,15 @@
 /**
  * 每日一言
  *
- * 接口 `${DAILY_API}/yiyan/random` —— 每次给一条随机句子，
+ * 接口 `${API_BASE}/yiyan/random` —— 每次给一条随机句子，
  * 所以「上一条 / 下一条」就是再取一条；序列与背景由 core/daily 统一管理，
  * 卡片与详情永远是同一句、同一张图。
  */
 import { GlassButton, SeriesNav } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { Check, Copy, Heart, Image as ImageIcon } from "lucide-vue-next"
-import { DAILY_API, dailySeries } from "@/core/daily"
+import { dailySeries } from "@/core/daily"
+import { API_BASE } from "@/core/api"
 import { photoBg } from "@/ui/controls"
 import { copyText } from "@/ui/controls"
 
@@ -55,7 +56,7 @@ interface Quote {
   from: string
 }
 
-const API = `${DAILY_API}/yiyan/random`
+const API = `${API_BASE}/yiyan/random`
 
 const series = dailySeries<Quote>("yiyan", {
   initial: { hitokoto: "正在加载…", from: "" },

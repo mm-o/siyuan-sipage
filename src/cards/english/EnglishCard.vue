@@ -45,7 +45,7 @@
 /**
  * 每日英语
  *
- * 接口 `${DAILY_API}/itab/todayEnglish` 只按「今天」返回一句（不支持 ?date=），
+ * 接口 `API_EN` 只按「今天」返回一句（不支持 ?date=），
  * 所以「上一条 / 下一条」用一条本地句库循环：offset 0 = 今天的接口内容，
  * 其余在本地 24 句里循环 —— 离线也有内容可翻。
  * 朗读：接口给了 tts 就播音频，本地句库用系统语音合成。
@@ -53,7 +53,8 @@
 import { GlassButton, SeriesNav } from "@/ui/controls"
 import { computed, onBeforeUnmount, ref } from "vue"
 import { BookOpen, Check, Copy, Image as ImageIcon, Pause, Play } from "lucide-vue-next"
-import { DAILY_API, dailySeries } from "@/core/daily"
+import { dailySeries } from "@/core/daily"
+import { API_EN } from "@/core/api"
 import { photoBg } from "@/ui/controls"
 import { copyText } from "@/ui/controls"
 
@@ -68,7 +69,7 @@ interface English {
   tts: string
 }
 
-const API = `${DAILY_API}/itab/todayEnglish`
+const API = API_EN
 
 /** 本地句库：接口一天只给一句，翻页靠它循环（与今天的接口内容互不重复地混在一起） */
 const POOL: Array<[content: string, note: string]> = [

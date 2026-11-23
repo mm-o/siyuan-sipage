@@ -19,25 +19,7 @@
 
       <!-- ② 内容 -->
       <div class="set-main desk-pane is-mid">
-        <section v-if="current === 'about'" class="about">
-          <h2 class="set-h2">关于</h2>
-          <p class="set-p">把 iTab 的卡片重写进思源：桌面、页签、文档里都能用，而且是活的。</p>
-          <dl class="set-kv">
-            <dt>版本</dt><dd>v{{ version }}</dd>
-            <dt>设计语言</dt><dd>apple-design-skill（HIG · Liquid Glass）</dd>
-            <dt>卡片来源</dt><dd>iTab 逆向还原（本地研究）</dd>
-            <dt>运行环境</dt><dd>思源 {{ frontend }}</dd>
-          </dl>
-          <div class="set-group">
-            <div class="set-row">
-              <div class="set-label">
-                <b>重置桌面</b>
-                <small>清空卡片，回到默认一张</small>
-              </div>
-              <button class="desk-btn" type="button" @click="resetDesk()">重置</button>
-            </div>
-          </div>
-        </section>
+        <AboutPanel v-if="current === 'about'" />
         <LibraryPanel v-else-if="current === 'library'" :selected="selected" @select="selected = $event" />
         <component :is="activeComponent" v-else />
       </div>
@@ -105,6 +87,21 @@
           </div>
         </template>
 
+        <!-- 关于：版本信息 + 重置桌面 -->
+        <template v-else-if="current === 'about'">
+          <dl class="set-kv">
+            <dt>版本</dt><dd>v{{ version }}</dd>
+            <dt>运行环境</dt><dd>思源 {{ frontend }}</dd>
+            <dt>仓库</dt>
+            <dd><a class="set-link" :href="pkg.homepage" target="_blank" rel="noreferrer">{{ pkg.homepage.replace("https://github.com/", "") }}</a></dd>
+          </dl>
+          <div class="set-about-reset">
+            <b>重置桌面</b>
+            <small>清空卡片，回到默认一张</small>
+            <button class="desk-btn" type="button" @click="resetDesk()">重置</button>
+          </div>
+        </template>
+
         <p v-if="current === 'library'" class="set-side-hint">同一张卡可以放多张；尺寸与位置在桌面「整理模式」里拖。</p>
         <p v-else-if="current === 'cards'" class="set-side-hint">拖动滑轨立刻生效，双击滑轨恢复该项默认值。</p>
 
@@ -139,6 +136,7 @@ import { Grid2x2, Image as ImageIcon, Info, SlidersHorizontal, X } from "lucide-
 import { Settings as SettingsIcon } from "lucide-vue-next"
 import CardFrame from "./CardFrame.vue"
 import Sheet from "./Sheet.vue"
+import AboutPanel from "./AboutPanel.vue"
 import WallpaperPanel from "./WallpaperPanel.vue"
 import CardsPanel from "./CardsPanel.vue"
 import LibraryPanel from "./LibraryPanel.vue"
@@ -195,7 +193,8 @@ const tag = computed(
 const sourceLabel = computed(() => SOURCE_LABEL[wallSource(wallpaper)])
 const wallSize = ref("")
 watch(
-  [() => wallpaper.type, () => wallpaper.value],
+  /* resolved 也要看：先上缩略图、原图回来替换，尺寸得跟着更新到真像素 */
+  [() => wallpaper.type, () => wallpaper.value, () => wallpaper.resolved],
   () => {
     if (wallpaper.type === "theme") {
       wallSize.value = "主题色"
@@ -639,5 +638,34 @@ function resetAll() {
 .set-kv dd {
   margin: 0;
   color: var(--desk-text);
+}
+
+.set-link {
+  color: var(--desk-accent);
+  text-decoration: none;
+}
+
+/* 关于：重置桌面（危险操作放最下面，和右栏「恢复默认」分开） */
+.set-about-reset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-1);
+  margin-top: auto;
+  padding-top: var(--desk-sp-3);
+  border-top: 1px solid var(--desk-stroke);
+  font-size: var(--desk-fs-caption);
+}
+
+.set-about-reset b {
+  font-weight: 600;
+  color: var(--desk-text);
+}
+
+.set-about-reset small {
+  color: var(--desk-text-3);
+}
+
+.set-about-reset .desk-btn {
+  margin-top: var(--desk-sp-1);
 }
 </style>
