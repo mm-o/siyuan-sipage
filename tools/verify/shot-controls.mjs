@@ -115,7 +115,8 @@ try {
   await added.first().getByRole('button', { name: '移除', exact: true }).click()
   await page.waitForFunction(() => document.querySelectorAll('.qp-col.is-left .qp-item').length === 1)
   await page.waitForTimeout(250)
-  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('desk:quickpick')).docs.length), 1, 'removal drops exactly one occurrence')
+  /* 实例状态：每张卡一份，存在插件存储的 cardStates 里（验证页用内存镜像） */
+  assert.equal(await page.evaluate(() => globalThis.__deskCardStates.data.qp.docs.length), 1, 'removal drops exactly one occurrence')
   await screenshot('controls-quickopen.png')
   checks.push('quick open keeps repeated slots, counts them, and removes one occurrence per click')
 

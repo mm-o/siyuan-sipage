@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div ref="rootRef" class="desk-root" :class="{ 'is-arrange': arranging, 'is-manipulating': !!drag, 'is-theme': isTheme }" @contextmenu.prevent="deskMenu">
     <!-- 壁纸（桌面窗口层，不随滚动条变化）：跟随思源时整层不画，直接透出思源背景 -->
     <div v-if="!isTheme" class="desk-wallpaper" :style="wallpaperStyle" />
@@ -62,7 +62,7 @@
             @refresh="refreshKey++"
             @fullscreen="openFull(inst)"
           >
-            <component :is="cardOf(inst.cardId)" :key="refreshKey" :size="label(inst)" :w="inst.w" :h="inst.h" />
+            <component :is="cardOf(inst.cardId)" :key="refreshKey" :size="label(inst)" :w="inst.w" :h="inst.h" :uid="inst.uid" />
           </CardFrame>
 
           <!-- 四边缩放：只在整理模式出现。到边界的手柄只变淡（仍可抓着往回收），夹取在 arrange.ts 里做 -->
@@ -111,7 +111,7 @@
     <!-- 全屏 -->
     <Teleport v-if="full.open" to="body">
       <div class="desk-full">
-        <div class="desk-full-inner"><component :is="cardOf(full.cardId!)" :size="full.size" /></div>
+        <div class="desk-full-inner"><component :is="cardOf(full.cardId!)" :size="full.size" :uid="full.uid" /></div>
         <GlassButton class="desk-full-close" :icon="Minimize2" label="退出全屏（Esc）" @click="full.open = false" />
       </div>
     </Teleport>
@@ -132,7 +132,7 @@
         <GlassButton :icon="Maximize2" label="全屏" @click="fullFromDetail(s)" />
       </template>
       <div v-if="s.open" class="desk-expanded desk-enter" :class="{ 'desk-pane is-solo': !defOf(s)?.detail }">
-        <component :is="defOf(s)?.detail || defOf(s)?.component" :key="`${s.key}-${s.cardId}`" mode="detail" />
+        <component :is="defOf(s)?.detail || defOf(s)?.component" :key="`${s.key}-${s.cardId}`" mode="detail" :uid="s.uid" />
       </div>
     </Sheet>
 
@@ -231,6 +231,7 @@ const cardOf = (id: string) => getCard(id)?.component
 /* 详情 / 全屏：每张卡一个独立弹窗。钉住的那个不被顶替，可以同时钉住多个。 */
 interface DetailSheet {
   key: number
+  uid: string
   cardId: string
   origin: DOMRect | null
   size: CardSize | ""
@@ -240,37 +241,38 @@ interface DetailSheet {
 const sheets = ref<DetailSheet[]>([])
 let sheetSeq = 0
 
-const full = ref<{ open: boolean; cardId: string; size: CardSize | "" }>({ open: false, cardId: "", size: "" })
+const full = ref<{ open: boolean; uid: string; cardId: string; size: CardSize | "" }>({ open: false, uid: "", cardId: "", size: "" })
 const refreshKey = ref(0)
 const defOf = (s: DetailSheet) => getCard(s.cardId)
 const sizeOf = (s: DetailSheet) => defOf(s)?.detailSize
 
 const dropSheet = (s: DetailSheet) => { sheets.value = sheets.value.filter((item) => item !== s) }
 
-function openFull(inst: { cardId: string; w: number; h: number }) {
+function openFull(inst: { uid: string; cardId: string; w: number; h: number }) {
   if (!getCard(inst.cardId)) return
-  full.value = { open: true, cardId: inst.cardId, size: label(inst) }
+  full.value = { open: true, uid: inst.uid, cardId: inst.cardId, size: label(inst) }
   sheets.value = sheets.value.filter((s) => s.cardId !== inst.cardId)
 }
 
-function expand(inst: { cardId: string; w: number; h: number }, origin?: DOMRect) {
+function expand(inst: { uid: string; cardId: string; w: number; h: number }, origin?: DOMRect) {
   if (arranging.value || !getCard(inst.cardId)) return
   /* 先清掉上一轮关掉的：只有还开着的弹窗参与下面两条判断。 */
   sheets.value = sheets.value.filter((s) => s.open)
   const same = sheets.value.find((s) => s.cardId === inst.cardId)
   if (same) {
+    same.uid = inst.uid
     same.origin = origin || null
     same.size = label(inst)
     return
   }
   /* 只顶替未钉住的那一个；钉住的一个都不动，于是可以同时留多个。 */
   const spare = sheets.value.find((s) => !s.pinned)
-  if (spare) Object.assign(spare, { cardId: inst.cardId, origin: origin || null, size: label(inst) })
-  else sheets.value.push({ key: ++sheetSeq, cardId: inst.cardId, origin: origin || null, size: label(inst), open: true, pinned: false })
+  if (spare) Object.assign(spare, { uid: inst.uid, cardId: inst.cardId, origin: origin || null, size: label(inst) })
+  else sheets.value.push({ key: ++sheetSeq, uid: inst.uid, cardId: inst.cardId, origin: origin || null, size: label(inst), open: true, pinned: false })
 }
 
 function fullFromDetail(s: DetailSheet) {
-  full.value = { open: true, cardId: s.cardId, size: s.size }
+  full.value = { open: true, uid: s.uid, cardId: s.cardId, size: s.size }
   dropSheet(s)
 }
 

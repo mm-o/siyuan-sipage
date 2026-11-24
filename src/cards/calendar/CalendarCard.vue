@@ -12,7 +12,7 @@
     <!-- 整月网格（参考实现 widget-calendar）：够宽才出，等比放大后是同一套版式 -->
     <div class="month">
       <ul class="row head">
-        <li v-for="(w, i) in WEEK" :key="w" :class="{ 'is-end': i >= 5 }">{{ w }}</li>
+        <li v-for="w in head" :key="w" :class="{ 'is-end': w === '六' || w === '日' }">{{ w }}</li>
       </ul>
       <ul v-for="(week, wi) in month" :key="wi" class="row">
         <li
@@ -39,9 +39,15 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { SolarDay } from "tyme4ts"
 import { dateKey, itemsOf, todayKey } from "@/core/agenda"
-import { dayDots } from "./calendar"
+import { calendarOf, dayDots } from "./calendar"
+
+const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
+
+/* 每张日历卡一份：看哪个月、一周从哪天开始 */
+const state = calendarOf(props.uid || "calendar")
 
 const WEEK = ["一", "二", "三", "四", "五", "六", "日"]
+const head = computed(() => (state.weekBegin === "mon" ? WEEK : ["日", ...WEEK.slice(0, 6)]))
 const tick = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
 
@@ -79,9 +85,11 @@ const today = computed(() => {
 const month = computed(() => {
   void tick.value
   const base = new Date()
-  const y = base.getFullYear()
-  const m = base.getMonth()
-  const start = new Date(y, m, 1 - ((new Date(y, m, 1).getDay() + 6) % 7))
+  const [pinYear, pinMonth] = state.month.split("-").map(Number)
+  const y = pinYear || base.getFullYear()
+  const m = pinMonth ? pinMonth - 1 : base.getMonth()
+  const lead = (new Date(y, m, 1).getDay() + (state.weekBegin === "mon" ? 6 : 0)) % 7
+  const start = new Date(y, m, 1 - lead)
   return Array.from({ length: 6 }, (_, wi) =>
     Array.from({ length: 7 }, (_, ci) => {
       const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + wi * 7 + ci)
@@ -89,6 +97,7 @@ const month = computed(() => {
         day: d.getDate(),
         dots: dayDots(dateKey(d)),
         inMonth: d.getMonth() === m,
+        weekend: d.getDay() === 0 || d.getDay() === 6,
         today: d.getDate() === base.getDate() && d.getMonth() === m && d.getFullYear() === y,
       }
     }),

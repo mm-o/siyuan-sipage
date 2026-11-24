@@ -2,12 +2,16 @@
 import { GlassButton, GlassField } from "@/ui/controls"
 import { onBeforeUnmount, ref, watch } from "vue"
 import { Check, Search } from "lucide-vue-next"
-import { blockState, blockTitle, setId } from "./block"
+import { blockOf, blockTitle, setId } from "./block"
 import { searchDocs, type PickDoc } from "@/core/quickdocs"
 import { mountProtyle } from "./block"
 import "./styles.css"
 
 /** 弹窗：上方输入/搜索，下方完整预览（预览区可滚动，所以内容能看全） */
+const props = defineProps<{ mode?: string; uid?: string }>()
+
+/* 详情跟着卡片实例走 */
+const blockState = blockOf(props.uid || "block")
 const draft = ref(blockState.id)
 const keyword = ref("")
 const hits = ref<PickDoc[]>([])
@@ -34,7 +38,7 @@ function render() {
 async function apply() {
   const id = draft.value.trim()
   if (!id) return
-  setId(id, await blockTitle(id).catch(() => ""))
+  setId(blockState, id, await blockTitle(id).catch(() => ""))
   hits.value = []
   render()
 }
@@ -45,7 +49,7 @@ async function search() {
 
 function pick(id: string, title: string) {
   draft.value = id
-  setId(id, title)
+  setId(blockState, id, title)
   hits.value = []
   render()
 }

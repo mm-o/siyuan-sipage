@@ -24,13 +24,16 @@
  */
 import { computed } from "vue"
 import { Ellipsis, FileText } from "lucide-vue-next"
-import { docs, openDoc } from "@/core/quickdocs"
+import { openDoc, quickOf } from "@/core/quickdocs"
 import { docColor, docRows } from "@/ui/controls"
 
-const props = defineProps<{ size?: string; w?: number; h?: number }>()
+const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
+
+/* 每张卡一份配置：同一张卡放多张，各配各的文档 */
+const state = quickOf(props.uid || "quickopen")
 
 const rowsMax = computed(() => Math.max(1, Math.floor(props.h ?? 2)))
-const rows = docRows(docs, computed(() => props.h))
+const rows = docRows(computed(() => state.docs), computed(() => props.h))
 
 function onRow(doc: { id?: string } | undefined, e: MouseEvent) {
   if (!doc?.id) return

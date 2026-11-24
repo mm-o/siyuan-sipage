@@ -10,7 +10,7 @@ const harness = await openBrowser({ storage: {
 const { page, errors } = harness
 const checks = []
 const dialog = page.locator('.desk-sheet')
-const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('desk:shortcut')).enabled)
+const stored = () => page.evaluate(() => globalThis.__deskCardStates.data.shortcut.enabled)
 try {
   await harness.goto()
   // 卡片内部全是快捷按钮，直接向卡框派发点击打开详情。

@@ -39,9 +39,9 @@ import { computed, onMounted, ref } from "vue"
 import { Ellipsis } from "lucide-vue-next"
 import { randomCoverUrl } from "@/core/image"
 import { getCard } from "@/core/registry"
-import { enabledShortcuts, runShortcut, useSprite, type Shortcut } from "./shortcut"
+import { enabledShortcuts, runShortcut, shortcutOf, useSprite, type Shortcut } from "./shortcut"
 
-const props = defineProps<{ size?: string; w?: number; h?: number }>()
+const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
 
 const cover = ref("")
 const bgStyle = computed(() => (cover.value ? { backgroundImage: `url(${cover.value})` } : {}))
@@ -51,6 +51,8 @@ onMounted(() => {
 })
 
 const sprite = useSprite()
+/* 每张卡一份：同一张卡放多张，各配各的图标 */
+const state = shortcutOf(props.uid || "shortcut")
 const g = computed(() => {
   /* 段落取自注册表（快捷方式 = 2）：一个图标占 2×2 格 */
   const step = getCard("shortcut")?.constrain?.step ?? 2
@@ -59,7 +61,7 @@ const g = computed(() => {
   return { cols, rows, count: cols * rows }
 })
 /* 内容占前 count−1 个槽位，末位留给「打开卡片」 */
-const items = computed<Shortcut[]>(() => enabledShortcuts().slice(0, Math.max(0, g.value.count - 1)))
+const items = computed<Shortcut[]>(() => enabledShortcuts(state).slice(0, Math.max(0, g.value.count - 1)))
 const blanks = computed(() => Math.max(0, g.value.count - items.value.length - 1))
 </script>
 

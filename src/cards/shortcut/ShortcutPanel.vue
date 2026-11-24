@@ -25,7 +25,7 @@
           </span>
           <span class="name desk-ellipsis">{{ s.label }}</span>
           <span v-if="used(s.id)" class="desk-badge is-on">{{ used(s.id) }}</span>
-          <GlassButton :icon="Plus" label="加入" @click.stop="addShortcut(s.id)" />
+          <GlassButton :icon="Plus" label="加入" @click.stop="addShortcut(state, s.id)" />
         </li>
       </ul>
     </section>
@@ -51,7 +51,7 @@
             <component :is="s.fallback" v-else :size="13" :stroke-width="2" />
           </span>
           <span class="name desk-ellipsis">{{ s.label }}</span>
-          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeShortcutAt(i)" />
+          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeShortcutAt(state, i)" />
         </li>
         <li v-if="!enabled.length" class="sc-sub desk-note">空</li>
       </ul>
@@ -72,20 +72,25 @@ import {
   removeShortcutAt,
   reorderShortcut,
   runShortcut,
-  shortcutState,
+  shortcutOf,
   useSprite,
   type ShortcutGroup,
 } from "./shortcut"
 
+const props = defineProps<{ mode?: string; uid?: string }>()
+
+/* 详情跟着卡片实例走：同一张卡放多张，各配各的 */
+const state = shortcutOf(props.uid || "shortcut")
+
 const active = ref<ShortcutGroup>("导航")
 const sprite = useSprite()
 const dragFrom = ref(-1)
-const enabled = computed(() => enabledShortcuts())
-const used = (id: string) => shortcutState.enabled.filter((x) => x === id).length
+const enabled = computed(() => enabledShortcuts(state))
+const used = (id: string) => state.enabled.filter((x) => x === id).length
 const countOf = (g: ShortcutGroup) => byGroup(g).reduce((n, s) => n + used(s.id), 0)
 
 function drop(to: number) {
-  if (dragFrom.value >= 0) reorderShortcut(dragFrom.value, to)
+  if (dragFrom.value >= 0) reorderShortcut(state, dragFrom.value, to)
   dragFrom.value = -1
 }
 </script>

@@ -34,7 +34,9 @@ export function hydrateCards(root: ParentNode = document) {
     el.style.height = el.style.height || `${heightOf(size)}px`
 
     const [w, h] = size.split("x").map(Number)
-    const m = mountCard(el, cardId, { size, w, h })
+    /* 文档内嵌也按实例算：用宿主块 id 当 uid，同一块里的卡片共享一份状态 */
+    const host = el.closest("[data-node-id]")?.getAttribute("data-node-id") || cardId
+    const m = mountCard(el, cardId, { size, w, h, uid: `embed-${host}` })
     if (m) mounted.set(el, m)
   })
 }

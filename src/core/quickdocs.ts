@@ -9,8 +9,7 @@ function getApp(): any {
   return appRef || (window as any).siyuan?.ws?.app || null
 }
 
-import { computed } from "vue"
-import { persisted } from "@/core/store"
+import { stateOf } from "@/core/store"
 import { post, sql } from "@/core/util"
 
 export interface PickDoc {
@@ -18,21 +17,46 @@ export interface PickDoc {
   title: string
 }
 
-export const quickpick = persisted("desk:quickpick", { docs: [] as PickDoc[] })
-
-export const docs = computed(() => quickpick.docs)
+export interface QuickState {
+  docs: PickDoc[]
+}
 
 /** 快捷打开最多 8 格；与卡片库一致，同一篇文档可以重复占位。 */
 export const QUICK_SLOTS = 8
 
-export function addDoc(doc: PickDoc) {
-  if (quickpick.docs.length >= QUICK_SLOTS) return
-  quickpick.docs = [...quickpick.docs, doc]
+/** 老版本只有一份共享列表：第一次取用时认领给第一张卡，之后各卡各的 */
+function claimLegacy(state: QuickState) {
+  let raw: string | null = null
+  try {
+    raw = localStorage.getItem("desk:quickpick")
+  } catch {
+    return
+  }
+  if (!raw) return
+  try {
+    const box = JSON.parse(raw) as { docs?: PickDoc[] }
+    if (!state.docs.length && Array.isArray(box.docs)) state.docs = box.docs.slice(0, QUICK_SLOTS)
+    localStorage.removeItem("desk:quickpick")
+  } catch {
+    /* 旧键坏了就当没有 */
+  }
 }
 
-export function removeDocAt(index: number) {
-  if (index < 0 || index >= quickpick.docs.length) return
-  quickpick.docs = quickpick.docs.filter((_, i) => i !== index)
+/** 每张卡一份配置：按实例 uid 取，第一次取时用空列表建一份 */
+export function quickOf(uid: string): QuickState {
+  const state = stateOf<QuickState>(uid, { docs: [] })
+  claimLegacy(state)
+  return state
+}
+
+export function addDoc(state: QuickState, doc: PickDoc) {
+  if (state.docs.length >= QUICK_SLOTS) return
+  state.docs = [...state.docs, doc]
+}
+
+export function removeDocAt(state: QuickState, index: number) {
+  if (index < 0 || index >= state.docs.length) return
+  state.docs = state.docs.filter((_, i) => i !== index)
 }
 
 export async function searchDocs(keyword: string, limit = 8): Promise<PickDoc[]> {
@@ -107,10 +131,10 @@ export function tint(seed: string) {
 }
 
 /** 拖动排序：把 from 移到 to */
-export function reorderQuick(from: number, to: number) {
-  const list = [...quickpick.docs]
+export function reorderQuick(state: QuickState, from: number, to: number) {
+  const list = [...state.docs]
   if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return
   const [item] = list.splice(from, 1)
   list.splice(to, 0, item)
-  quickpick.docs = list
+  state.docs = list
 }

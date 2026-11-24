@@ -1,4 +1,4 @@
-﻿import { reactive, watch } from "vue"
+import { reactive, watch } from "vue"
 import { LunarDay } from "tyme4ts"
 import { listFavs, removeFav, saveFav } from "@/core/image"
 import { pad } from "@/core/util"
@@ -26,6 +26,7 @@ const LS = {
   appearance: "appearance",
   weather: "weather",
   countdown: "countdown",
+  cardState: "cardState",
 } as const
 
 let driver: StorageDriver | null = null
@@ -173,6 +174,31 @@ function applyAppearanceVars() {
 
 export function resetAppearance() {
   Object.assign(appearance, DEFAULT_APPEARANCE)
+}
+
+/* ── 卡片实例状态（每张卡一份）────────────────────────────
+ * 同一张卡可以放多张，各有各的数据：状态按实例 uid 存，卡组件与详情弹窗拿 uid 取自己那一份。
+ * 新实例第一次取用时用 defaults 建一份；旧版按卡片类型共享的数据由各卡自己「认领」迁移。
+ */
+interface CardStateBox {
+  data: Record<string, Record<string, unknown>>
+}
+
+export const cardStates: CardStateBox = (G.__deskCardStates ||= reactive<CardStateBox>({ data: {} }))
+
+/** 取某个实例的状态：缺字段补默认值，已有值一概不动 */
+export function stateOf<T extends object>(uid: string, defaults: T): T {
+  const bag = (cardStates.data[uid] ||= {})
+  for (const [key, value] of Object.entries(defaults)) {
+    if (!(key in bag)) bag[key] = structuredClone(value)
+  }
+  /* 从 reactive 父对象上再取一次：拿到的是 Proxy，组件里的读写才有响应 */
+  return cardStates.data[uid] as T
+}
+
+/** 卡片从桌面移除时连带清掉它的状态，避免越攒越多 */
+export function dropState(uid: string) {
+  delete cardStates.data[uid]
 }
 
 /* ── 桌面 ─────────────────────────────────────────────── */
@@ -532,12 +558,13 @@ export function persisted<T extends object>(key: string, defaults: T): T {
 export async function bootStore() {
   if (G.__deskBooted) return
   G.__deskBooted = true
-  const [w, d, a, wx, cd] = await Promise.all([
+  const [w, d, a, wx, cd, cs] = await Promise.all([
     read(LS.wallpaper, DEFAULT_WALLPAPER),
     read<DeskState>(LS.desk, { cards: [] }),
     read(LS.appearance, DEFAULT_APPEARANCE),
     read<WeatherState>(LS.weather, { locations: [], activeId: "" }),
     read<CountdownState>(LS.countdown, { events: [], seeded: false }),
+    read<CardStateBox>(LS.cardState, { data: {} }),
   ])
   Object.assign(wallpaper, w)
   Object.assign(appearance, a)
@@ -557,6 +584,7 @@ export async function bootStore() {
   weather.locations = Array.isArray(wx.locations) ? wx.locations : []
   weather.activeId = wx.activeId || weather.locations[0]?.id || ""
   countdown.events = Array.isArray(cd.events) ? cd.events : []
+  cardStates.data = cs?.data && typeof cs.data === "object" ? cs.data : {}
   /* 收藏没有第二份状态：公开文件夹里有什么，收藏就是什么 */
   favorites.splice(0, favorites.length, ...(await listFavs()))
   seedCountdown()
@@ -575,7 +603,8 @@ function persistAll() {
   save(LS.appearance, appearance)
   save(LS.weather, weather)
   save(LS.countdown, countdown)
+  save(LS.cardState, cardStates)
 }
 
-watch([wallpaper, appearance, desk, weather, countdown], persistAll, { deep: true })
+watch([wallpaper, appearance, desk, weather, countdown, cardStates], persistAll, { deep: true })
 watch(appearance, applyAppearanceVars, { deep: true, immediate: true })

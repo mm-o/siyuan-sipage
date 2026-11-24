@@ -20,7 +20,7 @@
             <FileText :size="13" :stroke-width="2" />
           </span>
           <span class="qp-name desk-ellipsis">{{ d.title }}</span>
-          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeDocAt(i)" />
+          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeDocAt(state, i)" />
         </li>
         <li v-if="!docs.length" class="qp-empty desk-note">右栏点一下文档加入</li>
       </ul>
@@ -52,7 +52,13 @@
 import { GlassButton, GlassField } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { FileText, GripVertical, Plus, Search, Trash2 } from "lucide-vue-next"
-import { QUICK_SLOTS, addDoc, docs, quickpick, recentDocs, removeDocAt, reorderQuick, searchDocs, tint, type PickDoc } from "@/core/quickdocs"
+import { QUICK_SLOTS, addDoc, quickOf, recentDocs, removeDocAt, reorderQuick, searchDocs, tint, type PickDoc } from "@/core/quickdocs"
+
+const props = defineProps<{ mode?: string; uid?: string }>()
+
+/* 详情跟着卡片实例走：同一张卡放多张，各配各的 */
+const state = quickOf(props.uid || "quickopen")
+const docs = computed(() => state.docs)
 
 const keyword = ref("")
 const hits = ref<PickDoc[]>([])
@@ -63,7 +69,7 @@ const used = (id: string) => docs.value.filter((d) => d.id === id).length
 const full = computed(() => docs.value.length >= QUICK_SLOTS)
 
 function drop(to: number) {
-  if (dragFrom.value >= 0) reorderQuick(dragFrom.value, to)
+  if (dragFrom.value >= 0) reorderQuick(state, dragFrom.value, to)
   dragFrom.value = -1
 }
 
@@ -76,7 +82,7 @@ async function run() {
 }
 
 function pick(d: PickDoc) {
-  addDoc(d)
+  addDoc(state, d)
   keyword.value = ""
   hits.value = []
 }
@@ -89,7 +95,7 @@ recentDocs(12)
     recent.value = []
   })
 
-void quickpick
+void state
 </script>
 
 <style scoped>

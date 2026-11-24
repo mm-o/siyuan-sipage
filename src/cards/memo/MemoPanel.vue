@@ -7,7 +7,7 @@
           v-for="group in GROUPS"
           :key="group.id"
           class="mm-row mm-nav-btn"
-          :class="{ 'is-active': agenda.group === group.id }"
+          :class="{ 'is-active': state.group === group.id }"
           type="button"
           @click="pick(group.id)"
         >
@@ -27,7 +27,7 @@
         <span class="mm-bar-title">{{ current.name }}</span>
         <span class="mm-bar-hint desk-note">{{ current.hint }}</span>
         <span class="mm-grow" />
-        <GlassButton v-if="agenda.group === 'done'" :icon="Trash2" label="清空已完成" variant="danger" @click="clearDone" />
+        <GlassButton v-if="state.group === 'done'" :icon="Trash2" label="清空已完成" variant="danger" @click="clearDone" />
       </header>
 
       <ul class="mm-scroll mm-list">
@@ -56,7 +56,7 @@
         <li v-if="!listRows.length" class="mm-empty desk-note">{{ current.empty }}</li>
       </ul>
 
-      <form v-if="agenda.group !== 'done'" class="mm-new" @submit.prevent="create">
+      <form v-if="state.group !== 'done'" class="mm-new" @submit.prevent="create">
         <GlassField v-model="fresh" class="mm-input" :label="current.add" :placeholder="`${current.add}，回车`" />
         <GlassButton :icon="Plus" label="添加" variant="primary" text :disabled="!fresh.trim()" @click="create" />
       </form>
@@ -125,6 +125,7 @@
 import { Chips, GlassButton, GlassField, GlassSwitch } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { AlarmClock, CalendarDays, CircleCheck, Inbox, Plus, StickyNote, Trash2, X } from "lucide-vue-next"
+import { stateOf } from "@/core/store"
 import {
   addItem,
   agenda,
@@ -143,8 +144,14 @@ import {
   toggleItem,
   upcoming,
   weekdayOf,
+  type PlanGroup,
   type PlanItem,
 } from "@/core/agenda"
+
+const props = defineProps<{ mode?: string; uid?: string }>()
+
+/** 每张日程备忘卡一份：左栏停在哪个分组按实例 uid 存 */
+const state = stateOf<{ group: PlanGroup }>(props.uid || "memo", { group: agenda.group })
 
 const GROUPS = [
   { id: "today", name: "今天", icon: CalendarDays, hint: "做完就勾掉", empty: "今天空着，下面加一条", add: "加到今天" },
@@ -163,17 +170,17 @@ const QUICK = [
 /** 窄窗收起左栏后，分组改用一行胶囊（五个选项 Segmented 放不下） */
 const GROUP_CHIPS = GROUPS.map((group) => ({ label: group.name, value: group.id }))
 const groupChips = computed({
-  get: () => agenda.group,
+  get: () => state.group,
   set: (value: string | number) => pick(String(value)),
 })
 
-const current = computed(() => GROUPS.find((group) => group.id === agenda.group) || GROUPS[0])
+const current = computed(() => GROUPS.find((group) => group.id === state.group) || GROUPS[0])
 
 const activeId = ref("")
 const active = computed(() => (activeId.value ? visible.value.find((item) => item.id === activeId.value) : undefined))
 
 function pick(id: string) {
-  agenda.group = id as typeof agenda.group
+  state.group = id as typeof state.group
   activeId.value = ""
 }
 
@@ -184,7 +191,7 @@ type Row =
   | { kind: "item"; key: string; item: PlanItem; badge: string }
 
 const visible = computed<PlanItem[]>(() => {
-  switch (agenda.group) {
+  switch (state.group) {
     case "late":
       return overdue.value
     case "upcoming":
@@ -202,14 +209,14 @@ const listRows = computed<Row[]>(() => {
   const out: Row[] = []
   let last = ""
   for (const item of visible.value) {
-    if (agenda.group === "upcoming" && item.date !== last) {
+    if (state.group === "upcoming" && item.date !== last) {
       last = item.date
       out.push({ kind: "date", key: `d-${item.date}`, text: `${dayLabel(item.date)} ${weekdayOf(item.date)}` })
     }
     const badge =
-      agenda.group === "late"
+      state.group === "late"
         ? dayLabel(item.date)
-        : agenda.group === "done"
+        : state.group === "done"
           ? item.date
             ? dayLabel(item.date)
             : "备忘"
@@ -221,7 +228,7 @@ const listRows = computed<Row[]>(() => {
 
 /* 选中项跟列表走：换分组、删掉、勾完都自动落到第一条 */
 watch(
-  () => [agenda.group, visible.value.map((item) => item.id).join(",")].join("|"),
+  () => [state.group, visible.value.map((item) => item.id).join(",")].join("|"),
   () => {
     if (activeId.value && visible.value.some((item) => item.id === activeId.value)) return
     activeId.value = visible.value[0]?.id || ""
@@ -278,7 +285,7 @@ const fresh = ref("")
 function create() {
   const text = fresh.value
   if (!text.trim()) return
-  const date = agenda.group === "inbox" ? "" : agenda.group === "upcoming" ? dayKey(1) : todayKey()
+  const date = state.group === "inbox" ? "" : state.group === "upcoming" ? dayKey(1) : todayKey()
   const item = addItem({ text, date })
   fresh.value = ""
   if (item) activeId.value = item.id

@@ -31,7 +31,7 @@
           <GlassSelect v-model.number="viewMonth" class="cal-select" label="月份" :options="monthChoices" />
           <GlassButton :icon="ChevronRight" label="下个月" @click="shift(1)" />
           <GlassSelect v-model="viewFestival" class="cal-select" label="节假日" :options="festivalChoices" />
-          <GlassButton text label="今天" :disabled="isToday" @click="selected = new Date()" />
+          <GlassButton text label="今天" :disabled="isToday" @click="picked(new Date())" />
         </div>
 
         <ul class="cal-head">
@@ -41,7 +41,7 @@
         </ul>
 
         <ul class="cal-grid" @wheel.prevent="onWheel">
-          <li v-for="cell in cells" :key="cell.key" @click="selected = cell.date">
+          <li v-for="cell in cells" :key="cell.key" @click="picked(cell.date)">
             <div
               class="cal-cell"
               :class="{
@@ -121,7 +121,7 @@ import { computed, ref } from "vue"
 import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
 import { addItem, dateKey, itemsOf, mirrorToDailyNote, todayKey, toggleItem } from "@/core/agenda"
-import { calendarPrefs, dayDots } from "./calendar"
+import { calendarOf, dayDots } from "./calendar"
 import "./styles.css"
 
 const WEEK_NAMES = ["日", "一", "二", "三", "四", "五", "六"] as const
@@ -131,17 +131,32 @@ const WEEK_OPTIONS = [
   { label: "日", value: "sun" },
 ]
 
-/** 一周开始日：两个等价选项 → Segmented；写进日历自己的偏好，重开还是这个 */
+/** 每张日历卡一份：一周开端、写日记开关、固定月份都按实例 uid 存 */
+const props = defineProps<{ mode?: string; uid?: string }>()
+const state = calendarOf(props.uid || "calendar")
+
+/** 一周开始日：两个等价选项 → Segmented；写进这张卡的偏好，重开还是这个 */
 const weekBegin = computed({
-  get: () => calendarPrefs.weekBegin,
+  get: () => state.weekBegin,
   set: (value: string) => {
-    calendarPrefs.weekBegin = value === "sun" ? "sun" : "mon"
+    state.weekBegin = value === "sun" ? "sun" : "mon"
   },
 })
 const mondayFirst = computed(() => weekBegin.value === "mon")
 const headLabels = computed(() => (mondayFirst.value ? MONDAY_FIRST : [...WEEK_NAMES]))
 
-const selected = ref<Date>(new Date())
+/** 这张卡上次看的月份（YYYY-MM）；没有就从今天开始 */
+const startMonth = (() => {
+  const [year, month] = state.month.split("-").map(Number)
+  return year && month ? new Date(year, month - 1, 1, 12) : new Date()
+})()
+const selected = ref<Date>(startMonth)
+
+/** 选日期，同时把「这张卡看的月份」记下来：多张日历卡各看各的月 */
+function picked(date: Date) {
+  selected.value = date
+  state.month = dateKey(date).slice(0, 7)
+}
 const today = new Date()
 
 /* ── 黄历一律直接问库（tyme4ts），这里只有三个转换小函数 ── */
@@ -205,7 +220,7 @@ const viewYear = computed({
   set: (year: number) => {
     const next = new Date(selected.value)
     next.setFullYear(year)
-    if (!Number.isNaN(next.getTime())) selected.value = next
+    if (!Number.isNaN(next.getTime())) picked(next)
   },
 })
 
@@ -215,7 +230,7 @@ const viewMonth = computed({
     const next = new Date(selected.value)
     next.setDate(1)
     next.setMonth(month)
-    selected.value = next
+    picked(next)
   },
 })
 
@@ -329,7 +344,7 @@ function shift(delta: number) {
   const next = new Date(selected.value)
   next.setDate(1)
   next.setMonth(next.getMonth() + delta)
-  selected.value = next
+  picked(next)
 }
 
 let wheelLock = false
@@ -342,9 +357,9 @@ function onWheel(event: WheelEvent) {
 
 const draft = ref("")
 const mirrorDaily = computed({
-  get: () => calendarPrefs.mirrorDaily,
+  get: () => state.mirrorDaily,
   set: (value: boolean) => {
-    calendarPrefs.mirrorDaily = value
+    state.mirrorDaily = value
   },
 })
 
