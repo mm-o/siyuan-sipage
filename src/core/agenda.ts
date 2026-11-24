@@ -143,7 +143,7 @@ export const doneList = computed(() => {
 
 /* ── 日历格子上的标记 ─────────────────────────────────────── */
 
-export interface DayMark {
+interface DayMark {
   open: number
   done: number
   late: boolean
@@ -167,9 +167,9 @@ const marks = computed(() => {
   return map
 })
 
-export const markOf = (key: string) => marks.value.get(key)
+const markOf = (key: string) => marks.value.get(key)
 /** 一格上的日程点：日历卡、日历详情、小日历共用 */
-export type DayDot = "open" | "done" | "late"
+type DayDot = "open" | "done" | "late"
 
 const NO_DOTS: DayDot[] = []
 

@@ -254,12 +254,3 @@ export function getCard(id: string): CardDef | undefined {
   return CARDS.find((c) => c.id === id)
 }
 
-/** 桌面面板（不是卡片）的尺寸约束：时钟可调，工具组固定 */
-const PANEL_CONSTRAIN: Record<string, CardConstrain> = {
-  "@clock": { min: 3, max: 10 },
-}
-
-/** 尺寸约束的唯一入口：卡片查注册表，面板查上面这张表（拖动/整理/补位共用） */
-export const constrainOf = (cardId: string): CardConstrain | undefined =>
-  PANEL_CONSTRAIN[cardId] ?? getCard(cardId)?.constrain
-

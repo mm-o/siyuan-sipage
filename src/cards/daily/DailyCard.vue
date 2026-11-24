@@ -36,7 +36,7 @@ const empty = computed(() => (state.offset === 0 ? "今天还没写 · 点开写
 
 const meta = computed(() => {
   const p = preview.value
-  if (!p) return ""
+  if (!p) return "0 字"
   const open = p.todos.filter((todo) => !todo.done).length
   return [`${p.words} 字`, open ? `${open} 待办` : ""].filter(Boolean).join(" · ")
 })

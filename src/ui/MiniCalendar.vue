@@ -4,6 +4,7 @@
       <GlassButton :icon="ChevronLeft" label="上个月" @click="shift(-1)" />
       <span class="mc-title">{{ title }}</span>
       <GlassButton :icon="ChevronRight" label="下个月" @click="shift(1)" />
+      <GlassButton v-if="today" text label="今天" @click="goToday" />
     </header>
 
     <ul class="mc-week">
@@ -50,7 +51,9 @@ const props = withDefaults(defineProps<{
   nav?: boolean
   /** 格子上的日程点 */
   dots?: boolean
-}>(), { modelValue: "", weekBegin: "mon", nav: false, dots: true })
+  /** 头部「今天」按钮：跳回本月并选中今天 */
+  today?: boolean
+}>(), { modelValue: "", weekBegin: "mon", nav: false, dots: true, today: false })
 
 const emit = defineEmits<{ "update:modelValue": [string] }>()
 
@@ -101,6 +104,12 @@ function pick(cell: { key: string; date: Date; inMonth: boolean }) {
   emit("update:modelValue", cell.key)
 }
 
+function goToday() {
+  const key = todayKey()
+  month.value = key
+  emit("update:modelValue", key)
+}
+
 function shift(delta: number) {
   const d = parse(month.value)
   d.setDate(1)
@@ -121,8 +130,7 @@ function shift(delta: number) {
 .mc-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.3em;
+  gap: 0.15em;
 }
 
 .mc-title {

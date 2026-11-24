@@ -14,12 +14,14 @@ export interface DailyNote {
   title: string
 }
 
-export interface DailyLine {
+interface DailyLine {
   type: string
   text: string
 }
 
-export interface DailyTodo {
+interface DailyTodo {
+  /** 待办块的 id：点一下能滚到正文那一行 */
+  id: string
   text: string
   done: boolean
 }
@@ -89,14 +91,14 @@ export async function loadDaily(date: Date): Promise<DailyPreview | null> {
 
   const stat = await dailyStat(note.id)
   const rows = await sql(
-    `select type, content, updated from blocks
+    `select id, type, content, updated from blocks
      where root_id = '${note.id}' and type in ('p','h','i','c','m','t','callout','q','s') and content != ''
      order by sort asc limit 40`,
   ).catch(() => [])
 
   const lines: DailyLine[] = []
   const todos: DailyTodo[] = []
-  for (const row of rows as { type?: string; content?: string; updated?: string }[]) {
+  for (const row of rows as { id?: string; type?: string; content?: string; updated?: string }[]) {
     /* 段落 content 可能带换行：卡片只取第一行，剩下的留给详情 */
     const text = String(row.content || "").split("\n").map((line) => line.trim()).find(Boolean) || ""
     if (!text) continue
@@ -104,7 +106,7 @@ export async function loadDaily(date: Date): Promise<DailyPreview | null> {
     if (type === "i") {
       const todo = /^\[([ xX])\]\s*(.+)$/.exec(text)
       if (todo) {
-        todos.push({ text: todo[2], done: todo[1] !== " " })
+        todos.push({ id: String(row.id || ""), text: todo[2], done: todo[1] !== " " })
         continue
       }
     }

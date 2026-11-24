@@ -184,7 +184,7 @@ interface CardStateBox {
   data: Record<string, Record<string, unknown>>
 }
 
-export const cardStates: CardStateBox = (G.__deskCardStates ||= reactive<CardStateBox>({ data: {} }))
+const cardStates: CardStateBox = (G.__deskCardStates ||= reactive<CardStateBox>({ data: {} }))
 
 /** 取某个实例的状态：缺字段补默认值，已有值一概不动 */
 export function stateOf<T extends object>(uid: string, defaults: T): T {
@@ -197,7 +197,7 @@ export function stateOf<T extends object>(uid: string, defaults: T): T {
 }
 
 /** 卡片从桌面移除时连带清掉它的状态，避免越攒越多 */
-export function dropState(uid: string) {
+function dropState(uid: string) {
   delete cardStates.data[uid]
 }
 
@@ -250,6 +250,7 @@ export function countOnDesk(cardId: string) {
 export function removeFromDesk(uid: string) {
   const i = desk.cards.findIndex((c) => c.uid === uid)
   if (i >= 0) desk.cards.splice(i, 1)
+  dropState(uid)
 }
 
 /** 改尺寸（格）：只钳制范围，不做任何避让（自由摆放） */

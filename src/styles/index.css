@@ -1703,3 +1703,13 @@ html.dark,
 .desk-sheet-mask :is(.wx-hit, .wx-loc-pick):hover { background: rgb(255 255 255 / 14%); }
 /* 空槽保持虚线语义，不参与悬停高亮。 */
 :is(.desk-root, .desk-sheet-mask) :is(.rc-cell, .qp-item).is-empty { background: transparent; border-style: dashed; }
+
+/* 日记详情跑的是真编辑器：栏不再裁切，斜杠 / 引用提示菜单才能出栏 */
+.desk-expanded.desk-pane:has(.dl-panel) {
+  overflow: visible;
+}
+
+/* 思源的斜杠 / 引用 / 表情提示菜单默认 z-index 7，会被插件弹层盖住：抬到弹层之上 */
+.protyle-hint {
+  z-index: 10000 !important;
+}

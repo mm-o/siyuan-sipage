@@ -5,19 +5,24 @@
       <header class="dl-day">
         <b class="dl-day-num">{{ dayNum }}</b>
         <span class="dl-day-label">{{ label }}</span>
-        <span class="desk-note">{{ meta }}</span>
+        <!-- 固定一行：没有日记也写 0 块 · 0 字，下面的日历不会上移 -->
+        <span class="dl-meta desk-note">{{ meta }}</span>
       </header>
 
-      <MiniCalendar v-model="selectedKey" nav class="dl-cal" />
-      <p v-if="state.offset !== 0" class="dl-back">
-        <GlassButton text label="回到今天" @click="state.offset = 0" />
-      </p>
+      <MiniCalendar v-model="selectedKey" nav today class="dl-cal" />
 
       <ul class="dl-todos mm-scroll">
-        <li v-for="(todo, i) in preview?.todos ?? []" :key="i" class="mm-line" :class="{ 'is-done': todo.done }">
+        <li
+          v-for="todo in todos"
+          :key="todo.id || todo.text"
+          class="mm-line"
+          :class="{ 'is-done': todo.done }"
+          :title="todo.text"
+          @click="reveal(todo.id)"
+        >
           <span class="mm-text">{{ todo.text }}</span>
         </li>
-        <li v-if="!preview?.todos?.length" class="desk-note">这天没有待办</li>
+        <li v-if="!todos.length" class="desk-note">没有待办</li>
       </ul>
 
       <GlassButton v-if="!preview && state.offset === 0" class="dl-open" text variant="primary" :icon="PenLine" label="写今天的日记" @click="create" />
@@ -65,9 +70,16 @@ const selectedKey = computed({
     state.offset = Math.round((target.getTime() - today.getTime()) / 86_400_000)
   },
 })
-const meta = computed(() => (preview.value ? `${preview.value.blocks} 块 · ${preview.value.words} 字` : ""))
+/** 固定一行：没有日记也写 0 块 · 0 字，下面的日历不会因为空而上下跳 */
+const meta = computed(() => {
+  const p = preview.value
+  if (!p) return "0 块 · 0 字"
+  const open = p.todos.filter((todo) => !todo.done).length
+  return `${p.blocks} 块 · ${p.words} 字${open ? ` · ${open} 待办` : ""}`
+})
 
 const preview = ref<DailyPreview | null>(null)
+const todos = computed(() => preview.value?.todos ?? [])
 const host = ref<HTMLElement>()
 let handle: { destroy: () => void } | null = null
 
@@ -88,6 +100,12 @@ function render() {
   })
 }
 
+/** 点待办：滚到正文里那一行，同一个编辑器，不另开窗口 */
+function reveal(id: string) {
+  if (!id) return
+  host.value?.querySelector<HTMLElement>(`[data-node-id="${id}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" })
+}
+
 async function load() {
   preview.value = await loadDaily(date.value).catch(() => null)
   render()
@@ -104,12 +122,11 @@ async function refreshStat() {
 }
 
 /** 新建今天的日记，然后就地开写（不跳去文档页签） */
+/** 新建今天的日记，然后走同一条加载/挂载路径（不另开窗口） */
 async function create() {
   try {
-    const note = await ensureToday()
-    preview.value = await loadDaily(date.value).catch(() => null)
-    render()
-    if (!preview.value) preview.value = { ...note, words: 0, blocks: 0, lines: [], todos: [], updated: "" }
+    await ensureToday()
+    await load()
   } catch (e) {
     toast(`创建日记失败：${(e as Error).message}`, 3000)
   }
@@ -155,14 +172,17 @@ onBeforeUnmount(() => {
   font-size: var(--desk-fs-body);
 }
 
+/* 统计行固定高度：没有数据也占位，日历不上下跳 */
+.dl-meta {
+  min-height: 1.5em;
+  font-variant-numeric: tabular-nums;
+}
+
 .dl-cal {
   font-size: var(--desk-fs-sm);
 }
 
-.dl-back {
-  margin: 0;
-}
-
+/* 待办直接挂在日历下面：分隔线常驻，日期一换内容跟着换，行比可点列表收紧一档 */
 .dl-todos {
   flex: 1 1 auto;
   display: flex;
@@ -170,9 +190,15 @@ onBeforeUnmount(() => {
   gap: var(--desk-sp-0);
   min-height: 0;
   margin: 0;
-  padding: 0;
+  padding: var(--desk-sp-2) 0 0;
+  border-top: 1px solid var(--desk-stroke);
   list-style: none;
   font-size: var(--desk-fs-caption);
+}
+
+.dl-todos .mm-line {
+  min-height: calc(var(--desk-hit) - 4px);
+  cursor: pointer;
 }
 
 .dl-open {
@@ -180,19 +206,24 @@ onBeforeUnmount(() => {
   align-self: flex-start;
 }
 
+/* 文档页：实底 + 不做 backdrop-filter，否则会给 fixed 提示菜单造包含块，斜杠菜单会飘/被裁 */
 .dl-body {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-  padding: var(--desk-detail-pad);
-  overflow: hidden;
+  background: var(--desk-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* 不裁切：斜杠 / 引用提示菜单要能盖到栏外 */
+  overflow: visible;
 }
 
+/* 高度交给 Protyle 自己（.protyle 是 flex 列，内容区自己滚），这里不抢 overflow */
 .dl-protyle {
   width: 100%;
   height: 100%;
-  overflow: auto;
+  padding: var(--desk-detail-pad);
   color: var(--desk-text);
   font-size: var(--desk-fs-body);
 }

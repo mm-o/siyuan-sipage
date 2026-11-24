@@ -9,10 +9,11 @@ src/index.ts             插件注册：存储、页签、顶栏、命令
 src/core/
   util.ts                共用底座：post()/sql() 内核出口、pad() 与正文块类型 BODY_TYPES
   registry.ts            16 种卡片、组件、材质、尺寸约束的唯一装配点
-  store.ts               桌面/壁纸/外观状态、思源存储、缓存、网格排版
+  store.ts               桌面/壁纸/外观状态、实例状态 stateOf、思源存储、缓存、网格排版
   image.ts               图片清单、跨域代理、壁纸样式、图片收藏文件
   daily.ts               每日内容的共享序列、背景与翻页
-  agenda.ts              日程与备忘共用的模型、分组、按日索引与写日记出口
+  agenda.ts              日程与备忘共用的模型、分组、按日索引、日程点与写日记出口
+  dailyNote.ts           日记：按 custom-dailynote 找文档、统计、待办与正文前几行
   quickdocs.ts           文档索引与打开行为
 src/ui/
   DeskShell.vue          画布、面板组装、整理入口、每卡一个详情弹窗与全屏宿主
@@ -20,6 +21,8 @@ src/ui/
   arrange.ts             指针/键盘移动缩放、fitDims 唯一尺寸约束
   CardFrame.vue          卡片材质、形状类、原生菜单、详情/全屏事件
   Sheet.vue              统一标题栏、弹层、钉住、顶栏拖动/四角缩放与 FLIP
+  MiniCalendar.vue       可复用月格：月份切换 / 周首 / 今天 / 日程点，尺寸全用 em
+  protyle.ts             Protyle 挂载：只读与就地编辑（含提示菜单出弹层）
   SettingsSheet.vue      壁纸/组件设置/卡片库/关于，统一预览与重置
   WallpaperPanel.vue     壁纸来源选择
   CardsPanel.vue         外观参数

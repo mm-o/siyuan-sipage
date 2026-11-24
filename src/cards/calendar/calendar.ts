@@ -9,7 +9,7 @@
  */
 import { stateOf } from "@/core/store"
 
-export interface CalendarState {
+interface CalendarState {
   weekBegin: "mon" | "sun"
   mirrorDaily: boolean
   month: string

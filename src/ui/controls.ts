@@ -393,38 +393,6 @@ export function photoBg(cover: string) {
   return { backgroundImage: `url(${cover || "/appearance/covers/cover_001.webp"})` }
 }
 
-/* ── 主题探测 ─────────────────────────────────────────── */
-type Theme = "light" | "dark"
-
-const current = ref<Theme>("light")
-let observer: MutationObserver | null = null
-let listeners = 0
-
-/** 思源在 <body> 上切换 `.body--dark` 表示深色外观 */
-function sync() {
-  current.value = document.body.classList.contains("body--dark") ? "dark" : "light"
-}
-
-/** 组件内使用：自动订阅 body 的 class 变化 */
-export function useTheme(): Ref<Theme> {
-  onMounted(() => {
-    sync()
-    listeners += 1
-    if (!observer) {
-      observer = new MutationObserver(sync)
-      observer.observe(document.body, { attributes: true, attributeFilter: ["class"] })
-    }
-  })
-  onBeforeUnmount(() => {
-    listeners -= 1
-    if (listeners <= 0 && observer) {
-      observer.disconnect()
-      observer = null
-    }
-  })
-  return current
-}
-
 /* ── 自由尺寸卡片的槽位几何 ───────────────────────────── */
 /**
  * 每「2 格 × 2 格」= 1 个元素（快捷方式 / 最近文档 / 快捷打开共用）。

@@ -17,7 +17,7 @@ export interface PickDoc {
   title: string
 }
 
-export interface QuickState {
+interface QuickState {
   docs: PickDoc[]
 }
 

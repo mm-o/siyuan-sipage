@@ -34,8 +34,21 @@ export function mountProtyle(app: unknown, element: HTMLElement, blockId: string
     }, 800)
   }
 
+  /* 斜杠 / @ / 引用提示菜单是 position:fixed，却挂在编辑器里：
+     插件弹层带了 backdrop-filter / transform 的祖先会给它造包含块，坐标就从视口变成「栏内」，
+     最后飘到右下角。这里把它挪到 body（思源只持有元素引用，不查父节点），坐标立刻回到视口。 */
+  let hints: MutationObserver | null = null
+  const adoptHints = () => {
+    element.querySelectorAll<HTMLElement>(".protyle-hint").forEach((hint) => {
+      if (hint.parentElement !== document.body) document.body.append(hint)
+    })
+  }
+
   if (options.editable) {
     element.addEventListener("input", onEdit, true)
+    hints = new MutationObserver(adoptHints)
+    hints.observe(element, { childList: true, subtree: true })
+    window.setTimeout(adoptHints, 50)
   } else {
     /* 只读化：渲染完再去掉 contenteditable，不改 Protyle 自己的排版 */
     setTimeout(() => {
@@ -48,6 +61,8 @@ export function mountProtyle(app: unknown, element: HTMLElement, blockId: string
   return {
     destroy() {
       if (timer) window.clearTimeout(timer)
+      hints?.disconnect()
+      hints = null
       element.removeEventListener("input", onEdit, true)
       try {
         ;(editor as unknown as { destroy?: () => void }).destroy?.()

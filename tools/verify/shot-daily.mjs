@@ -39,6 +39,10 @@ try {
   assert.match(await sheet.locator('.dl-day-label').textContent(), /今天/)
   assert.equal(await sheet.locator('.dl-todos .mm-text').first().textContent(), '给日记卡加联动')
   assert.ok(await sheet.locator('.dl-protyle p').count() >= 1, 'protyle placeholder is mounted (real render happens in SiYuan)')
+  /* 统计行固定：没有日记也占位（这里换成前一天验证） */
+  await sheet.locator('.mc-cell').nth(2).click()
+  await page.waitForFunction(() => document.querySelector('.desk-sheet .dl-meta')?.textContent?.startsWith('0 块'))
+  assert.match(await sheet.locator('.dl-meta').textContent(), /0 块 · 0 字/)
   await screenshot('daily-panel.png')
   checks.push('daily panel lists the day’s open tasks and mounts the read-only view')
 

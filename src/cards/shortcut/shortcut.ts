@@ -73,7 +73,7 @@ const SHORTCUTS: Shortcut[] = [
 
 export const GROUPS: ShortcutGroup[] = ["导航", "文档", "视图", "数据", "系统"]
 
-export interface ShortcutState {
+interface ShortcutState {
   enabled: string[]
 }
 
