@@ -11,6 +11,8 @@ import { Protyle } from "siyuan"
 interface MountOptions {
   /** 就地编辑（默认只读） */
   editable?: boolean
+  /** 完整功能：保留标题、面包屑、块图标与工具栏（默认极简渲染） */
+  full?: boolean
   /** 编辑时的输入回调（防抖由调用方决定） */
   onInput?: () => void
 }
@@ -20,7 +22,7 @@ export function mountProtyle(app: unknown, element: HTMLElement, blockId: string
     blockId,
     mode: "wysiwyg",
     action: ["cb-get-all"],
-    render: { background: false, title: false, gutter: false, scroll: false, breadcrumb: false },
+    ...(options.full ? {} : { render: { background: false, title: false, gutter: false, scroll: false, breadcrumb: false } }),
   } as never)
 
   let timer = 0

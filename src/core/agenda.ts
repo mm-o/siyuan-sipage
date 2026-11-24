@@ -168,6 +168,19 @@ const marks = computed(() => {
 })
 
 export const markOf = (key: string) => marks.value.get(key)
+/** 一格上的日程点：日历卡、日历详情、小日历共用 */
+export type DayDot = "open" | "done" | "late"
+
+const NO_DOTS: DayDot[] = []
+
+export function dayDots(key: string): DayDot[] {
+  const mark = markOf(key)
+  if (!mark) return NO_DOTS
+  const dots: DayDot[] = []
+  for (let i = 0; i < Math.min(3, mark.open); i += 1) dots.push(mark.late ? "late" : "open")
+  if (!dots.length) for (let i = 0; i < Math.min(3, mark.done); i += 1) dots.push("done")
+  return dots
+}
 
 /** 五个分组各自的条数（左栏徽章） */
 export const counts = computed<Record<PlanGroup, number>>(() => {

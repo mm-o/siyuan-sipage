@@ -122,9 +122,9 @@ import { GlassButton, GlassField, GlassSelect, GlassSwitch, Segmented, toast } f
 import { computed, ref } from "vue"
 import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
-import { addItem, dateKey, itemsOf, mirrorToDailyNote, todayKey, toggleItem } from "@/core/agenda"
+import { addItem, dateKey, dayDots, itemsOf, mirrorToDailyNote, todayKey, toggleItem } from "@/core/agenda"
 import { ensureToday, findDaily, openDaily } from "@/core/dailyNote"
-import { calendarOf, dayDots } from "./calendar"
+import { calendarOf } from "./calendar"
 import "./styles.css"
 
 const WEEK_NAMES = ["日", "一", "二", "三", "四", "五", "六"] as const

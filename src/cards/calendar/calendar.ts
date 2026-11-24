@@ -8,7 +8,6 @@
  * 同一张卡可以放多张、各看各的月份，所以这些都按实例 uid 存。
  */
 import { stateOf } from "@/core/store"
-import { markOf } from "@/core/agenda"
 
 export interface CalendarState {
   weekBegin: "mon" | "sun"
@@ -42,19 +41,4 @@ export function calendarOf(uid: string): CalendarState {
   const state = stateOf<CalendarState>(uid, DEFAULTS)
   claimLegacy(state)
   return state
-}
-
-/** 一格上的日程点：卡片月历与详情月历共用同一套取法 */
-export type DayDot = "open" | "done" | "late"
-
-const NO_DOTS: DayDot[] = []
-
-/** 最多三个点：没做完的排在前面（逾期算红点）；全做完了只剩弱色点 */
-export function dayDots(key: string): DayDot[] {
-  const mark = markOf(key)
-  if (!mark) return NO_DOTS
-  const dots: DayDot[] = []
-  for (let i = 0; i < Math.min(3, mark.open); i += 1) dots.push(mark.late ? "late" : "open")
-  if (!dots.length) for (let i = 0; i < Math.min(3, mark.done); i += 1) dots.push("done")
-  return dots
 }

@@ -8,11 +8,10 @@
         <span class="desk-note">{{ meta }}</span>
       </header>
 
-      <div class="dl-nav">
-        <GlassButton :icon="ChevronLeft" label="前一天" @click="step(-1)" />
-        <GlassButton text label="今天" :disabled="state.offset === 0" @click="state.offset = 0" />
-        <GlassButton :icon="ChevronRight" label="后一天" @click="step(1)" />
-      </div>
+      <MiniCalendar v-model="selectedKey" nav class="dl-cal" />
+      <p v-if="state.offset !== 0" class="dl-back">
+        <GlassButton text label="回到今天" @click="state.offset = 0" />
+      </p>
 
       <ul class="dl-todos mm-scroll">
         <li v-for="(todo, i) in preview?.todos ?? []" :key="i" class="mm-line" :class="{ 'is-done': todo.done }">
@@ -40,11 +39,12 @@
  * 每张日记卡一份日期偏移，所以开着两张卡能同时看两天。
  */
 import { computed, onBeforeUnmount, ref, watch } from "vue"
-import { ChevronLeft, ChevronRight, PenLine } from "lucide-vue-next"
+import { PenLine } from "lucide-vue-next"
 import { GlassButton, toast } from "@/ui/controls"
 import { stateOf } from "@/core/store"
 import { mountProtyle } from "@/ui/protyle"
-import { dayOf, dailyStat, ensureToday, labelOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
+import MiniCalendar from "@/ui/MiniCalendar.vue"
+import { dateKeyOf, dailyStat, dayOf, ensureToday, labelOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
 
 const props = defineProps<{ mode?: string; uid?: string }>()
 
@@ -52,15 +52,25 @@ const state = stateOf<{ offset: number }>(props.uid || "daily", { offset: 0 })
 const date = computed(() => dayOf(state.offset))
 const label = computed(() => labelOf(date.value))
 const dayNum = computed(() => date.value.getDate())
+
+/** 小日历选中的是哪天：和实例 offset 互转 */
+const selectedKey = computed({
+  get: () => dateKeyOf(date.value),
+  set: (key: string) => {
+    const [y, m, d] = key.split("-").map(Number)
+    if (!y || !m || !d) return
+    const target = new Date(y, m - 1, d)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    state.offset = Math.round((target.getTime() - today.getTime()) / 86_400_000)
+  },
+})
 const meta = computed(() => (preview.value ? `${preview.value.blocks} 块 · ${preview.value.words} 字` : ""))
 
 const preview = ref<DailyPreview | null>(null)
 const host = ref<HTMLElement>()
 let handle: { destroy: () => void } | null = null
 
-function step(delta: number) {
-  state.offset += delta
-}
 
 function render() {
   const el = host.value
@@ -70,9 +80,10 @@ function render() {
   el.replaceChildren()
   const note = preview.value
   if (!note) return
-  /* 就地编辑：Protyle 自己处理输入与保存，这里只在停笔后刷新左栏统计 */
+  /* 就地编辑 + 思源文档的完整功能：标题、面包屑、块图标、工具栏都保留 */
   handle = mountProtyle((window as any).siyuan?.ws?.app, el, note.id, {
     editable: true,
+    full: true,
     onInput: () => void refreshStat(),
   })
 }
@@ -144,10 +155,12 @@ onBeforeUnmount(() => {
   font-size: var(--desk-fs-body);
 }
 
-.dl-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-1);
+.dl-cal {
+  font-size: var(--desk-fs-sm);
+}
+
+.dl-back {
+  margin: 0;
 }
 
 .dl-todos {
