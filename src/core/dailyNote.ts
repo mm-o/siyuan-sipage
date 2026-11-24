@@ -72,15 +72,22 @@ export async function ensureToday(): Promise<DailyNote> {
   return { id: doc.id, title: dateKeyOf(new Date()) }
 }
 
+/** 某篇日记的字数与块数（编辑时就地刷新统计，不重挂 Protyle） */
+export async function dailyStat(id: string): Promise<{ words: number; blocks: number }> {
+  const [row] = await sql(
+    `select coalesce(sum(length), 0) as words, count(*) as blocks from blocks
+     where root_id = '${id}' and type in ${BODY_TYPES} limit 1`,
+  ).catch(() => [])
+  const hit = (row || {}) as { words?: number; blocks?: number }
+  return { words: Number(hit.words) || 0, blocks: Number(hit.blocks) || 0 }
+}
+
 /** 日记预览：字数 / 块数 / 前几行 / 未勾掉的待办 */
 export async function loadDaily(date: Date): Promise<DailyPreview | null> {
   const note = await findDaily(date)
   if (!note) return null
 
-  const [stat] = await sql(
-    `select coalesce(sum(length), 0) as words, count(*) as blocks from blocks
-     where root_id = '${note.id}' and type in ${BODY_TYPES} limit 1`,
-  ).catch(() => [])
+  const stat = await dailyStat(note.id)
   const rows = await sql(
     `select type, content, updated from blocks
      where root_id = '${note.id}' and type in ('p','h','i','c','m','t','callout','q','s') and content != ''
@@ -106,8 +113,8 @@ export async function loadDaily(date: Date): Promise<DailyPreview | null> {
 
   return {
     ...note,
-    words: Number((stat as { words?: number } | undefined)?.words) || 0,
-    blocks: Number((stat as { blocks?: number } | undefined)?.blocks) || 0,
+    words: stat.words,
+    blocks: stat.blocks,
     lines,
     todos,
     updated: String((rows[0] as { updated?: string } | undefined)?.updated || ""),

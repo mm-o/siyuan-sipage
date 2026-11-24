@@ -21,13 +21,13 @@
         <li v-if="!preview?.todos?.length" class="desk-note">这天没有待办</li>
       </ul>
 
-      <GlassButton class="dl-open" text variant="primary" :icon="PenLine" :label="preview ? '打开日记' : '写今天的日记'" @click="open" />
+      <GlassButton v-if="!preview && state.offset === 0" class="dl-open" text variant="primary" :icon="PenLine" label="写今天的日记" @click="create" />
     </aside>
 
     <!-- 右：只读全文（思源 Protyle 渲染） -->
     <section class="dl-body desk-pane is-right">
       <div ref="host" class="dl-protyle" />
-      <p v-if="!preview" class="dl-empty desk-note">{{ state.offset === 0 ? "今天还没有写日记" : "这天没有日记" }}</p>
+      <p v-if="!preview" class="dl-empty desk-note">{{ state.offset === 0 ? "点左下「写今天的日记」，写完这里就是编辑器" : "这天没有日记" }}</p>
     </section>
   </div>
 </template>
@@ -44,7 +44,7 @@ import { ChevronLeft, ChevronRight, PenLine } from "lucide-vue-next"
 import { GlassButton, toast } from "@/ui/controls"
 import { stateOf } from "@/core/store"
 import { mountProtyle } from "@/ui/protyle"
-import { dayOf, ensureToday, labelOf, loadDaily, openDaily, type DailyPreview } from "@/core/dailyNote"
+import { dayOf, dailyStat, ensureToday, labelOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
 
 const props = defineProps<{ mode?: string; uid?: string }>()
 
@@ -70,7 +70,11 @@ function render() {
   el.replaceChildren()
   const note = preview.value
   if (!note) return
-  handle = mountProtyle((window as any).siyuan?.ws?.app, el, note.id)
+  /* 就地编辑：Protyle 自己处理输入与保存，这里只在停笔后刷新左栏统计 */
+  handle = mountProtyle((window as any).siyuan?.ws?.app, el, note.id, {
+    editable: true,
+    onInput: () => void refreshStat(),
+  })
 }
 
 async function load() {
@@ -78,16 +82,25 @@ async function load() {
   render()
 }
 
-async function open() {
+/** 停笔后只刷新字数/块数：不重挂 Protyle，光标不丢 */
+async function refreshStat() {
+  const note = preview.value
+  if (!note) return
+  const stat = await dailyStat(note.id).catch(() => null)
+  if (!stat) return
+  note.words = stat.words
+  note.blocks = stat.blocks
+}
+
+/** 新建今天的日记，然后就地开写（不跳去文档页签） */
+async function create() {
   try {
-    const note = state.offset === 0 ? await ensureToday() : await loadDaily(date.value)
-    if (!note) {
-      toast("这天没有日记", 2000)
-      return
-    }
-    await openDaily(note.id)
+    const note = await ensureToday()
+    preview.value = await loadDaily(date.value).catch(() => null)
+    render()
+    if (!preview.value) preview.value = { ...note, words: 0, blocks: 0, lines: [], todos: [], updated: "" }
   } catch (e) {
-    toast(`打开失败：${(e as Error).message}`, 3000)
+    toast(`创建日记失败：${(e as Error).message}`, 3000)
   }
 }
 

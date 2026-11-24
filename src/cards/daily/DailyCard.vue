@@ -10,24 +10,19 @@
       <li v-if="!shown.length" class="dl-empty desk-note">{{ empty }}</li>
     </ul>
 
-    <footer v-if="!preview" class="dl-foot">
-      <GlassButton v-if="state.offset === 0" text variant="primary" :icon="PenLine" label="写今天的日记" @click.stop="write" />
-    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
 /**
- * 日记卡：只读预览某一天的日记（默认今天）
+ * 日记卡：预览某一天的日记（默认今天），点开详情就地编辑
  *
  * 和日历、日程同一套日期：每张日记卡可以看不同的一天（实例状态 offset），
- * 顶部给「块 · 字 · 待办」，正文给前几行，点开详情是只读全文。
+ * 顶部给「字 · 待办」，正文给前几行。
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
-import { PenLine } from "lucide-vue-next"
-import { GlassButton, toast } from "@/ui/controls"
 import { stateOf } from "@/core/store"
-import { dayOf, ensureToday, labelOf, loadDaily, openDaily, type DailyPreview } from "@/core/dailyNote"
+import { dayOf, labelOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
 
 const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
 
@@ -37,7 +32,7 @@ const date = computed(() => dayOf(state.offset))
 const label = computed(() => labelOf(date.value))
 
 const preview = ref<DailyPreview | null>(null)
-const empty = computed(() => (state.offset === 0 ? "今天还没写" : "这天没有日记"))
+const empty = computed(() => (state.offset === 0 ? "今天还没写 · 点开写一句" : "这天没有日记"))
 
 const meta = computed(() => {
   const p = preview.value
@@ -56,14 +51,6 @@ async function load() {
   preview.value = await loadDaily(date.value).catch(() => null)
 }
 
-async function write() {
-  try {
-    const note = await ensureToday()
-    await openDaily(note.id)
-  } catch (e) {
-    toast(`写日记失败：${(e as Error).message}`, 3000)
-  }
-}
 
 let timer = 0
 onMounted(() => {
@@ -139,10 +126,6 @@ watch(() => state.offset, () => void load())
   flex: 0 0 auto;
 }
 
-.dl-foot {
-  flex: 0 0 auto;
-  margin-top: auto;
-}
 
 @container (max-width: 120px) {
   .dl-meta {
