@@ -357,3 +357,7 @@
     max-height: 45%;
   }
 }
+
+.cal-diary {
+  align-self: flex-start;
+}

@@ -63,6 +63,7 @@ The desk has its own clock panel on the left (same grid layer as the tool group)
 | Countdown | Anniversaries and target days, grouped by category |
 | Writing heatmap | Writing volume by day; a whole year in details |
 | Pomodoro | 25 minutes focus + 5 minutes break |
+| Daily note | One day’s diary: blocks / words / open tasks and the first lines; read-only full text in details |
 | Agenda memo | Today / overdue / memo sections, check the dot to finish; a date makes it a schedule, no date keeps it in the inbox |
 | Doc stats | Documents / words / created today, grouped by notebook |
 | Daily quote | One sentence a day with a wallpaper |
@@ -165,7 +166,7 @@ pnpm check:browser   # build the harness and run five isolated browser suites
 
 Copy `.env.example` to `.env` and set the workspace path (Windows accepts forward slashes, e.g. `E:/sy`). `dev:reload` reads `SIYUAN_URL` / `SIYUAN_TOKEN` or script flags; browser suites use system Edge unless `EDGE_PATH` is set.
 
-Layout: `src/core` (state / images / registry), `src/cards` (15 cards), `src/ui` (desk shell / settings / controls), `src/embed` (document embeds), `src/styles` (the single global stylesheet).
+Layout: `src/core` (state / images / registry), `src/cards` (16 cards), `src/ui` (desk shell / settings / controls), `src/embed` (document embeds), `src/styles` (the single global stylesheet).
 
 ## Releasing
 

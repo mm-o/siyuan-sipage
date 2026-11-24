@@ -103,6 +103,8 @@
           <GlassSwitch v-model="mirrorDaily" label="同时写入今天的日记" :disabled="!onToday" />
           <span class="desk-note">{{ onToday ? "写进今天的日记，手机上也能看到" : "只有今天能写入日记" }}</span>
         </label>
+
+        <GlassButton class="cal-diary" text :icon="NotebookPen" label="打开这天的日记" @click="openDiary" />
       </aside>
     </div>
   </div>
@@ -121,6 +123,7 @@ import { computed, ref } from "vue"
 import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
 import { addItem, dateKey, itemsOf, mirrorToDailyNote, todayKey, toggleItem } from "@/core/agenda"
+import { ensureToday, findDaily, openDaily } from "@/core/dailyNote"
 import { calendarOf, dayDots } from "./calendar"
 import "./styles.css"
 
@@ -373,6 +376,19 @@ async function addToDay() {
     toast("已加到今天，并写进今天的日记")
   } catch (e) {
     toast(`已加到今天，写日记失败：${(e as Error).message}`, 3000)
+  }
+}
+
+async function openDiary() {
+  try {
+    const note = onToday.value ? await ensureToday() : await findDaily(selected.value)
+    if (!note) {
+      toast("这天没有日记", 2000)
+      return
+    }
+    await openDaily(note.id)
+  } catch (e) {
+    toast(`打开日记失败：${(e as Error).message}`, 3000)
   }
 }
 

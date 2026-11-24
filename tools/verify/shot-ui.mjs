@@ -4,7 +4,7 @@ import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
 
 const cards = [
-  ['clock', '时钟', true], ['calendar', '日历', true], ['english', '每日英语', false],
+  ['clock', '时钟', true], ['calendar', '日历', true], ['daily', '日记', true], ['english', '每日英语', false],
   ['yiyan', '每日一言', false], ['shici', '每日诗词', false], ['weather', '天气', false],
   ['countdown', '倒数日', true], ['heatmap', '写作热力图', true], ['pomodoro', '番茄钟', true],
   ['memo', '日程备忘', true], ['docstats', '文档统计', true], ['quickopen', '快捷打开', true],
@@ -39,7 +39,7 @@ try {
     assert.equal(await preview.locator('.body > *').count(), 1, `${name} preview renders`)
     assert.equal(await preview.locator(':scope > button.gb').count(), 0, 'Previews have no floating controls')
   }
-  checks.push('all 15 library previews render and switch solid/glass materials reactively')
+  checks.push('all 16 library previews render and switch solid/glass materials reactively')
 
   await page.locator('.lib-row').filter({ has: page.locator('b', { hasText: /^日历$/ }) }).click()
   await page.getByRole('button', { name: '添加到桌面', exact: true }).click()
@@ -163,7 +163,7 @@ try {
     globalThis.__deskDesk.cards = [...panels, ...cards.map(([cardId], index) => ({ uid: `verify-${cardId}`, cardId, w: 6, h: 6, x: 1 + index % 6 * 8, y: 8 + Math.floor(index / 6) * 8 }))]
   }, { cards, panels })
   const frames = page.locator('.desk-root .item:not(.is-panel) > .frame')
-  await page.waitForFunction(() => document.querySelectorAll('.desk-root .item:not(.is-panel) > .frame').length === 15)
+  await page.waitForFunction(() => document.querySelectorAll('.desk-root .item:not(.is-panel) > .frame').length === 16)
   for (const [w, h] of [[6, 6], [12, 6], [6, 12]]) {
     await page.evaluate(({ w, h }) => {
       for (const card of globalThis.__deskDesk.cards) if (!card.cardId.startsWith('@')) { card.w = w; card.h = h }
@@ -176,7 +176,7 @@ try {
     }))
     assert.ok(boxes.every(box => box.content && box.width > 0 && box.height > 0), `All cards have nonzero content boxes at ${w}×${h}`)
   }
-  checks.push('all 15 desktop cards render square, wide and tall content boxes without runtime errors')
+  checks.push('all 16 desktop cards render square, wide and tall content boxes without runtime errors')
   // 操作较小的日历，避免测试点击落到视口外。
   await page.evaluate(() => {
     for (const c of globalThis.__deskDesk.cards) if (!c.cardId.startsWith('@')) { c.w = 6; c.h = 6 }

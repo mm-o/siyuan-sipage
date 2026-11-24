@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 卡片注册表 —— 唯一的扩展点
  *
  * 加一张新卡片只需要：
@@ -8,7 +8,9 @@
  * 外框、右键菜单、尺寸、弹窗、文档内嵌、持久化 —— 全部由框架统一处理。
  */
 import type { Component } from "vue"
-import { BarChart3, CalendarClock, CalendarDays, Clock, CloudSun, Boxes, FolderOpen, Grid3x3, History, Zap, Languages, ListTodo, Quote, ScrollText, Timer } from "lucide-vue-next"
+import { BarChart3, CalendarClock, CalendarDays, Clock, CloudSun, Boxes, FolderOpen, Grid3x3, History, Zap, Languages, ListTodo, NotebookPen, Quote, ScrollText, Timer } from "lucide-vue-next"
+import DailyCard from "@/cards/daily/DailyCard.vue"
+import DailyPanel from "@/cards/daily/DailyPanel.vue"
 import CalendarCard from "@/cards/calendar/CalendarCard.vue"
 import CalendarPanel from "@/cards/calendar/CalendarPanel.vue"
 import ClockCard from "@/cards/clock/ClockCard.vue"
@@ -167,6 +169,17 @@ export const CARDS: CardDef[] = [
     icon: Timer,
     detail: PomodoroPanel,
     detailSize: { width: "min(820px, 92vw)", height: "min(520px, 82vh)" },
+    surface: "solid",
+  },
+  {
+    id: "daily",
+    name: "日记",
+    desc: "某一天的日记：块 / 字 / 待办与正文前几行，详情里只读全文",
+    component: DailyCard,
+    icon: NotebookPen,
+    detail: DailyPanel,
+    constrain: { step: 1, min: 2, max: 16 },
+    detailSize: { width: "min(900px, 92vw)", height: "min(640px, 86vh)" },
     surface: "solid",
   },
   {

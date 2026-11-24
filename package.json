@@ -27,7 +27,7 @@
     "check:types": "vue-tsc --noEmit -p tsconfig.json",
     "check:bp": "node tools/verify/check-breakpoints.mjs",
     "check": "pnpm check:types && pnpm check:arch && pnpm check:bp && pnpm build && pnpm check:dist",
-    "check:browser": "pnpm dev:card && node tools/verify/shot-deskclock.mjs && node tools/verify/shot-arrange.mjs && node tools/verify/shot-ui.mjs && node tools/verify/shot-theme.mjs && node tools/verify/shot-glass.mjs && node tools/verify/shot-surfaces.mjs && node tools/verify/shot-agenda.mjs && node tools/verify/shot-controls.mjs && node tools/verify/shot-shortcut.mjs"
+    "check:browser": "pnpm dev:card && node tools/verify/shot-deskclock.mjs && node tools/verify/shot-arrange.mjs && node tools/verify/shot-ui.mjs && node tools/verify/shot-theme.mjs && node tools/verify/shot-glass.mjs && node tools/verify/shot-surfaces.mjs && node tools/verify/shot-agenda.mjs && node tools/verify/shot-daily.mjs && node tools/verify/shot-controls.mjs && node tools/verify/shot-shortcut.mjs"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.8.1",

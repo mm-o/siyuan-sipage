@@ -8,7 +8,7 @@
 src/index.ts             插件注册：存储、页签、顶栏、命令
 src/core/
   util.ts                共用底座：post()/sql() 内核出口、pad() 与正文块类型 BODY_TYPES
-  registry.ts            15 种卡片、组件、材质、尺寸约束的唯一装配点
+  registry.ts            16 种卡片、组件、材质、尺寸约束的唯一装配点
   store.ts               桌面/壁纸/外观状态、思源存储、缓存、网格排版
   image.ts               图片清单、跨域代理、壁纸样式、图片收藏文件
   daily.ts               每日内容的共享序列、背景与翻页
