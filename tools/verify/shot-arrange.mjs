@@ -39,10 +39,13 @@ try {
       { uid: 'heatmap', cardId: 'heatmap', w: 16, h: 6, x: 1, y: 17 },
       { uid: 'shortcut', cardId: 'shortcut', w: 8, h: 6, x: 18, y: 17 },
     ] }))
-    localStorage.setItem('desk:memo', JSON.stringify({ items: [
-      { id: '1', text: '留一点空白，给新的想法', done: false },
-      { id: '2', text: '把常用的卡片放在手边', done: false },
-      { id: '3', text: '今天，慢慢做好一件事', done: true },
+    const today = new Date()
+    const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    localStorage.setItem('desk:agenda', JSON.stringify({ group: 'today', seeded: true, items: [
+      { id: '1', text: '留一点空白，给新的想法', note: '', date: key, time: '', done: false, doneAt: 0, at: 1, syncedAt: 0 },
+      { id: '2', text: '把常用的卡片放在手边', note: '', date: key, time: '', done: false, doneAt: 0, at: 2, syncedAt: 0 },
+      { id: '3', text: '今天，慢慢做好一件事', note: '', date: key, time: '', done: true, doneAt: 3, at: 3, syncedAt: 0 },
+      { id: '4', text: '备忘先放收件箱', note: '', date: '', time: '', done: false, doneAt: 0, at: 4, syncedAt: 0 },
     ] }))
   })
   await harness.goto()
@@ -50,7 +53,7 @@ try {
   await page.getByRole('button', { name: '整理桌面', exact: true }).click()
   const toolbar = page.getByRole('toolbar', { name: '整理桌面' })
   await toolbar.waitFor()
-  const memo = page.locator('.item[aria-label^="备忘录"]')
+  const memo = page.locator('.item[aria-label^="日程备忘"]')
   await memo.hover()
   await page.waitForTimeout(300)
   await page.screenshot({ path: path.join(out, 'arrange-light.png') })

@@ -137,8 +137,11 @@
       </div>
 
       <div v-else-if="tab === 'theme'" class="random">
-        <div class="random-preview" :style="{ background: THEME_BG }" />
-        <p class="desk-hint">取思源当前主题的主题色做背景，切换「外观 → 主题」时壁纸跟着变，不需要重新设置。</p>
+        <div class="theme-preview" :style="themePreview">
+          <i class="theme-preview-card" />
+          <i class="theme-preview-card is-wide" />
+        </div>
+        <p class="desk-hint">直接用思源当前的背景（主题色或主题自带的背景图），桌面不自造底色；换主题、换背景都跟着变，也不叠模糊与遮罩。</p>
       </div>
 
       <!-- 纯色 -->
@@ -191,7 +194,6 @@ import {
   picsumFirst,
   picsumShuffle,
   randomCoverUrl,
-  THEME_BG,
   wallSource,
   type AssetImage,
   type BingImage,
@@ -200,6 +202,9 @@ import {
   type WallSource,
   type WebImage,
 } from "@/core/image"
+
+/** 「跟随思源」预览：桌面就是思源背景本身，这里只画主题底色 + 卡片剪影 */
+const themePreview = computed(() => ({ background: "var(--b3-theme-background)" }))
 
 /** 一屏三行：4 列 × 3 行 = 12 张 */
 const PAGE = 12
@@ -250,7 +255,7 @@ async function toggleFav(value: string) {
 
 /** 壁纸来源与显示标签 */
 const SOURCES: { value: WallSource; label: string; desc: string; icon: Component }[] = [
-  { value: "theme", label: "跟随思源", desc: "吃主题色", icon: Palette },
+  { value: "theme", label: "跟随思源", desc: "透出思源背景", icon: Palette },
   { value: "siyuan", label: "思源资源", desc: "笔记本图片", icon: FolderOpen },
   { value: "cover", label: "思源头图", desc: "本地 18 分类", icon: Images },
   { value: "bing", label: "必应每日", desc: "最近 8 天", icon: CalendarDays },
@@ -597,6 +602,34 @@ const isActive = (c: string) => c.toLowerCase() === wallpaper.value.toLowerCase(
   border: 1px solid var(--desk-stroke);
   background-size: cover;
   background-position: center;
+}
+
+/* 跟随思源：预览就是主题底色 + 两张卡片的剪影，一句话说清「桌面和思源一个底」 */
+.theme-preview {
+  position: relative;
+  aspect-ratio: 32 / 11;
+  overflow: hidden;
+  border: 1px solid var(--desk-stroke);
+  border-radius: var(--desk-r-md);
+  background-size: cover;
+  background-position: center;
+}
+
+.theme-preview-card {
+  position: absolute;
+  top: 24%;
+  left: 10%;
+  width: 22%;
+  height: 46%;
+  border: 1px solid var(--desk-stroke);
+  border-radius: var(--desk-r-md);
+  background: var(--desk-surface);
+  opacity: 0.92;
+}
+
+.theme-preview-card.is-wide {
+  left: 38%;
+  width: 50%;
 }
 
 .url-row {

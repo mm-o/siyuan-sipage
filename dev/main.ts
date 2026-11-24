@@ -1,7 +1,7 @@
 /** 框架验证页：桌面壳 + 文档内嵌卡片 */
 import "@/styles/index.css"
 import { createApp } from "vue"
-import { appearance, bootStore, countdown, desk } from "@/core/store"
+import { appearance, bootStore, countdown, desk, wallpaper } from "@/core/store"
 import DeskShell from "@/ui/DeskShell.vue"
 import { hydrateCards, startCardObserver } from "@/embed/cards"
 import { DESK_ICON } from "@/ui/controls"
@@ -23,6 +23,13 @@ const seedAppearance = localStorage.getItem("desk-cards:appearance")
 if (seedAppearance) {
   try {
     Object.assign(appearance, JSON.parse(seedAppearance))
+  } catch {}
+}
+// 壁纸同理（截图脚本要能预置「跟随思源」这类底片）
+const seedWallpaper = localStorage.getItem("desk-cards:wallpaper")
+if (seedWallpaper) {
+  try {
+    Object.assign(wallpaper, JSON.parse(seedWallpaper))
   } catch {}
 }
 // 倒数日事件同理（验证脚本要能预置几条，才能截到有内容的卡片）

@@ -1,8 +1,8 @@
-<template>
-  <div ref="rootRef" class="desk-root" :class="{ 'is-arrange': arranging, 'is-manipulating': !!drag }" @contextmenu.prevent="deskMenu">
-    <!-- 壁纸（桌面窗口层，不随滚动条变化） -->
-    <div class="desk-wallpaper" :style="wallpaperStyle" />
-    <div class="desk-wallpaper-mask" :style="maskStyle" />
+﻿<template>
+  <div ref="rootRef" class="desk-root" :class="{ 'is-arrange': arranging, 'is-manipulating': !!drag, 'is-theme': isTheme }" @contextmenu.prevent="deskMenu">
+    <!-- 壁纸（桌面窗口层，不随滚动条变化）：跟随思源时整层不画，直接透出思源背景 -->
+    <div v-if="!isTheme" class="desk-wallpaper" :style="wallpaperStyle" />
+    <div v-if="!isTheme" class="desk-wallpaper-mask" :style="maskStyle" />
     <div class="arrange-veil" aria-hidden="true" />
 
     <!-- 唯一画布：卡片 / 时钟 / 工具组同坐标系 -->
@@ -66,7 +66,7 @@
           </CardFrame>
 
           <!-- 四边缩放：只在整理模式出现。到边界的手柄只变淡（仍可抓着往回收），夹取在 arrange.ts 里做 -->
-          <template v-if="arranging && !panel(inst)">
+          <template v-if="arranging && inst.cardId !== PANEL_TOOLS">
             <GlassButton
               v-for="e in EDGES"
               :key="e.id"
@@ -146,7 +146,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
-import { PANEL_CLOCK, desk, favoriteWallpaper, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
+import { PANEL_CLOCK, PANEL_TOOLS, desk, favoriteWallpaper, flowDesk, removeFromDesk, wallpaper } from "@/core/store"
 import { wallpaperBg } from "@/core/image"
 import { useDeskGrid, normalizeSizes } from "./arrange"
 import DeskClock from "./DeskClock.vue"
@@ -162,7 +162,8 @@ const EDGES = [
   { id: "w", icon: MoveHorizontal, label: "左" },
 ] as const
 
-/* 壁纸：三种形态（图片 / 纯色 / 跟随思源）由 wallpaperBg 统一给出 */
+/* 壁纸：跟随思源时整层不画（背景交给 CSS 变量），图片/纯色才需要这一层 */
+const isTheme = computed(() => wallpaper.type === "theme")
 const wallpaperStyle = computed(() => ({
   ...wallpaperBg(wallpaper),
   filter: wallpaper.blur ? `blur(${wallpaper.blur}px)` : undefined,
@@ -372,6 +373,7 @@ function measure() {
 onMounted(() => {
   document.addEventListener("keydown", onKey)
   measure()
+  /* 跟随思源：主题属性/内联样式一变就重算镜像背景，不需要轮询 */
   /* 窗口拖拽时 ResizeObserver 会连续回调：合并到每帧一次，避免重复重排 */
   /* 桌面进入视口时重播入场动效（切回标签页也能看到） */
   io = new IntersectionObserver((entries) => {

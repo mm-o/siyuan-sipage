@@ -1,6 +1,6 @@
-import { computed, ref, type Ref } from "vue"
+﻿import { computed, ref, type Ref } from "vue"
 import { getCard, type CardConstrain } from "@/core/registry"
-import { appearance, computeGrid, desk, setDeskDims } from "@/core/store"
+import { PANEL_TOOLS, appearance, computeGrid, desk, setDeskDims } from "@/core/store"
 
 type Edge = "n" | "s" | "e" | "w"
 
@@ -142,7 +142,7 @@ export function useDeskGrid(viewport: Ref<number>) {
     e.stopPropagation()
     const c = desk.cards[index]
     const lim = getCard(c.cardId)?.constrain
-    if (e.shiftKey && !c.cardId.startsWith("@")) {
+    if (e.shiftKey && c.cardId !== PANEL_TOOLS) {
       const step = lim?.step || 1
       Object.assign(c, fitDims(lim, c.w + delta.x * step, c.h + delta.y * step))
     } else {

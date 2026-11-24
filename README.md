@@ -58,12 +58,12 @@ The desk has its own clock panel on the left (same grid layer as the tool group)
 | Card | What it does |
 | --- | --- |
 | Clock | Dot-matrix / flip styles, rotates automatically with size |
-| Calendar | Today / month view / lunar terms; opens a full month view |
+| Calendar | Today / month view / lunar terms; the day pane lists that day’s schedule, cells carry schedule dots |
 | Weather | Current weather and 7-day forecast; manage places in details |
 | Countdown | Anniversaries and target days, grouped by category |
 | Writing heatmap | Writing volume by day; a whole year in details |
 | Pomodoro | 25 minutes focus + 5 minutes break |
-| Memo | One to-do per row, click the dot to check it off |
+| Agenda memo | Today / overdue / memo sections, check the dot to finish; a date makes it a schedule, no date keeps it in the inbox |
 | Doc stats | Documents / words / created today, grouped by notebook |
 | Daily quote | One sentence a day with a wallpaper |
 | Daily poem | A classical poem with full text, translation and notes |
@@ -81,7 +81,7 @@ Sizes: 2×2 cells by default. Clock / calendar / weather can be dragged between 
 
 | Source | Where it comes from | Notes |
 | --- | --- | --- |
-| Follow theme | Theme color | No image stored; follows theme switches |
+| Follow SiYuan | SiYuan’s own background | No image stored, no blur or mask; follows theme and background switches |
 | SiYuan assets | Notebook `assets/` | Served by the kernel, searchable |
 | SiYuan covers | 18 built-in categories | All tags listed, local images |
 | Bing daily | Official Bing API | Last 8 days |

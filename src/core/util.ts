@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 共用底座：跨模块的基础动作集中在这一个文件。
  *
  * `post` / `sql` 是内核 HTTP 的唯一出口（POST JSON → 校验 code → 返回 data）；
@@ -21,3 +21,9 @@ export async function sql(stmt: string) {
 
 /** 两位补零 */
 export const pad = (n: number) => String(n).padStart(2, "0")
+
+/**
+ * 正文块类型：字数、块数与「今天写了多少」只数这些。
+ * 文档块（type='d'）的 length 是标题本身，混进来会把总字数算成「所有标题的长度」。
+ */
+export const BODY_TYPES = "('p','h','c','m','t','callout','html')"

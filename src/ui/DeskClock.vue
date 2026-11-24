@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="desk-clock">
     <time class="time" :datetime="now.toISOString()">{{ timeText }}</time>
     <div class="date">{{ dateText }}</div>
@@ -37,15 +37,15 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   text-shadow: 0 4px 24px rgb(0 0 0 / 42%);
 }
 .time {
-  font-size: clamp(40px, 40cqh, 130px);
+  font-size: clamp(28px, min(64cqh, 32cqw), 160px);
   font-weight: 300;
   line-height: 1;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 .date {
-  margin-top: clamp(6px, 6cqh, 18px);
-  font-size: clamp(12px, 8cqh, 26px);
+  margin-top: clamp(1px, 2cqh, 8px);
+  font-size: clamp(11px, 7cqh, 22px);
   color: rgb(255 255 255 / 78%);
 }
 </style>

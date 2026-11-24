@@ -151,8 +151,8 @@ const togglePinned = (id: string) => emit("pin", id)
 
 <style scoped>
   .cd-detail-inner {
-  flex: 0 0 300px;
-  width: 300px;
+  flex: 0 0 var(--desk-detail-w);
+  width: var(--desk-detail-w);
   display: flex;
   flex-direction: column;
   }

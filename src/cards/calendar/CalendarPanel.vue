@@ -1,141 +1,145 @@
 <template>
-  <div class="cal-panel desk-seq" :class="theme">
-    <!-- 左：月视图 -->
-    <section class="cal-main desk-pane is-left">
-      <!-- 单行：年份 / 翻月 / 月份 / 节假日 / 今天，宁可压缩下拉也不换行 -->
-      <div class="cal-toolbar">
-        <GlassSelect v-model.number="viewYear" class="cal-select" label="年份" :options="yearChoices" />
-        <GlassButton :icon="ChevronLeft" label="上个月" @click="shift(-1)" />
-        <GlassSelect v-model.number="viewMonth" class="cal-select cal-select--month" label="月份" :options="monthChoices" />
-        <GlassButton :icon="ChevronRight" label="下个月" @click="shift(1)" />
-        <GlassSelect v-model="viewFestival" class="cal-select cal-select--festival" label="节假日" :options="festivalChoices" />
-        <GlassButton text label="今天" :disabled="isToday" @click="selected = new Date()" />
-      </div>
+  <div class="cal-panel desk-seq">
+    <div class="cal-body desk-panel-row">
+      <!-- 左：选中日的黄历 -->
+      <aside class="cal-side desk-pane is-left">
+        <header class="cal-day">
+          <b class="cal-day-num">{{ detail.day }}</b>
+          <span class="cal-day-date">{{ detail.date }} 周{{ detail.week }}</span>
+          <span class="cal-day-lunar">{{ detail.lunar }} · {{ detail.ganzhi }}</span>
+          <span class="desk-note">第{{ detail.weekOfYear }}周 · 第{{ detail.dayOfYear }}天<template v-if="detail.diff"> · {{ detail.diff > 0 ? "还有" : "已过" }} {{ Math.abs(detail.diff) }} 天</template></span>
+        </header>
 
-      <ul class="cal-grid-week">
-        <li v-for="label in headLabels" :key="label" :class="{ 'is-weekend': label === '六' || label === '日' }">
-          {{ label }}
-        </li>
-      </ul>
+        <ul class="cal-facts mm-scroll">
+          <li v-for="fact in facts" :key="fact.label" class="cal-fact">
+            <span class="cal-tag" :class="{ 'is-weak': !fact.strong }">{{ fact.label }}</span>
+            <span class="cal-fact-text">{{ fact.text }}</span>
+          </li>
+        </ul>
 
-      <ul class="cal-grid" @wheel.prevent="onWheel">
-        <li v-for="cell in cells" :key="cell.key" @click="selected = cell.date">
-          <div
-            class="cal-cell"
-            :class="{
-              'is-today': cell.isToday,
-              'is-selected': cell.isSelected,
-              'is-other': cell.isOther,
-              'is-weekend': cell.isWeekend,
-              'is-festival': cell.isFestival,
-            }"
-          >
-            <span class="cal-cell-day">{{ cell.day }}</span>
-            <span class="cal-cell-lunar ariaLabel" data-position="north" data-tooltip-encoding="none" :aria-label="cell.lunar">{{ cell.lunar }}</span>
-          </div>
-        </li>
-      </ul>
-    </section>
+        <div class="cal-week">
+          <span class="desk-note">一周开始</span>
+          <Segmented v-model="weekBegin" :options="WEEK_OPTIONS" />
+        </div>
+      </aside>
 
-    <!-- 右：选中日详情 -->
-    <aside class="cal-aside desk-pane is-right">
-      <div class="cal-aside-head">
-        <div class="cal-aside-badge">{{ detail.day }}</div>
-        <p class="cal-aside-date">{{ detail.date }} 周{{ detail.week }}</p>
-        <p class="cal-aside-lunar">{{ detail.lunar }} · {{ detail.ganzhi }}</p>
-        <p class="cal-aside-weak">本年第{{ detail.weekOfYear }}周，第{{ detail.dayOfYear }}天</p>
-        <p v-if="detail.diff !== 0" class="cal-aside-weak">
-          距今天{{ detail.diff > 0 ? "还有" : "已过去" }} {{ Math.abs(detail.diff) }} 天
-        </p>
-      </div>
+      <!-- 中：月视图 -->
+      <section class="cal-main desk-pane is-mid">
+        <div class="cal-toolbar">
+          <GlassSelect v-model.number="viewYear" class="cal-select" label="年份" :options="yearChoices" />
+          <GlassButton :icon="ChevronLeft" label="上个月" @click="shift(-1)" />
+          <GlassSelect v-model.number="viewMonth" class="cal-select" label="月份" :options="monthChoices" />
+          <GlassButton :icon="ChevronRight" label="下个月" @click="shift(1)" />
+          <GlassSelect v-model="viewFestival" class="cal-select" label="节假日" :options="festivalChoices" />
+          <GlassButton text label="今天" :disabled="isToday" @click="selected = new Date()" />
+        </div>
 
-      <ul class="cal-detail-list">
-        <li v-if="detail.festival" class="cal-detail-row">
-          <span class="cal-detail-tag">节日</span>
-          <span class="cal-detail-text">{{ detail.festival }}</span>
-        </li>
-        <li v-if="detail.term" class="cal-detail-row">
-          <span class="cal-detail-tag cal-detail-tag--weak">节气</span>
-          <span class="cal-detail-text">{{ detail.term }}{{ detail.termDay ? ` · ${detail.termDay}` : "" }}</span>
-        </li>
-        <li class="cal-detail-row">
-          <span class="cal-detail-tag">生肖</span>
-          <span class="cal-detail-text">{{ detail.zodiac }}</span>
-        </li>
-        <li class="cal-detail-row">
-          <span class="cal-detail-tag">星座</span>
-          <span class="cal-detail-text">{{ detail.constellation }}座</span>
-        </li>
-        <li class="cal-detail-row">
-          <span class="cal-detail-tag cal-detail-tag--weak">月相</span>
-          <span class="cal-detail-text">{{ detail.moon }}</span>
-        </li>
-        <li v-if="detail.duty" class="cal-detail-row">
-          <span class="cal-detail-tag cal-detail-tag--weak">建除</span>
-          <span class="cal-detail-text">{{ detail.duty }}日 · {{ detail.twelveStar }} · {{ detail.nineStar }}</span>
-        </li>
-        <li v-if="detail.star28" class="cal-detail-row">
-          <span class="cal-detail-tag cal-detail-tag--weak">星宿</span>
-          <span class="cal-detail-text">{{ detail.star28 }}宿 · 纳音 {{ detail.sound }}</span>
-        </li>
-        <li v-if="detail.recommends.length" class="cal-detail-row">
-          <span class="cal-detail-tag">宜</span>
-          <span class="cal-detail-text">{{ detail.recommends.join(" ") }}</span>
-        </li>
-        <li v-if="detail.avoids.length" class="cal-detail-row">
-          <span class="cal-detail-tag cal-detail-tag--weak">忌</span>
-          <span class="cal-detail-text">{{ detail.avoids.join(" ") }}</span>
-        </li>
-      </ul>
+        <ul class="cal-head">
+          <li v-for="label in headLabels" :key="label" :class="{ 'is-weekend': label === '六' || label === '日' }">
+            {{ label }}
+          </li>
+        </ul>
 
-      <!-- 底部：一周开始（两个等价选项 → Segmented）+ 唯一动作 -->
-      <div class="cal-week-row">
-        <span>一周开始</span>
-        <Segmented v-model="weekBegin" :options="WEEK_OPTIONS" class="cal-week-seg" />
-      </div>
+        <ul class="cal-grid" @wheel.prevent="onWheel">
+          <li v-for="cell in cells" :key="cell.key" @click="selected = cell.date">
+            <div
+              class="cal-cell"
+              :class="{
+                'is-today': cell.isToday,
+                'is-selected': cell.isSelected,
+                'is-other': cell.isOther,
+                'is-weekend': cell.isWeekend,
+                'is-festival': cell.isFestival,
+              }"
+            >
+              <span class="cal-cell-day">{{ cell.day }}</span>
+              <span class="cal-cell-lunar ariaLabel" data-position="north" data-tooltip-encoding="none" :aria-label="cell.lunar">{{ cell.lunar }}</span>
+              <span v-if="cell.dots.length" class="cal-dots" aria-hidden="true">
+                <i v-for="(dot, index) in cell.dots" :key="index" class="cal-dot" :class="`is-${dot}`" />
+              </span>
+            </div>
+          </li>
+        </ul>
+      </section>
 
-      <div class="cal-actions">
-        <GlassButton class="cal-add" text variant="primary" :icon="Plus" label="新建日程" @click="createEvent" />
-      </div>
-    </aside>
+      <!-- 右：这一天的日程（和日程备忘卡是同一份数据） -->
+      <aside class="cal-agenda desk-pane is-right">
+        <header class="cal-agenda-head">
+          <span class="cal-agenda-title">日程</span>
+          <span class="desk-badge" :class="{ 'is-on': openOnDay > 0 }">{{ openOnDay }}/{{ dayItems.length }}</span>
+          <span class="cal-grow" />
+          <GlassButton
+            v-if="onToday"
+            :icon="NotebookPen"
+            label="写入今天的日记"
+            text
+            :disabled="!openOnDay"
+            @click="mirror"
+          />
+        </header>
+
+        <ul class="cal-list mm-scroll">
+          <li v-for="item in dayItems" :key="item.id" class="mm-row mm-line" :class="{ 'is-done': item.done }">
+            <button
+              class="mm-dot"
+              type="button"
+              role="checkbox"
+              :aria-checked="item.done"
+              :aria-label="item.done ? '标记未完成' : '标记完成'"
+              @click="toggleItem(item.id)"
+            />
+            <span v-if="item.time" class="mm-time">{{ item.time }}</span>
+            <span class="mm-text">{{ item.text }}</span>
+          </li>
+          <li v-if="!dayItems.length" class="cal-empty desk-note">这一天还没有安排</li>
+        </ul>
+
+        <form class="cal-new" @submit.prevent="addToDay">
+          <GlassField v-model="draft" class="cal-new-field" label="新日程" placeholder="回车加到这一天" />
+          <GlassButton :icon="Plus" label="添加" variant="primary" :disabled="!draft.trim()" @click="addToDay" />
+        </form>
+
+        <label class="cal-mirror">
+          <GlassSwitch v-model="mirrorDaily" label="同时写入今天的日记" :disabled="!onToday" />
+          <span class="desk-note">{{ onToday ? "写进今天的日记，手机上也能看到" : "只有今天能写入日记" }}</span>
+        </label>
+      </aside>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { GlassButton, GlassSelect, Segmented } from "@/ui/controls"
-import { computed, ref, watch } from "vue"
-import { ChevronLeft, ChevronRight, Plus } from "lucide-vue-next"
-import { toast } from "@/ui/controls"
-import { useTheme } from "@/ui/controls"
+/**
+ * 日历详情：左黄历 / 中月历 / 右日程
+ *
+ * 三栏回答三件事：这天是什么日子（节气、宜忌）、这个月怎么排、这天要做什么。
+ * 日程与备忘是同一份数据（`core/agenda`），右栏勾选、新增立刻反映到桌面卡片和备忘详情；
+ * 写日记只是可选出口（默认关、只对今天），失败只提示，不动本地条目。
+ */
+import { GlassButton, GlassField, GlassSelect, GlassSwitch, Segmented, toast } from "@/ui/controls"
+import { computed, ref } from "vue"
+import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
+import { addItem, dateKey, itemsOf, mirrorToDailyNote, todayKey, toggleItem } from "@/core/agenda"
+import { calendarPrefs, dayDots } from "./calendar"
 import "./styles.css"
 
-const props = defineProps<{
-  data?: Record<string, any>
-  theme?: "light" | "dark"
-  api?: { setData?: (patch: Record<string, any>) => void; save?: () => void }
-}>()
-
-const detected = useTheme()
-const theme = computed(() => props.theme || detected.value)
-
 const WEEK_NAMES = ["日", "一", "二", "三", "四", "五", "六"] as const
-const MONDAY_FIRST = ["一", "二", "三", "四", "五", "六", "日"]
+const MONDAY_FIRST = [...WEEK_NAMES.slice(1), WEEK_NAMES[0]]
 const WEEK_OPTIONS = [
   { label: "一", value: "mon" },
   { label: "日", value: "sun" },
 ]
 
-/** 一周开始日：两个等价选项，用 Segmented（设计规则） */
-const weekBegin = ref(props.data?.weekBegin1 === false ? "sun" : "mon")
+/** 一周开始日：两个等价选项 → Segmented；写进日历自己的偏好，重开还是这个 */
+const weekBegin = computed({
+  get: () => calendarPrefs.weekBegin,
+  set: (value: string) => {
+    calendarPrefs.weekBegin = value === "sun" ? "sun" : "mon"
+  },
+})
 const mondayFirst = computed(() => weekBegin.value === "mon")
 const headLabels = computed(() => (mondayFirst.value ? MONDAY_FIRST : [...WEEK_NAMES]))
-
-/** 选择写回宿主（文档内嵌时 api 才存在；桌面卡片只存本地） */
-watch(weekBegin, (v) => {
-  props.api?.setData?.({ weekBegin1: v === "mon" })
-  props.api?.save?.()
-})
 
 const selected = ref<Date>(new Date())
 const today = new Date()
@@ -239,6 +243,13 @@ function lunarLabel(date: Date): { text: string; isFestival: boolean } {
   return { text: lunar.getName() === "初一" ? lunar.getLunarMonth().getName() : lunar.getName(), isFestival: false }
 }
 
+/* ── 日程：同一天最多三个点，没做完的排在前面 ────────────── */
+
+const selectedKey = computed(() => dateKey(selected.value))
+const dayItems = computed(() => itemsOf(selectedKey.value))
+const openOnDay = computed(() => dayItems.value.filter((item) => !item.done).length)
+const onToday = computed(() => selectedKey.value === todayKey())
+
 const cells = computed(() => {
   const year = selected.value.getFullYear()
   const month = selected.value.getMonth() + 1
@@ -254,6 +265,7 @@ const cells = computed(() => {
         date,
         day: date.getDate(),
         lunar: label.text,
+        dots: dayDots(dateKey(date)),
         isFestival: label.isFestival,
         isToday: key === keyOf(today),
         isSelected: key === keyOf(selected.value),
@@ -297,6 +309,22 @@ const detail = computed(() => {
   }
 })
 
+/** 左栏只摆「这一天是什么日子」：标签 + 内容，空的整行不出现 */
+const facts = computed(() => {
+  const d = detail.value
+  return [
+    { label: "节日", text: d.festival, strong: true },
+    { label: "节气", text: d.term ? `${d.term}${d.termDay ? ` · ${d.termDay}` : ""}` : "", strong: false },
+    { label: "生肖", text: d.zodiac, strong: true },
+    { label: "星座", text: d.constellation ? `${d.constellation}座` : "", strong: true },
+    { label: "月相", text: d.moon, strong: false },
+    { label: "建除", text: d.duty ? `${d.duty}日 · ${d.twelveStar} · ${d.nineStar}` : "", strong: false },
+    { label: "星宿", text: d.star28 ? `${d.star28}宿 · 纳音 ${d.sound}` : "", strong: false },
+    { label: "宜", text: d.recommends.join(" "), strong: true },
+    { label: "忌", text: d.avoids.join(" "), strong: true },
+  ].filter((fact) => fact.text)
+})
+
 function shift(delta: number) {
   const next = new Date(selected.value)
   next.setDate(1)
@@ -310,47 +338,35 @@ function onWheel(event: WheelEvent) {
   shift(event.deltaY < 0 ? -1 : 1)
 }
 
-/**
- * 新建日程
- *
- * 思源没有独立的「日程」对象，最贴近的做法是写进今天的日记：
- *   1. /api/notebook/lsNotebooks 取笔记本
- *   2. /api/filetree/createDailyNote 建/取今天日记
- *   3. /api/block/appendBlock 追加一条待办
- * 这样日程就变成可勾选的任务，和其他待办在同一个体系里。
- */
-async function createEvent() {
-  const title = window.prompt("新建日程（写入今天的日记）", "日程：")
-  if (!title) return
+/* ── 这一天的日程：内联添加 + 手写日记 ─────────────────── */
 
-  const post = async (url: string, body: unknown) => {
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-    return r.json()
-  }
+const draft = ref("")
+const mirrorDaily = computed({
+  get: () => calendarPrefs.mirrorDaily,
+  set: (value: boolean) => {
+    calendarPrefs.mirrorDaily = value
+  },
+})
 
+async function addToDay() {
+  const item = addItem({ text: draft.value, date: selectedKey.value })
+  if (!item) return
+  draft.value = ""
+  if (!mirrorDaily.value || !onToday.value) return
   try {
-    const nb = await post("/api/notebook/lsNotebooks", {})
-    const notebook = nb?.data?.notebooks?.[0]?.id
-    if (!notebook) throw new Error("未找到笔记本")
+    await mirrorToDailyNote([item])
+    toast("已加到今天，并写进今天的日记")
+  } catch (e) {
+    toast(`已加到今天，写日记失败：${(e as Error).message}`, 3000)
+  }
+}
 
-    const daily = await post("/api/filetree/createDailyNote", { notebook, app: "" })
-    const docId = daily?.data?.id
-    if (!docId) throw new Error(daily?.msg || "创建日记失败")
-
-    const res = await post("/api/block/appendBlock", {
-      dataType: "markdown",
-      data: `- [ ] ${title}`,
-      parentID: docId,
-    })
-    if (res?.code !== 0) throw new Error(res?.msg || "写入失败")
-
+async function mirror() {
+  try {
+    await mirrorToDailyNote(dayItems.value)
     toast("已写入今天的日记")
   } catch (e) {
-    toast(`新建日程失败：${(e as Error).message}`, 3000)
+    toast(`写入日记失败：${(e as Error).message}`, 3000)
   }
 }
 </script>

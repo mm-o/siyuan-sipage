@@ -1,11 +1,11 @@
-/** 共享表面/字段/开关/滑轨：使用真实页面与交互，所有数据留在隔离浏览器。 */
+﻿/** 共享表面/字段/开关/滑轨：使用真实页面与交互，所有数据留在隔离浏览器。 */
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
 
 const harness = await openBrowser({ storage: {
   'desk-cards:desk': { cards: panels },
-  'desk:memo': { items: [{ id: 'surfaces-memo', text: '字段初始内容', done: false, at: 1795344000000 }], filter: 'all' },
+  'desk:agenda': { group: 'inbox', seeded: true, items: [{ id: 'surfaces-memo', text: '字段初始内容', note: '', date: '', time: '', done: false, doneAt: 0, at: 1795344000000, syncedAt: 0 }] },
 } })
 const { page, errors } = harness
 const checks = []
@@ -92,9 +92,9 @@ try {
   await theme(false)
   const memoFrame = await cardDetail('memo', '.mm-panel')
   await fields()
-  const editor = dialog.getByRole('textbox', { name: '备忘录内容', exact: true })
+  const editor = dialog.getByRole('textbox', { name: '日程标题', exact: true })
   await editor.fill('公共字段输入即时更新模型')
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('desk:memo') || '{}').items?.some(item => item.id === 'surfaces-memo' && item.text === '公共字段输入即时更新模型'))
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('desk:agenda') || '{}').items?.some(item => item.id === 'surfaces-memo' && item.text === '公共字段输入即时更新模型'))
   assert.equal(await dialog.locator('.mm-list .mm-text').first().textContent(), '公共字段输入即时更新模型')
   await screenshot('surfaces-memo-fields.png')
   const frameLight = await surface(memoFrame)
@@ -102,7 +102,7 @@ try {
   const frameDark = await surface(memoFrame)
   assert.notDeepEqual(frameLight, frameDark, 'Actual card frame switches material in dark appearance')
   await close()
-  checks.push('memo textarea updates its draft before forwarded input writes the persistent model; actual card surface follows theme')
+  checks.push('memo title field updates the shared agenda model as you type; actual card surface follows theme')
 
   await theme(false)
   await cardDetail('calendar', '.cal-panel')
@@ -121,11 +121,11 @@ try {
   await popup.getByRole('option', { name: `${currentYear + 1}年`, exact: true }).click()
   await popup.waitFor({ state: 'detached' })
   assert.match(await year.textContent(), new RegExp(String(currentYear + 1)))
-  assert.match(await dialog.locator('.cal-aside-date').textContent(), new RegExp(String(currentYear + 1)))
+  assert.match(await dialog.locator('.cal-day-date').textContent(), new RegExp(String(currentYear + 1)))
   await month.click()
   await popup.getByRole('option', { name: '1月', exact: true }).click()
   await popup.waitFor({ state: 'detached' })
-  assert.match(await dialog.locator('.cal-aside-date').textContent(), new RegExp(`^${currentYear + 1}-0?1-`))
+  assert.match(await dialog.locator('.cal-day-date').textContent(), new RegExp(`^${currentYear + 1}-0?1-`))
   await year.focus()
   await year.press('Enter')
   await popup.waitFor()

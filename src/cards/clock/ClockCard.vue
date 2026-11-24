@@ -10,7 +10,7 @@
 
     <!-- 其它比例：一行时间（够宽就带秒），下面日期 -->
     <template v-else>
-      <div class="time">
+      <div class="time" :class="{ 'with-sec': withSec }">
         <span class="unit"><span class="roll" :key="`h${hh}`">{{ hh }}</span></span>
         <em>:</em>
         <span class="unit"><span class="roll" :key="`m${mm}`">{{ mm }}</span></span>
@@ -72,10 +72,10 @@ const week = computed(() => `周${"日一二三四五六"[now.value.getDay()]}`)
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3cqh;
+  gap: 2cqh;
   width: 100%;
   height: 100%;
-  padding: 4cqh 3cqw;
+  padding: 2cqh 2cqw;
   color: var(--desk-text);
   overflow: hidden;
 }
@@ -85,7 +85,7 @@ const week = computed(() => `周${"日一二三四五六"[now.value.getDay()]}`)
   display: flex;
   align-items: baseline;
   gap: 0.06em;
-  font-size: clamp(26px, 52cqh, 132px);
+  font-size: clamp(22px, min(64cqh, 30cqw), 150px);
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -95,6 +95,11 @@ const week = computed(() => `周${"日一二三四五六"[now.value.getDay()]}`)
 .time em {
   font-style: normal;
   transform: translateY(-0.04em);
+}
+
+/* 带秒：8 个字符，按字符数再收一档宽度 */
+.time.with-sec {
+  font-size: clamp(20px, min(64cqh, 18cqw), 150px);
 }
 
 /* 每个数字段：裁剪窗口 + 滚动体 */
@@ -126,7 +131,7 @@ const week = computed(() => `周${"日一二三四五六"[now.value.getDay()]}`)
 .tall .row {
   display: flex;
   justify-content: center;
-  font-size: clamp(24px, 30cqh, 96px);
+  font-size: clamp(20px, min(34cqh, 40cqw), 110px);
   font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;

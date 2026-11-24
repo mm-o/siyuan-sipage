@@ -97,8 +97,8 @@
         <p v-else-if="current === 'cards'" class="set-side-hint">拖动滑轨立刻生效，双击滑轨恢复该项默认值。</p>
 
         <dl v-if="current === 'wallpaper'" class="set-stats">
-          <div><dt>模糊</dt><dd>{{ wallpaper.blur }}</dd></div>
-          <div><dt>遮罩</dt><dd>{{ Math.round(wallpaper.mask * 100) }}%</dd></div>
+          <div><dt>模糊</dt><dd>{{ isTheme ? "—" : wallpaper.blur }}</dd></div>
+          <div><dt>遮罩</dt><dd>{{ isTheme ? "—" : `${Math.round(wallpaper.mask * 100)}%` }}</dd></div>
           <div><dt>张贴</dt><dd>{{ desk.cards.length }}</dd></div>
         </dl>
 
@@ -164,7 +164,9 @@ const version = pkg.version
 const frontend = getFrontend()
 
 /* 预览：用真实壁纸做底（图片 / 纯色 / 跟随思源三态统一由 wallpaperBg 给出） */
-const previewBg = computed(() => wallpaperBg(wallpaper))
+const previewBg = computed(() => (isTheme.value ? { background: "var(--b3-theme-background)" } : wallpaperBg(wallpaper)))
+/** 跟随思源不叠模糊与遮罩：右栏统计里就不该报这两个数 */
+const isTheme = computed(() => wallpaper.type === "theme")
 const tag = computed(
   () => `圆角 ${appearance.radius} · 模糊 ${appearance.blur} · 玻璃 ${Math.round(appearance.opacity * 100)}%`,
 )
@@ -176,7 +178,7 @@ watch(
   [() => wallpaper.type, () => wallpaper.resolved || wallpaper.value],
   (_, __, onCleanup) => {
     if (wallpaper.type === "theme") {
-      wallSize.value = "主题色"
+      wallSize.value = "思源背景"
       return
     }
     if (wallpaper.type === "solid") {

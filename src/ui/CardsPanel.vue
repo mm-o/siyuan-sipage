@@ -35,15 +35,22 @@
 
     <div class="set-group">
       <h4 class="set-group-title">壁纸</h4>
-      <Slider v-model="wallpaper.blur" label="模糊" :min="0" :max="24" suffix="px" />
-      <Slider v-model="wallpaper.mask" label="遮罩" :min="0" :max="0.8" :step="0.02" suffix="%" :scale="100" />
+      <p v-if="isTheme" class="desk-hint">跟随思源：直接用思源当前背景，不叠模糊与遮罩。</p>
+      <template v-else>
+        <Slider v-model="wallpaper.blur" label="模糊" :min="0" :max="24" suffix="px" />
+        <Slider v-model="wallpaper.mask" label="遮罩" :min="0" :max="0.8" :step="0.02" suffix="%" :scale="100" />
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 /** 全局外观参数；预览和恢复默认统一由 SettingsSheet 提供。 */
+import { computed } from "vue"
 import { GlassSwitch } from "@/ui/controls"
 import Slider from "@/ui/Slider.vue"
 import { appearance as a, DEFAULT_APPEARANCE as D, CELL_MIN, CELL_MAX, wallpaper } from "@/core/store"
+
+/** 跟随思源不看模糊/遮罩：那两层只服务于照片底片 */
+const isTheme = computed(() => wallpaper.type === "theme")
 </script>

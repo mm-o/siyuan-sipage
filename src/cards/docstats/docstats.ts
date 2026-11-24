@@ -1,6 +1,6 @@
-import { computed } from "vue"
+﻿import { computed } from "vue"
 import { persisted } from "@/core/store"
-import { pad, sql } from "@/core/util"
+import { BODY_TYPES, pad, sql } from "@/core/util"
 
 interface Bar {
   label: string
@@ -26,7 +26,7 @@ interface DocStats {
   updatedAt: number
 }
 
-export const docstats = persisted("desk:docstats", { cache: null as DocStats | null })
+export const docstats = persisted("desk:docstats.v2", { cache: null as DocStats | null })
 export const stats = computed(() => docstats.cache)
 
 const CACHE_MS = 5 * 60_000
@@ -35,7 +35,10 @@ const ymd = (d: Date) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getD
 
 /**
  * 四个维度一次取完（每条都显式 limit：思源 SQL 默认只回 64 行）：
- *   总量 / 笔记本分布 / 近 14 天新增 / 字数分布 + 字数 Top
+ *   总量 / 笔记本分布 / 字数构成 / 字数 Top
+ *
+ * 口径（和思源自己一致）：**字数只数正文块**（`BODY_TYPES`）；文档块（type='d'）的
+ * length 是标题本身，混进来就会出现「745 字 / 62 篇」这种数字。
  */
 export async function loadDocStats(force = false): Promise<DocStats> {
   const cached = docstats.cache
@@ -44,18 +47,22 @@ export async function loadDocStats(force = false): Promise<DocStats> {
   const now = new Date()
   const d7 = new Date(now.getTime() - 7 * 86_400_000)
   const d30 = new Date(now.getTime() - 30 * 86_400_000)
-  const where = "type = 'd'"
 
   const [sum] = await sql(
-    `select count(*) as docs, sum(length) as words,
-       sum(case when substr(created,1,8) >= '${ymd(now)}' then 1 else 0 end) as today,
-       sum(case when substr(created,1,8) >= '${ymd(d7)}' then 1 else 0 end) as week,
-       sum(case when substr(created,1,8) >= '${ymd(d30)}' then 1 else 0 end) as month
-     from blocks where ${where} limit 1`,
+    `select
+       (select count(*) from blocks where type = 'd') as docs,
+       (select coalesce(sum(length), 0) from blocks where type in ${BODY_TYPES}) as words,
+       (select count(*) from blocks where type = 'd' and substr(created, 1, 8) >= '${ymd(now)}') as today,
+       (select count(*) from blocks where type = 'd' and substr(created, 1, 8) >= '${ymd(d7)}') as week,
+       (select count(*) from blocks where type = 'd' and substr(created, 1, 8) >= '${ymd(d30)}') as month
+     limit 1`,
   )
 
   const nbRows = await sql(
-    `select box, count(*) as docs, sum(length) as words from blocks where ${where} group by box order by docs desc limit 10`,
+    `select box,
+       sum(case when type = 'd' then 1 else 0 end) as docs,
+       sum(case when type in ${BODY_TYPES} then length else 0 end) as words
+     from blocks group by box having docs > 0 order by docs desc limit 10`,
   )
   const names = new Map<string, string>()
   try {
@@ -67,7 +74,8 @@ export async function loadDocStats(force = false): Promise<DocStats> {
   }
 
   const pathRows = await sql(
-    `select box, hpath, sum(length) as words from blocks where ${where} group by box, hpath order by words desc limit 400`,
+    `select box, hpath, sum(length) as words from blocks
+     where type in ${BODY_TYPES} group by box, hpath order by words desc limit 400`,
   )
 
   const tree = (() => {
@@ -93,7 +101,10 @@ export async function loadDocStats(force = false): Promise<DocStats> {
   })()
 
   const topRows = await sql(
-    `select content as title, length from blocks where ${where} order by length desc limit 5`,
+    `select b.content as title, sum(x.length) as words
+     from blocks x join blocks b on b.id = x.root_id
+     where x.type in ${BODY_TYPES} and b.type = 'd'
+     group by x.root_id order by words desc limit 5`,
   )
 
   const data: DocStats = {
@@ -107,7 +118,7 @@ export async function loadDocStats(force = false): Promise<DocStats> {
       value: Number(r.docs) || 0,
     })),
     tree,
-    top: topRows.map((r) => ({ label: String(r.title || "未命名"), value: Number(r.length) || 0 })),
+    top: topRows.map((r) => ({ label: String(r.title || "未命名"), value: Number(r.words) || 0 })),
     updatedAt: Date.now(),
   }
   docstats.cache = data

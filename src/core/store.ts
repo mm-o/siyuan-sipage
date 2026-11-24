@@ -1,4 +1,4 @@
-import { reactive, watch } from "vue"
+﻿import { reactive, watch } from "vue"
 import { LunarDay } from "tyme4ts"
 import { listFavs, removeFav, saveFav } from "@/core/image"
 import { pad } from "@/core/util"
@@ -198,7 +198,7 @@ export const CELL_MIN = 24
 export const CELL_MAX = 36
 const DEFAULT_CELL = 27
 export const PANEL_CLOCK = "@clock"
-const PANEL_TOOLS = "@tools"
+export const PANEL_TOOLS = "@tools"
 
 export const desk: DeskState = (G.__deskDesk ||= reactive<DeskState>({ cards: [] }))
 
@@ -279,7 +279,7 @@ const SEED: [string, number, number, number, number][] = [
 function seedDefaultDesk() {
   if (desk.cards.length) return
   desk.cards = [
-    { uid: "panel-clock", cardId: PANEL_CLOCK, w: 12, h: 6, x: 0, y: 0, auto: true },
+    { uid: "panel-clock", cardId: PANEL_CLOCK, w: 12, h: 4, x: 0, y: 0, auto: true },
     { uid: "panel-tools", cardId: PANEL_TOOLS, w: 2, h: 2, x: 0, y: 0, auto: true },
     ...SEED.map(([cardId, w, h, x, y]) => ({ uid: `${cardId}-seed`, cardId, w, h, x, y })),
   ]

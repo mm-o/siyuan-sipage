@@ -7,11 +7,12 @@
 ```text
 src/index.ts             插件注册：存储、页签、顶栏、命令
 src/core/
-  util.ts                共用底座：post()/sql() 内核出口与 pad()，几行的通用件不单独成文件
+  util.ts                共用底座：post()/sql() 内核出口、pad() 与正文块类型 BODY_TYPES
   registry.ts            15 种卡片、组件、材质、尺寸约束的唯一装配点
   store.ts               桌面/壁纸/外观状态、思源存储、缓存、网格排版
   image.ts               图片清单、跨域代理、壁纸样式、图片收藏文件
   daily.ts               每日内容的共享序列、背景与翻页
+  agenda.ts              日程与备忘共用的模型、分组、按日索引与写日记出口
   quickdocs.ts           文档索引与打开行为
 src/ui/
   DeskShell.vue          画布、面板组装、整理入口、每卡一个详情弹窗与全屏宿主
@@ -63,6 +64,8 @@ src/styles/index.css     设计令牌、共享控件、设置骨架、整理模�
 
 状态复用 `globalThis` 避免重复 bundle 的多份默认状态。修改兼容或持久化逻辑时，要额外验证思源整页重载与已有数据恢复。
 
+日程与备忘共用 `core/agenda.ts` 的一份状态：卡片、详情、日历只读模型与派生分组，写操作也只有一个入口。老版 `desk:memo` 在首次加载时一次性迁入收件箱并删除旧键；写日记只是可选出口（默认关），失败不影响本地条目。
+
 ## 生命周期
 
 - 桌面时间只在整分钟唤醒，卸载清理定时器。
@@ -74,7 +77,7 @@ src/styles/index.css     设计令牌、共享控件、设置骨架、整理模�
 
 ```bash
 pnpm check          # 类型/未用符号、分层、断点、构建、产物完整性
-pnpm check:browser  # 独立验证页与 5 组浏览器回归
+pnpm check:browser  # 独立验证页与 6 组浏览器回归
 ```
 
 `pnpm dev` 监听输出到 `.env` 指定工作空间的插件目录；未配置时输出 `dev-dist-plugin/`，避免覆盖验证页源码。`pnpm build` 固定输出 `dist/` 和 `package.zip`；验证页输出 `dev-dist/`，不会混入插件。

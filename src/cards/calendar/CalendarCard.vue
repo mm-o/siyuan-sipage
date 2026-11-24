@@ -6,6 +6,7 @@
       <b class="num" :class="`wk${v.wk}`">{{ v.day }}</b>
       <span class="lunar">{{ v.lunar }}</span>
       <span class="week">{{ v.week }}</span>
+      <span v-if="today.open" class="agenda">{{ today.open }} 项日程</span>
     </div>
 
     <!-- 整月网格（参考实现 widget-calendar）：够宽才出，等比放大后是同一套版式 -->
@@ -21,6 +22,9 @@
           :class="{ 'is-other': !cell.inMonth, 'is-today': cell.today, 'is-end': ci >= 5 }"
         >
           {{ cell.day }}
+          <i v-if="cell.dots.length" class="cell-dots">
+            <b v-for="(dot, di) in cell.dots" :key="di" class="cell-dot" :class="`is-${dot}`" />
+          </i>
         </li>
       </ul>
     </div>
@@ -34,6 +38,8 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { SolarDay } from "tyme4ts"
+import { dateKey, itemsOf, todayKey } from "@/core/agenda"
+import { dayDots } from "./calendar"
 
 const WEEK = ["一", "二", "三", "四", "五", "六", "日"]
 const tick = ref(0)
@@ -62,6 +68,13 @@ const v = computed(() => {
   }
 })
 
+/** 今天的日程：只报还没做的条数，做完了就不出声 */
+const today = computed(() => {
+  void tick.value
+  const list = itemsOf(todayKey())
+  return { total: list.length, open: list.filter((item) => !item.done).length }
+})
+
 /** 当月 6×7（周一开头），今天标蓝 */
 const month = computed(() => {
   void tick.value
@@ -74,6 +87,7 @@ const month = computed(() => {
       const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + wi * 7 + ci)
       return {
         day: d.getDate(),
+        dots: dayDots(dateKey(d)),
         inMonth: d.getMonth() === m,
         today: d.getDate() === base.getDate() && d.getMonth() === m && d.getFullYear() === y,
       }
@@ -116,7 +130,7 @@ const month = computed(() => {
 
 .num.wk5,
 .num.wk6 {
-  color: #fa595c;
+  color: var(--desk-danger);
 }
 
 .num.wk6 {
@@ -144,7 +158,14 @@ const month = computed(() => {
   font-style: normal;
   color: #fff;
   border-radius: 0.2em;
-  background: #eb3333;
+  background: var(--desk-danger);
+}
+
+/* 今天还有几条没做：数字格最下面一行，小字，不抢日号 */
+.agenda {
+  font-size: 8cqmin;
+  color: var(--desk-accent);
+  white-space: nowrap;
 }
 
 /* 月历：够宽才显示（8x4 起，等比放大同版式） */
@@ -178,7 +199,7 @@ const month = computed(() => {
 }
 
 .head li.is-end {
-  color: #fa595c;
+  color: var(--desk-danger);
 }
 
 .row:not(.head) {
@@ -186,10 +207,38 @@ const month = computed(() => {
 }
 
 .cell {
+  position: relative;
   display: grid;
   place-items: center;
   font-size: 7cqmin;
   line-height: 1;
+}
+
+/* 月格里的日程点：贴底一行，不参与数字排版 */
+.cell-dots {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  gap: 1.5cqmin;
+}
+
+.cell-dot {
+  width: 1.6cqmin;
+  height: 1.6cqmin;
+  border-radius: 50%;
+  background: var(--desk-accent);
+}
+
+.cell-dot.is-late {
+  background: var(--desk-danger);
+}
+
+.cell-dot.is-done {
+  background: var(--desk-text-3);
+  opacity: 0.6;
 }
 
 .cell.is-other {
@@ -197,7 +246,7 @@ const month = computed(() => {
 }
 
 .cell.is-end {
-  color: #fa595c;
+  color: var(--desk-danger);
 }
 
 .cell.is-today {
@@ -205,7 +254,7 @@ const month = computed(() => {
   height: 1.9em;
   justify-self: center;
   border-radius: 50%;
-  background: #367df1;
+  background: var(--desk-accent);
   color: #fff;
 }
 

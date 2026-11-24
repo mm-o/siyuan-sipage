@@ -7,7 +7,7 @@ const cards = [
   ['clock', '时钟', true], ['calendar', '日历', true], ['english', '每日英语', false],
   ['yiyan', '每日一言', false], ['shici', '每日诗词', false], ['weather', '天气', false],
   ['countdown', '倒数日', true], ['heatmap', '写作热力图', true], ['pomodoro', '番茄钟', true],
-  ['memo', '备忘录', true], ['docstats', '文档统计', true], ['quickopen', '快捷打开', true],
+  ['memo', '日程备忘', true], ['docstats', '文档统计', true], ['quickopen', '快捷打开', true],
   ['recent', '最近文档', true], ['shortcut', '快捷方式', true], ['block', '思源块', true],
 ]
 const harness = await openBrowser({ storage: { 'desk-cards:desk': { cards: panels } } })
@@ -71,7 +71,15 @@ try {
   const source = name => page.locator('.source').filter({ has: page.locator('strong', { hasText: new RegExp(`^${name}$`) }) })
   const oldImage = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>').toString('base64')
   const prime = () => page.evaluate(value => { globalThis.__deskWallpaper.resolved = value }, oldImage)
-  const wall = () => page.evaluate(() => ({ ...globalThis.__deskWallpaper, background: getComputedStyle(document.querySelector('.desk-wallpaper')).background, image: getComputedStyle(document.querySelector('.desk-wallpaper')).backgroundImage }))
+  const wall = () => page.evaluate(() => {
+    const el = document.querySelector('.desk-wallpaper')
+    return {
+      ...globalThis.__deskWallpaper,
+      /* 跟随思源不画底片：这一层根本不存在 */
+      background: el ? getComputedStyle(el).background : '',
+      image: el ? getComputedStyle(el).backgroundImage : 'none',
+    }
+  })
   const assertSource = async type => {
     await page.waitForFunction(type => globalThis.__deskWallpaper.type === type && globalThis.__deskWallpaper.resolved === undefined, type)
     const state = await wall()
@@ -89,7 +97,11 @@ try {
   assert.ok(solidWall.background, 'Solid color reaches the desktop background')
   await prime()
   await source('跟随思源').click()
-  assert.match((await assertSource('theme')).image, /radial-gradient/)
+  const themeWall = await assertSource('theme')
+  /* 跟随思源 = 什么都不画：桌面层透明、没有遮罩，直接透出思源背景 */
+  assert.equal(themeWall.image, 'none', 'theme mode paints no background layer')
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.desk-root')).backgroundColor), 'rgba(0, 0, 0, 0)')
+  assert.equal(await page.locator('.desk-wallpaper-mask').count(), 0, 'theme mode drops the photo mask')
   await prime()
   await source('思源头图').click()
   assert.match((await assertSource('cover')).image, /\/appearance\/covers\//)

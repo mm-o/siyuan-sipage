@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 写作热力图的数据层
  *
  * 取数方式与 siyuan-dashboard 一致：走思源内核的 SQL（`/api/query/sql`），
@@ -9,7 +9,7 @@
  * 只做纯计算与一次查询，不碰 DOM、不落盘。
  */
 import { onMounted, ref } from "vue"
-import { pad, sql } from "@/core/util"
+import { BODY_TYPES, pad, sql } from "@/core/util"
 
 /* ── 日期键（本地时区，避免 toISOString 把日期挪一天）── */
 const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -78,9 +78,9 @@ function windowStart(weeks: number, today = new Date().toLocaleDateString("sv-SE
 async function loadHeatmap(weeks = WEEKS_YEAR): Promise<Map<string, number>> {
   const since = ymdOf(windowStart(weeks))
   const stmt = `select day, count(distinct id) as n from (
-  select substr(created, 1, 8) as day, id from blocks where created >= '${since}'
+  select substr(created, 1, 8) as day, id from blocks where created >= '${since}' and type in ${BODY_TYPES}
   union all
-  select substr(updated, 1, 8) as day, id from blocks where updated >= '${since}'
+  select substr(updated, 1, 8) as day, id from blocks where updated >= '${since}' and type in ${BODY_TYPES}
 ) group by day order by day limit ${weeks * 7 + 7}`
   const rows = (await sql(stmt)) as { day: string; n: number }[]
 

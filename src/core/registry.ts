@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 卡片注册表 —— 唯一的扩展点
  *
  * 加一张新卡片只需要：
@@ -8,7 +8,7 @@
  * 外框、右键菜单、尺寸、弹窗、文档内嵌、持久化 —— 全部由框架统一处理。
  */
 import type { Component } from "vue"
-import { BarChart3, CalendarClock, CalendarDays, Clock, CloudSun, Boxes, FolderOpen, Grid3x3, History, Zap, Languages, Quote, ScrollText, StickyNote, Timer } from "lucide-vue-next"
+import { BarChart3, CalendarClock, CalendarDays, Clock, CloudSun, Boxes, FolderOpen, Grid3x3, History, Zap, Languages, ListTodo, Quote, ScrollText, Timer } from "lucide-vue-next"
 import CalendarCard from "@/cards/calendar/CalendarCard.vue"
 import CalendarPanel from "@/cards/calendar/CalendarPanel.vue"
 import ClockCard from "@/cards/clock/ClockCard.vue"
@@ -95,10 +95,12 @@ export const CARDS: CardDef[] = [
   {
     id: "calendar",
     name: "日历",
-    desc: "今日 / 月历 / 农历节气，点开是完整月视图",
+    desc: "今日 / 月历 / 农历节气，右栏是当天日程与备忘",
     component: CalendarCard,
     icon: CalendarDays,
     detail: CalendarPanel,
+    /* 左黄历 240 + 中月历 + 右日程 300，三栏都要站得住 */
+    detailSize: { width: "min(1040px, 94vw)", height: "min(720px, 90vh)" },
     constrain: { step: 1, min: 2, max: 16 },
     // 参考实现 的日历是白卡（--bg-card: #fff / #222），不是玻璃
     surface: "solid",
@@ -169,12 +171,13 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "memo",
-    name: "备忘录",
-    desc: "一行一条待办，点圆点勾掉",
+    name: "日程备忘",
+    desc: "今天要做什么 + 随手记，勾掉即完成；日历里同一天可见",
     component: MemoCard,
-    icon: StickyNote,
+    icon: ListTodo,
     detail: MemoPanel,
-    detailSize: { width: "min(900px, 92vw)", height: "min(560px, 84vh)" },
+    // 左分组 / 中列表 / 右编辑，编辑栏带日期与时间，要留够横向空间
+    detailSize: { width: "min(1000px, 94vw)", height: "min(600px, 86vh)" },
     surface: "solid",
   },
   {
@@ -237,4 +240,13 @@ export const CARDS: CardDef[] = [
 export function getCard(id: string): CardDef | undefined {
   return CARDS.find((c) => c.id === id)
 }
+
+/** 桌面面板（不是卡片）的尺寸约束：时钟可调，工具组固定 */
+const PANEL_CONSTRAIN: Record<string, CardConstrain> = {
+  "@clock": { min: 3, max: 10 },
+}
+
+/** 尺寸约束的唯一入口：卡片查注册表，面板查上面这张表（拖动/整理/补位共用） */
+export const constrainOf = (cardId: string): CardConstrain | undefined =>
+  PANEL_CONSTRAIN[cardId] ?? getCard(cardId)?.constrain
 

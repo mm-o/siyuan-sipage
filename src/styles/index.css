@@ -98,6 +98,8 @@
 
   /* 间距（4pt 栅格） */
   --desk-aside-w: 240px;
+  /* 详情第三栏（分类 / 编辑 / 日程）：与左栏同源，窄窗收起 */
+  --desk-detail-w: 300px;
 
   /*
    * 容器断点刻度（@container 不能用 var，这里只作唯一说明源；新代码请只用这五个值）
@@ -214,7 +216,8 @@ html.dark,
 }
 
 /* ══ 插件根 ════════════════════════════════════════════════ */
-/* 页签根（index.ts 里 addTab 挂载的容器） */
+/* 页签根（index.ts 里 addTab 挂载的容器）：桌面直接铺满，不自己收边、不自己裁；
+   只有跟随思源时连这层底色也一起让开，四角与背景就是思源自己的像素。 */
 .desk-tab-root {
   display: flex;
   flex-direction: column;
@@ -223,6 +226,14 @@ html.dark,
   min-height: 0;
   overflow: hidden;
   background: var(--b3-theme-background, #fff);
+}
+
+.desk-tab-root:has(.desk-root.is-theme) {
+  background: transparent;
+}
+
+.layout-tab-container:has(> .desk-tab-root) {
+  background-color: transparent;
 }
 
 /* 盒模型：插件不用 Tailwind preflight，只给自己的三个根做 border-box。
@@ -929,11 +940,45 @@ html.dark,
   inset: 0;
   overflow: hidden;
   isolation: isolate;
-  background: #0f172a;
+  /* 底子只有主题变量这一个来源：切日夜和卡片同一帧生效 */
+  background: var(--b3-theme-background, #0f172a);
   color: #f8fafc;
   font-family: var(--b3-font-family, "PingFang SC", "Microsoft YaHei", sans-serif);
   font-size: var(--desk-fs-sm);
   line-height: 1.5;
+}
+
+/* ── 跟随思源 ───────────────────────────────────────────────
+   桌面不画自己的底片：页签容器、页签根与桌面层全部让开，
+   露出来的就是思源自己的背景（主题色或主题背景图），四角与思源同一份像素。
+   照片底上的白字、深色玻璃药丸在这里换回主题色。 */
+.desk-root.is-theme {
+  color: var(--desk-text);
+  background: transparent;
+}
+
+.desk-root.is-theme .desk-clock {
+  color: var(--desk-text);
+  text-shadow: none;
+}
+
+.desk-root.is-theme .desk-clock .date {
+  color: var(--desk-text-3);
+}
+
+.desk-root.is-theme .empty {
+  color: var(--desk-text-2);
+}
+
+/* 工具组与卡片悬浮控件：照片色调 → 普通玻璃（照片型卡片内部的控件不受影响） */
+.desk-root.is-theme :is(.tools .gb.on-photo, .tools .brand, .frame > .gb.on-photo) {
+  --dg-ink: var(--desk-text);
+  --dg-base: var(--desk-text);
+  --dg-fill: color-mix(in srgb, var(--desk-surface) 78%, transparent);
+  --dg-hover: color-mix(in srgb, var(--desk-surface) 94%, transparent);
+  --dg-rim: var(--desk-stroke);
+
+  color: var(--desk-text);
 }
 
 /* ── 壁纸：铺满桌面窗口 ── */
@@ -1418,6 +1463,12 @@ html.dark,
 :is(.desk-root, .desk-sheet-mask, .desk-embed-card) .mm-row.is-done .mm-dot::before { background: var(--dg-primary); border-color: var(--dg-primary); }
 :is(.desk-root, .desk-sheet-mask, .desk-embed-card) .mm-dot:focus-visible { outline: var(--desk-ring); outline-offset: 1px; border-radius: 50%; }
 
+/* 日程行：日程备忘详情与日历右栏共用一套行内布局（圆点 + 时间 + 标题 + 完成态）。 */
+:is(.desk-root, .desk-sheet-mask, .desk-embed-card) .mm-line { display: flex; align-items: center; gap: var(--desk-sp-2); min-height: var(--desk-hit); }
+:is(.desk-root, .desk-sheet-mask, .desk-embed-card) .mm-line .mm-text { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+:is(.desk-root, .desk-sheet-mask, .desk-embed-card) .mm-line .mm-time { flex: none; color: var(--desk-text-3); font-size: var(--desk-fs-caption); font-variant-numeric: tabular-nums; }
+:is(.desk-root, .desk-sheet-mask, .desk-embed-card) .mm-line.is-done .mm-text { color: var(--desk-text-3); text-decoration: line-through; }
+
 /* 公共表面：弹层、框架卡片与内容面共享阴影和日夜色；弹层不描边。 */
 .desk-pane,
 .desk-surface {
@@ -1638,8 +1689,8 @@ html.dark,
 }
 
 /* 滚动区：结构由业务负责，滚动条外观只在这里定义。 */
-:is(.desk-root, .desk-sheet-mask, .desk-embed-card) :is(.cd-scroll, .wx-hits, .sc-col) { scrollbar-width: none; }
-:is(.desk-root, .desk-sheet-mask, .desk-embed-card) :is(.cd-scroll, .wx-hits, .sc-col)::-webkit-scrollbar { width: 0; height: 0; }
+:is(.desk-root, .desk-sheet-mask, .desk-embed-card) :is(.cd-scroll, .mm-scroll, .wx-hits, .sc-col) { scrollbar-width: none; }
+:is(.desk-root, .desk-sheet-mask, .desk-embed-card) :is(.cd-scroll, .mm-scroll, .wx-hits, .sc-col)::-webkit-scrollbar { width: 0; height: 0; }
 
 /* 可选择行：导航、卡片库、来源、分类、地点、文档和备忘共用一个悬停与选中反馈。 */
 :is(.desk-sheet-mask, .desk-root, .desk-embed-card) :is(.lib-row, .source, .cd-nav-btn, .cd-chip, .cd-cat-chip, .wx-hit, .qp-item, .mm-row, .rc-cell) { color: var(--desk-text); border: 0; background: transparent; border-radius: var(--desk-r-control); transition: background var(--desk-dur-fast) var(--desk-ease), border-color var(--desk-dur-fast) var(--desk-ease), color var(--desk-dur-fast) var(--desk-ease); }

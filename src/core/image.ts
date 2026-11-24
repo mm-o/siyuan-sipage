@@ -161,21 +161,17 @@ export const SOURCE_LABEL: Record<WallSource, string> = {
 }
 
 /**
- * 跟随思源：底色不写死，直接吃主题变量。
- * 主题一换，变量一变，壁纸跟着变，不需要任何 JS 监听。
- */
-export const THEME_BG =
-  "radial-gradient(120% 88% at 20% 0%, color-mix(in srgb, var(--b3-theme-primary, #3575f0) 38%, var(--b3-theme-background, #12161f)) 0%, transparent 58%), var(--b3-theme-background, #12161f)"
-
-/**
  * 思源资源：直接用笔记本 assets 里的图，内核按 /assets/... 直给，
  * 零网络、零转发；value 为空时退到题头图首张。
  */
 const SIYUAN_FALLBACK_BG = 'url("/appearance/covers/cover_001.webp")'
 
-/** 壁纸状态 → 背景样式（唯一出口：桌面、设置预览、组件设置预览都用它） */
+/**
+ * 壁纸状态 → 背景样式（唯一出口：桌面、设置预览都用它）。
+ * 跟随思源不在这里给样式 —— 桌面那层直接不画，背景由 CSS 变量跟着主题走。
+ */
 export function wallpaperBg(w: { type: string; value: string; resolved?: string }): Record<string, string> {
-  if (w.type === "theme") return { background: THEME_BG }
+  if (w.type === "theme") return {}
   if (w.type === "siyuan") return { backgroundImage: w.value ? `url(${w.value})` : SIYUAN_FALLBACK_BG }
   if (w.type === "solid") return { background: w.value }
   return { backgroundImage: `url(${w.resolved || w.value})` }
