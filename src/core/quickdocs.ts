@@ -9,7 +9,7 @@ function getApp(): any {
   return appRef || (window as any).siyuan?.ws?.app || null
 }
 
-import { stateOf } from "@/core/store"
+import { stateOf, takeLegacy } from "@/core/store"
 import { post, sql } from "@/core/util"
 
 export interface PickDoc {
@@ -24,31 +24,12 @@ interface QuickState {
 /** 快捷打开最多 8 格；与卡片库一致，同一篇文档可以重复占位。 */
 export const QUICK_SLOTS = 8
 
-/** 老版本只有一份共享列表：第一次取用时认领给第一张卡，之后各卡各的 */
-function claimLegacy(state: QuickState) {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem("desk:quickpick")
-  } catch {
-    return
-  }
-  if (!raw) return
-  try {
-    const box = JSON.parse(raw) as { docs?: PickDoc[] }
-    if (!state.docs.length && Array.isArray(box.docs)) state.docs = box.docs.slice(0, QUICK_SLOTS)
-    localStorage.removeItem("desk:quickpick")
-  } catch {
-    /* 旧键坏了就当没有 */
-  }
-}
-
-/** 每张卡一份配置：按实例 uid 取，第一次取时用空列表建一份 */
+/** 每张卡一份配置：第一次取时认领旧版共享列表，之后各卡各的 */
 export function quickOf(uid: string): QuickState {
-  const state = stateOf<QuickState>(uid, { docs: [] })
-  claimLegacy(state)
-  return state
+  const legacy = takeLegacy<{ docs?: PickDoc[] }>("desk:quickpick")
+  const docs = Array.isArray(legacy?.docs) ? legacy.docs.slice(0, QUICK_SLOTS) : []
+  return stateOf<QuickState>(uid, { docs })
 }
-
 export function addDoc(state: QuickState, doc: PickDoc) {
   if (state.docs.length >= QUICK_SLOTS) return
   state.docs = [...state.docs, doc]

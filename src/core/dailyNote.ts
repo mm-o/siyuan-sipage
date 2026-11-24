@@ -4,12 +4,13 @@
  * 思源的日记就是一篇文档，标识在 `attributes` 里：`custom-dailynote-YYYYMMDD = root_id`。
  * 所以「找某天的日记」是一条 SQL，「新建今天的日记」走内核 `/api/filetree/createDailyNote`。
  *
- * 卡片只读预览（前几行 + 字数/块数 + 未勾掉的待办），详情用 Protyle 只读渲染全文；
+ * 卡片给「字数 / 待办 / 前几行」，详情用 Protyle 就地编辑；
  * 两者都按实例偏移找日期，多张日记卡可以各看各的那一天。
  */
-import { BODY_TYPES, pad, post, sql } from "@/core/util"
+import { dateKey } from "@/core/agenda"
+import { BODY_TYPES, post, sql } from "@/core/util"
 
-export interface DailyNote {
+interface DailyNote {
   id: string
   title: string
 }
@@ -34,22 +35,12 @@ export interface DailyPreview extends DailyNote {
   updated: string
 }
 
-/** 日期键（本地时区）YYYY-MM-DD */
-export const dateKeyOf = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-
 /** 相对今天偏移几天 */
 export function dayOf(offset: number, base = new Date()) {
   return new Date(base.getFullYear(), base.getMonth(), base.getDate() + offset)
 }
 
-export function labelOf(date: Date) {
-  const today = dateKeyOf(new Date())
-  const key = dateKeyOf(date)
-  const weekday = `周${"日一二三四五六"[date.getDay()]}`
-  return key === today ? `今天 · ${weekday}` : `${date.getMonth() + 1}月${date.getDate()}日 · ${weekday}`
-}
-
-const attrOf = (date: Date) => `custom-dailynote-${dateKeyOf(date).replace(/-/g, "")}`
+const attrOf = (date: Date) => `custom-dailynote-${dateKey(date).replace(/-/g, "")}`
 
 /** 找某天的日记文档；没有就返回 null */
 export async function findDaily(date: Date): Promise<DailyNote | null> {
@@ -59,7 +50,7 @@ export async function findDaily(date: Date): Promise<DailyNote | null> {
   const id = String((rows[0] as { id?: string } | undefined)?.id || "")
   if (!id) return null
   const docs = await sql(`select content as title from blocks where id = '${id}' limit 1`).catch(() => [])
-  return { id, title: String((docs[0] as { title?: string } | undefined)?.title || dateKeyOf(date)) }
+  return { id, title: String((docs[0] as { title?: string } | undefined)?.title || dateKey(date)) }
 }
 
 /** 今天的日记：没有就让内核建一个（只对今天：日记文档的日期由内核按「今天」决定） */
@@ -71,7 +62,7 @@ export async function ensureToday(): Promise<DailyNote> {
   if (!notebook) throw new Error("未找到笔记本")
   const doc = await post<{ id: string }>("/api/filetree/createDailyNote", { notebook, app: "" })
   if (!doc?.id) throw new Error("创建日记失败")
-  return { id: doc.id, title: dateKeyOf(new Date()) }
+  return { id: doc.id, title: dateKey(new Date()) }
 }
 
 /** 某篇日记的字数与块数（编辑时就地刷新统计，不重挂 Protyle） */

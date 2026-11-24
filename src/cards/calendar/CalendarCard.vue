@@ -10,7 +10,7 @@
     </div>
 
     <!-- 整月网格：复用 ui/MiniCalendar，够宽才出 -->
-    <MiniCalendar class="month" :week-begin="state.weekBegin" />
+    <MiniCalendar class="month" :month="state.month" :week-begin="state.weekBegin" />
   </div>
 </template>
 

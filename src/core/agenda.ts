@@ -12,7 +12,7 @@
  * 存储：`persisted()`（本地存储，随插件页面走），老版备忘录 `desk:memo` 自动迁移。
  */
 import { computed, ref } from "vue"
-import { persisted } from "@/core/store"
+import { persisted, takeLegacy } from "@/core/store"
 import { pad, post } from "@/core/util"
 
 export interface PlanItem {
@@ -143,42 +143,20 @@ export const doneList = computed(() => {
 
 /* ── 日历格子上的标记 ─────────────────────────────────────── */
 
-interface DayMark {
-  open: number
-  done: number
-  late: boolean
-}
-
-const marks = computed(() => {
-  void tick.value
-  const today = todayKey()
-  const map = new Map<string, DayMark>()
-  for (const item of agenda.items) {
-    if (!item.date) continue
-    const hit = map.get(item.date) || { open: 0, done: 0, late: false }
-    if (item.done) {
-      hit.done += 1
-    } else {
-      hit.open += 1
-      if (item.date < today) hit.late = true
-    }
-    map.set(item.date, hit)
-  }
-  return map
-})
-
-const markOf = (key: string) => marks.value.get(key)
-/** 一格上的日程点：日历卡、日历详情、小日历共用 */
+/** 一格上的日程点：日历卡、日历详情、小日历共用（最多三个，没做完的排前面） */
 type DayDot = "open" | "done" | "late"
 
 const NO_DOTS: DayDot[] = []
 
 export function dayDots(key: string): DayDot[] {
-  const mark = markOf(key)
-  if (!mark) return NO_DOTS
+  const list = itemsOf(key)
+  if (!list.length) return NO_DOTS
+  const late = key < todayKey()
+  const open = list.filter((item) => !item.done).length
+  const done = list.length - open
   const dots: DayDot[] = []
-  for (let i = 0; i < Math.min(3, mark.open); i += 1) dots.push(mark.late ? "late" : "open")
-  if (!dots.length) for (let i = 0; i < Math.min(3, mark.done); i += 1) dots.push("done")
+  for (let i = 0; i < Math.min(3, open); i += 1) dots.push(late ? "late" : "open")
+  if (!dots.length) for (let i = 0; i < Math.min(3, done); i += 1) dots.push("done")
   return dots
 }
 
@@ -195,17 +173,6 @@ export const counts = computed<Record<PlanGroup, number>>(() => {
     else out.upcoming += 1
   }
   return out
-})
-
-/** 卡片头部：今天的条数与还没做的条数（逾期 / 备忘直接复用分组计数） */
-export const summary = computed(() => {
-  const today = itemsOf(todayKey())
-  return {
-    todayTotal: today.length,
-    todayOpen: today.filter((item) => !item.done).length,
-    late: counts.value.late,
-    inbox: counts.value.inbox,
-  }
 })
 
 /* ── 写 ───────────────────────────────────────────────────── */
@@ -293,38 +260,23 @@ export async function mirrorToDailyNote(items: PlanItem[]) {
 
 /** 老版备忘录（desk:memo）：有日期就到日历，没日期就进收件箱 */
 function migrateLegacy() {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem("desk:memo")
-  } catch {
-    return
-  }
-  if (!raw) return
-
-  try {
-    const box = JSON.parse(raw) as { items?: Array<{ id?: string; text?: string; done?: boolean; at?: number }> }
-    for (const old of box.items || []) {
-      const text = String(old.text || "").trim()
-      if (!text) continue
-      if (agenda.items.some((item) => item.text === text)) continue
-      agenda.items.push({
-        id: `ag-${old.id || Date.now().toString(36)}`,
-        text,
-        note: "",
-        date: "",
-        time: "",
-        done: !!old.done,
-        doneAt: old.done ? Date.now() : 0,
-        at: Number(old.at) || Date.now(),
-        syncedAt: 0,
-      })
-    }
-    localStorage.removeItem("desk:memo")
-  } catch {
-    /* 旧键坏了就当没迁移过，不阻塞卡片 */
+  const box = takeLegacy<{ items?: Array<{ id?: string; text?: string; done?: boolean; at?: number }> }>("desk:memo")
+  for (const old of box?.items || []) {
+    const text = String(old.text || "").trim()
+    if (!text || agenda.items.some((item) => item.text === text)) continue
+    agenda.items.push({
+      id: `ag-${old.id || Date.now().toString(36)}`,
+      text,
+      note: "",
+      date: "",
+      time: "",
+      done: !!old.done,
+      doneAt: old.done ? Date.now() : 0,
+      at: Number(old.at) || Date.now(),
+      syncedAt: 0,
+    })
   }
 }
-
 /** 首次运行种两条示例：一条今天的日程，一条收件箱里的备忘 */
 function seed() {
   if (agenda.seeded) return

@@ -10,6 +10,8 @@ const bad = files.filter(file => !allow.has(path.extname(file).toLowerCase())).m
 const entry = path.join(dist, 'index.js')
 const requires = fs.existsSync(entry) ? [...fs.readFileSync(entry, 'utf8').matchAll(/require\(["']([^"']+)["']\)/g)].map(match => match[1]) : []
 const foreign = requires.filter(name => name !== 'siyuan' && !name.startsWith('./'))
+/* 思源的插件加载器只解析 siyuan：相对 require（分包产物）一定加载失败 */
+const relative = requires.filter(name => name.startsWith('./'))
 const issues = []
 try {
   const source = JSON.parse(fs.readFileSync('plugin.json', 'utf8'))
@@ -19,5 +21,6 @@ try {
   for (const key of ['icon', 'preview']) if (built[key] && !files.includes(path.join(dist, built[key]))) issues.push(`缺少 ${key}: ${built[key]}`)
 } catch (error) { issues.push(`清单读取失败: ${error.message}`) }
 console.log(JSON.stringify({ 文件数: files.length, 缺失文件: missing, 不允许的扩展名: bad, 入口外部依赖: [...new Set(requires)], 异常依赖: foreign, 清单问题: issues }, null, 2))
+if (relative.length) issues.push(`入口含相对依赖（思源无法解析，需单文件打包）: ${relative.join(', ')}`)
 if (missing.length || bad.length || foreign.length || issues.length) process.exit(1)
 console.log('OK 产物完整、清单一致、入口仅依赖 siyuan')

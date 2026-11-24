@@ -1,42 +1,19 @@
-import { stateOf } from "@/core/store"
+import { stateOf, takeLegacy } from "@/core/store"
 import { sql } from "@/core/util"
 
 export { mountProtyle } from "@/ui/protyle"
 
 /** 卡片/弹窗共用：只记「显示哪个块」和它的标题 */
-export interface BlockState {
+interface BlockState {
   id: string
   title: string
 }
 
-/** 旧版只有一份：第一次取用时认领给第一张卡，之后各卡各的 */
-function claimLegacy(state: BlockState) {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem("desk:block")
-  } catch {
-    return
-  }
-  if (!raw) return
-  try {
-    const box = JSON.parse(raw) as Partial<BlockState>
-    if (!state.id && box.id) {
-      state.id = String(box.id)
-      state.title = String(box.title || "")
-    }
-    localStorage.removeItem("desk:block")
-  } catch {
-    /* 旧键坏了就当没有 */
-  }
-}
-
-/** 每张卡一份：按实例 uid 取，第一次取时用空块建一份 */
+/** 每张卡一份：第一次取时认领旧版那一个块，之后各显示各的 */
 export function blockOf(uid: string): BlockState {
-  const state = stateOf<BlockState>(uid, { id: "", title: "" })
-  claimLegacy(state)
-  return state
+  const legacy = takeLegacy<Partial<BlockState>>("desk:block")
+  return stateOf<BlockState>(uid, { id: String(legacy?.id || ""), title: String(legacy?.title || "") })
 }
-
 export function setId(state: BlockState, id: string, title = "") {
   state.id = id.trim()
   state.title = title

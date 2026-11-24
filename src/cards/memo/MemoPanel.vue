@@ -21,7 +21,7 @@
 
     <!-- 中：列表 -->
     <section class="mm-list-pane desk-pane is-mid">
-      <Chips v-model="groupChips" :options="GROUP_CHIPS" class="mm-groups" />
+
 
       <header class="mm-bar">
         <span class="mm-bar-title">{{ current.name }}</span>
@@ -167,12 +167,6 @@ const QUICK = [
   { label: "收件箱", value: "inbox" },
 ]
 
-/** 窄窗收起左栏后，分组改用一行胶囊（五个选项 Segmented 放不下） */
-const GROUP_CHIPS = GROUPS.map((group) => ({ label: group.name, value: group.id }))
-const groupChips = computed({
-  get: () => state.group,
-  set: (value: string | number) => pick(String(value)),
-})
 
 const current = computed(() => GROUPS.find((group) => group.id === state.group) || GROUPS[0])
 
@@ -359,14 +353,6 @@ function create() {
   min-height: 0;
 }
 
-/* 分组胶囊只在窄窗出现（宽屏有左栏） */
-.mm-groups {
-  display: none;
-  flex: 0 0 auto;
-  flex-wrap: wrap;
-  gap: var(--desk-sp-1);
-}
-
 .mm-bar {
   flex: 0 0 auto;
   display: flex;
@@ -524,19 +510,9 @@ function create() {
   text-align: center;
 }
 
-/* 窄窗：分组栏换成胶囊，再窄只留列表（勾选照常，编辑要宽一点） */
+/* 窄窗只收左栏：列表与编辑永远在场 */
 @container (max-width: 720px) {
   .mm-side {
-    display: none;
-  }
-
-  .mm-groups {
-    display: flex;
-  }
-}
-
-@container (max-width: 460px) {
-  .mm-detail {
     display: none;
   }
 }

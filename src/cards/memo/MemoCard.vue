@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="mm-card">
     <div class="mm-body">
       <header class="mm-head">
@@ -45,7 +45,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { GlassField } from "@/ui/controls"
-import { addItem, inbox, itemsOf, overdue, summary, todayKey, toggleItem, weekdayOf } from "@/core/agenda"
+import { addItem, counts, inbox, itemsOf, overdue, todayKey, toggleItem, weekdayOf } from "@/core/agenda"
 
 const props = defineProps<{ size?: string; w?: number; h?: number }>()
 
@@ -100,8 +100,8 @@ type Row =
   | { kind: "item"; key: string; item: ReturnType<typeof itemsOf>[number]; late: boolean }
 
 const meta = computed(() => {
-  const hit = summary.value
-  const parts = [`${weekdayOf(todayKey())} · ${hit.todayOpen} 项`]
+  const hit = counts.value
+  const parts = [`${weekdayOf(todayKey())} · ${hit.today} 项`]
   if (hit.late) parts.push(`逾期 ${hit.late}`)
   return parts.join(" · ")
 })

@@ -22,14 +22,18 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { stateOf } from "@/core/store"
-import { dayOf, labelOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
+import { dateKey, dayLabel, weekdayOf } from "@/core/agenda"
+import { dayOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
 
 const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
 
 /* 每张日记卡一份：看哪天（相对今天的偏移） */
 const state = stateOf<{ offset: number }>(props.uid || "daily", { offset: 0 })
 const date = computed(() => dayOf(state.offset))
-const label = computed(() => labelOf(date.value))
+const label = computed(() => {
+  const key = dateKey(date.value)
+  return `${dayLabel(key)} · ${weekdayOf(key)}`
+})
 
 const preview = ref<DailyPreview | null>(null)
 const empty = computed(() => (state.offset === 0 ? "今天还没写 · 点开写一句" : "这天没有日记"))

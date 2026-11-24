@@ -38,9 +38,12 @@ export function mountProtyle(app: unknown, element: HTMLElement, blockId: string
      插件弹层带了 backdrop-filter / transform 的祖先会给它造包含块，坐标就从视口变成「栏内」，
      最后飘到右下角。这里把它挪到 body（思源只持有元素引用，不查父节点），坐标立刻回到视口。 */
   let hints: MutationObserver | null = null
+  const adopted = new Set<HTMLElement>()
   const adoptHints = () => {
     element.querySelectorAll<HTMLElement>(".protyle-hint").forEach((hint) => {
-      if (hint.parentElement !== document.body) document.body.append(hint)
+      if (hint.parentElement === document.body) return
+      document.body.append(hint)
+      adopted.add(hint)
     })
   }
 
@@ -63,6 +66,9 @@ export function mountProtyle(app: unknown, element: HTMLElement, blockId: string
       if (timer) window.clearTimeout(timer)
       hints?.disconnect()
       hints = null
+      /* 收养的提示菜单是我们挪出来的，卸载时一并清掉，不留在 body 里 */
+      for (const hint of adopted) hint.remove()
+      adopted.clear()
       element.removeEventListener("input", onEdit, true)
       try {
         ;(editor as unknown as { destroy?: () => void }).destroy?.()

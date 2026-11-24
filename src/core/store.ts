@@ -201,6 +201,26 @@ function dropState(uid: string) {
   delete cardStates.data[uid]
 }
 
+/**
+ * 旧版「按卡片类型共享」的数据：读一次就删，谁先建实例谁认领。
+ * 各个卡的 `xxxOf(uid)` 用它把老键变成自己的初始值，之后各卡各的。
+ */
+export function takeLegacy<T>(key: string): T | null {
+  let raw: string | null = null
+  try {
+    raw = localStorage.getItem(key)
+  } catch {
+    return null
+  }
+  if (!raw) return null
+  try {
+    localStorage.removeItem(key)
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
 /* ── 桌面 ─────────────────────────────────────────────── */
 interface CardInstance {
   uid: string
@@ -317,7 +337,7 @@ function seedDefaultDesk() {
  * 一键整理 / 自动补位（对齐 参考实现 的 findFitPosition）。
  *
  * 规则：
- *   时钟（顶部）那一整块下方空 2 格，卡片从这里开始，逐行逐列找第一个空矩形；
+ *   时钟那一块下方留 1 格，卡片从这里开始，逐行逐列找第一个空矩形；
  *   卡片横向 / 纵向各留 1 格间距；左边留 1 格、右边留 1 格；
  *   小卡片自然填补空隙，视觉始终补满；卡片尺寸保持不变。
  */
@@ -330,9 +350,15 @@ export function flowDesk(cols: number) {
   const cards = desk.cards.filter((c) => !c.cardId.startsWith("@")).sort((a, b) => b.w * b.h - a.w * a.h)
   if (!cards.length) return
 
-  /* 时钟底部再空 2 格，卡片从这里开始排 */
+  /* 时钟底部留 1 格，卡片从这里开始排 */
   const clock = desk.cards.find((c) => c.cardId === PANEL_CLOCK)
-  const top = (clock ? clock.y + clock.h : 0) + 2
+  const top = (clock ? clock.y + clock.h : 0) + 1
+
+  /* 先全部抬到 (-1,-1)：否则未排的卡会拿旧坐标参与碰撞，把后面的卡挤下一行 */
+  for (const card of cards) {
+    card.x = -1
+    card.y = -1
+  }
 
   const overlap = (x: number, y: number, w: number, h: number, o: { x: number; y: number; w: number; h: number }) =>
     x < o.x + o.w && o.x < x + w && y < o.y + o.h && o.y < y + h
@@ -342,8 +368,6 @@ export function flowDesk(cols: number) {
     !cards.some((c) => c.x >= 0 && overlap(x - 1, y - 1, w + 2, h + 2, c))
 
   for (const card of cards) {
-    card.x = -1
-    card.y = -1
     const w = Math.min(card.w, cols - 1)
     const maxX = cols - w
     outer: for (let y = top; ; y++) {

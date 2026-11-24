@@ -44,8 +44,10 @@ import { GlassButton } from "@/ui/controls"
 import { dateKey, dayDots, todayKey } from "@/core/agenda"
 
 const props = withDefaults(defineProps<{
-  /** YYYY-MM-DD */
+  /** 选中的哪一天 YYYY-MM-DD */
   modelValue?: string
+  /** 只看哪个月 YYYY-MM（缺省跟随选中日） */
+  month?: string
   weekBegin?: "mon" | "sun"
   /** 顶部月份切换 */
   nav?: boolean
@@ -53,7 +55,7 @@ const props = withDefaults(defineProps<{
   dots?: boolean
   /** 头部「今天」按钮：跳回本月并选中今天 */
   today?: boolean
-}>(), { modelValue: "", weekBegin: "mon", nav: false, dots: true, today: false })
+}>(), { modelValue: "", month: "", weekBegin: "mon", nav: false, dots: true, today: false })
 
 const emit = defineEmits<{ "update:modelValue": [string] }>()
 
@@ -65,10 +67,11 @@ const parse = (key: string) => {
   return y && m && d ? new Date(y, m - 1, d) : new Date()
 }
 
-/** 看的是哪个月：跟随选中日，翻月只改视图 */
-const month = ref(props.modelValue || todayKey())
-watch(() => props.modelValue, (key) => {
-  if (key) month.value = key
+/** 看的是哪个月：外部可钉，内部翻月只改视图 */
+const month = ref(props.month || props.modelValue || todayKey())
+watch(() => [props.month, props.modelValue], ([pin, key]) => {
+  if (pin) month.value = pin
+  else if (key) month.value = key
 })
 
 const title = computed(() => {

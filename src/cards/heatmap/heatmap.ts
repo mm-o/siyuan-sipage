@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 写作热力图的数据层
  *
  * 取数方式与 siyuan-dashboard 一致：走思源内核的 SQL（`/api/query/sql`），
@@ -9,10 +9,10 @@
  * 只做纯计算与一次查询，不碰 DOM、不落盘。
  */
 import { onMounted, ref } from "vue"
-import { BODY_TYPES, pad, sql } from "@/core/util"
+import { dateKey } from "@/core/agenda"
+import { BODY_TYPES, sql } from "@/core/util"
 
-/* ── 日期键（本地时区，避免 toISOString 把日期挪一天）── */
-const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+/* ── 日期键（统一用 agenda 的本地时区写法，避免 toISOString 把日期挪一天）── */
 const parseDay = (key: string) => {
   const [y, m, d] = key.split("-").map(Number)
   return new Date(y, (m || 1) - 1, d || 1)
@@ -61,7 +61,7 @@ function windowStart(weeks: number, today = new Date().toLocaleDateString("sv-SE
   const end = parseDay(today)
   end.setDate(end.getDate() + (7 - ((end.getDay() + 6) % 7) - 1))
   end.setDate(end.getDate() - (weeks * 7 - 1))
-  return dayKey(end)
+  return dateKey(end)
 }
 
 /**
@@ -77,10 +77,14 @@ function windowStart(weeks: number, today = new Date().toLocaleDateString("sv-SE
  */
 async function loadHeatmap(weeks = WEEKS_YEAR): Promise<Map<string, number>> {
   const since = ymdOf(windowStart(weeks))
+  /* 日记文档单独算：它们的块不按 created 归属，见下面的 diary 查询 */
+  const skipDiary = "root_id not in (select block_id from attributes where name like 'custom-dailynote-%')"
   const stmt = `select day, count(distinct id) as n from (
-  select substr(created, 1, 8) as day, id from blocks where created >= '${since}' and type in ${BODY_TYPES}
+  select substr(created, 1, 8) as day, id from blocks
+  where created >= '${since}' and type in ${BODY_TYPES} and ${skipDiary}
   union all
-  select substr(updated, 1, 8) as day, id from blocks where updated >= '${since}' and type in ${BODY_TYPES}
+  select substr(updated, 1, 8) as day, id from blocks
+  where updated >= '${since}' and type in ${BODY_TYPES} and ${skipDiary}
 ) group by day order by day limit ${weeks * 7 + 7}`
   const rows = (await sql(stmt)) as { day: string; n: number }[]
 
@@ -89,6 +93,18 @@ async function loadHeatmap(weeks = WEEKS_YEAR): Promise<Map<string, number>> {
     const day = String(row.day || "")
     if (day.length !== 8) continue
     counts.set(keyOfYmd(day), Number(row.n) || 0)
+  }
+
+  /* 日记正文按「日记日期」归属：补写昨天的日记落在昨天，而不是今天 */
+  const diary = (await sql(`select a.name as attr, count(*) as n from blocks b
+    join attributes a on a.block_id = b.root_id
+    where a.name like 'custom-dailynote-%' and b.type in ${BODY_TYPES}
+    group by a.name limit ${weeks * 7}`).catch(() => [])) as { attr?: string; n?: number }[]
+  for (const row of diary) {
+    const ymd = String(row.attr || "").slice(-8)
+    if (ymd.length !== 8) continue
+    const key = keyOfYmd(ymd)
+    counts.set(key, (counts.get(key) || 0) + (Number(row.n) || 0))
   }
   return counts
 }
@@ -123,7 +139,7 @@ export function buildGrid(counts: Map<string, number>, weeks: number, today = ne
   for (let col = 0; col < weeks; col += 1) {
     const days: HeatDay[] = []
     for (let row = 0; row < 7; row += 1) {
-      const key = dayKey(cursor)
+      const key = dateKey(cursor)
       const count = counts.get(key) ?? 0
       days.push({ date: key, count, level: levelOf(count, cuts) })
       // 月份标签：每周第一天所在月份变了就放一个（首列除外，避免和左边标签打架）
@@ -147,7 +163,7 @@ export function buildStats(counts: Map<string, number>, weeks: number, today = n
   const cursor = parseDay(start)
   const end = parseDay(today)
   while (cursor.getTime() <= end.getTime()) {
-    const key = dayKey(cursor)
+    const key = dateKey(cursor)
     days.push({ date: key, count: counts.get(key) ?? 0, level: 0 })
     cursor.setDate(cursor.getDate() + 1)
   }

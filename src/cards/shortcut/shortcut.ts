@@ -4,7 +4,7 @@ import {
   Database, Ellipsis, Eye, FileText, Inbox, Layers, LayoutGrid, Link, List, Maximize,
   Menu, Network, PanelLeft, RefreshCw, ScrollText, Search, Settings, Sun, Tag, Terminal, ZoomIn,
 } from "lucide-vue-next"
-import { stateOf } from "@/core/store"
+import { stateOf, takeLegacy } from "@/core/store"
 import { post } from "@/core/util"
 
 /**
@@ -80,30 +80,12 @@ interface ShortcutState {
 /* 默认 8 个：搜索 / 命令面板 / 日记 / 外观 / 后退 / 前进 / 刷新 / 停靠栏 */
 const DEFAULT_ENABLED = ["search", "command", "daily", "mode", "back", "forward", "refresh", "dock"]
 
-/** 旧版只有一份启用列表：读一次就删，谁先建实例谁认领 */
-function legacyEnabled(): string[] | null {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem("desk:shortcut")
-  } catch {
-    return null
-  }
-  if (!raw) return null
-  try {
-    const box = JSON.parse(raw) as Partial<ShortcutState>
-    const list = Array.isArray(box.enabled) ? box.enabled.slice() : null
-    localStorage.removeItem("desk:shortcut")
-    return list
-  } catch {
-    return null
-  }
-}
-
-/** 每张卡一份：按实例 uid 取，第一次取时把旧列表或默认 8 个当初始值 */
+/** 每张卡一份：第一次取时认领旧列表，其余用默认 8 个 */
 export function shortcutOf(uid: string): ShortcutState {
-  return stateOf<ShortcutState>(uid, { enabled: legacyEnabled() ?? [...DEFAULT_ENABLED] })
+  const legacy = takeLegacy<Partial<ShortcutState>>("desk:shortcut")
+  const enabled = Array.isArray(legacy?.enabled) ? legacy.enabled.slice() : [...DEFAULT_ENABLED]
+  return stateOf<ShortcutState>(uid, { enabled })
 }
-
 /** 思源 sprite 是否可用（Shadow DOM / iframe 里不可用） */
 export const useSprite = () => typeof document !== "undefined" && !!document.getElementById("iconSearch")
 

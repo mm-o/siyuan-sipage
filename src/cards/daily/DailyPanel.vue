@@ -49,18 +49,22 @@ import { GlassButton, toast } from "@/ui/controls"
 import { stateOf } from "@/core/store"
 import { mountProtyle } from "@/ui/protyle"
 import MiniCalendar from "@/ui/MiniCalendar.vue"
-import { dateKeyOf, dailyStat, dayOf, ensureToday, labelOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
+import { dateKey, dayLabel, weekdayOf } from "@/core/agenda"
+import { dailyStat, dayOf, ensureToday, loadDaily, type DailyPreview } from "@/core/dailyNote"
 
 const props = defineProps<{ mode?: string; uid?: string }>()
 
 const state = stateOf<{ offset: number }>(props.uid || "daily", { offset: 0 })
 const date = computed(() => dayOf(state.offset))
-const label = computed(() => labelOf(date.value))
+const label = computed(() => {
+  const key = dateKey(date.value)
+  return `${dayLabel(key)} · ${weekdayOf(key)}`
+})
 const dayNum = computed(() => date.value.getDate())
 
 /** 小日历选中的是哪天：和实例 offset 互转 */
 const selectedKey = computed({
-  get: () => dateKeyOf(date.value),
+  get: () => dateKey(date.value),
   set: (key: string) => {
     const [y, m, d] = key.split("-").map(Number)
     if (!y || !m || !d) return

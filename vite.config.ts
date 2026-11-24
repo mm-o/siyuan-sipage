@@ -42,6 +42,9 @@ export default defineConfig(({ mode }) => {
         ] : [zipPack({ inDir: "dist", outDir: ".", outFileName: "package.zip" })],
         output: {
           entryFileNames: "[name].js",
+          /* 思源的插件加载器只认 siyuan 这一个外部模块，相对 require 解析不了，
+             所以必须单文件：动态 import 全部内联，不产出 chunks。 */
+          inlineDynamicImports: true,
           assetFileNames: asset => asset.name === "style.css" ? "index.css" : asset.name,
         },
       },
