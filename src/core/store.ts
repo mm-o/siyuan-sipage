@@ -123,6 +123,9 @@ export async function favoriteWallpaper(): Promise<boolean> {
 }
 
 /* ── 外观 ─────────────────────────────────────────────── */
+/** 材质风格：液态玻璃（默认）/ 思源原生 / 扁平 / 纸感 */
+export type DeskStyle = "liquid" | "native" | "md3"
+
 interface Appearance {
   /** 目标单格宽度（真实单格 = 视口宽 / 列数，被钳制在 [CELL_MIN, CELL_MAX]） */
   cell: number
@@ -132,6 +135,8 @@ interface Appearance {
   shadow: number
   lift: number
   paneOpacity: number
+  /** 材质风格：整套材质令牌在 index.css 里按 data-desk-style 覆盖 */
+  style: DeskStyle
   /* 动效 */
   motion: boolean
   motionDur: number      /* 入场时长 ms */
@@ -147,6 +152,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
   shadow: 0.34,
   lift: 2,
   paneOpacity: 0.8,
+  style: "liquid",
   motion: true,
   motionDur: 620,
   motionStagger: 40,
@@ -170,6 +176,10 @@ function applyAppearanceVars() {
     "--desk-seq-step": appearance.motion ? `${appearance.motionStagger}ms` : "0ms",
   }
   for (const [name, value] of Object.entries(vars)) style.setProperty(name, value)
+  /* 风格挂在 body 上：Teleport 出去的弹层也一起换材质；同时给 ui 层一个初值，
+     控件据此决定用自己的 DOM 还是思源的 b3-* 组件（ui 不能依赖 core） */
+  document.body.dataset.deskStyle = appearance.style
+  ;(G as Record<string, unknown>).__deskStyle = appearance.style
 }
 
 export function resetAppearance() {
@@ -353,7 +363,6 @@ export function flowDesk(cols: number) {
   if (cols <= 0) return
   alignPanels(cols, true)
 
-
   /* 大卡先放、小卡后补：小卡才有机会塞进大卡留下的空隙 */
   const cards = desk.cards.filter((c) => !c.cardId.startsWith("@")).sort((a, b) => b.w * b.h - a.w * a.h)
   if (!cards.length) return
@@ -400,7 +409,6 @@ function alignPanels(cols: number, force = false) {
     c.y = 1
   }
 }
-
 
 /* ── 倒数日 ───────────────────────────────────────────── */
 export type CountdownCategory = "anniversary" | "holiday" | "life" | "work" | "goal" | "other"

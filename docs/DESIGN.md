@@ -158,3 +158,61 @@ pnpm check:browser
 ## 空态
 
 所有「没有内容」的地方都是 `.desk-empty`：`ui/controls` 里的 `EmptyArt`（一本摊开的书 + 一颗星，96px；卡片内 40px；`currentColor` 跟 `--desk-text-3`）配一句话，可选再加一个动作；卡片和小列表用 `.is-tight`。空态不是终点：日记的空态直接给「写这天的日记」，任何一天都能建（今天走内核 `createDailyNote`，其它日期在最近一篇日记的同一目录建文档并补 `custom-dailynote-YYYYMMDD` 属性）。
+
+## 材质风格（三套）
+
+`body[data-desk-style]` 挂三套材质，切换只换令牌与控件外观，布局、字号、间距、动效一律不动。
+
+| 值 | 名称 | 面 / 圆角 | 控件 |
+|---|---|---|---|
+| `liquid` | 液态玻璃（默认） | 半透明 + 18px 模糊 + 高光内描边；卡片 18px | 自己的 `.gb` 镜片按钮、46×28 开关、凹槽滑轨 |
+| `native` | 思源原生 | `--b3-theme-surface` 实底；圆角整组取 `--b3-border-radius` / `-b` | **直接用思源组件**：`block__icon`、`b3-button`（`--outline` / `--cancel`）、`b3-switch` 26×16、`b3-slider`、`b3-text-field`、`b3-chip`；分段是一排 `b3-button--outline` |
+| `md3` | Material 3 | 面色 `#FFFBFE` / `#1C1B1F`；卡片 12px、弹层 28px、栏 16px | 药丸按钮（40 高、全圆角、state layer 8%/12%、主操作实心）、52×32 开关（16→24 旋钮）、4px 滑轨 + 20px 旋钮、`filled` 输入框（下边线聚焦）、8px 胶囊（选中 16% 主题浅底）、分段是一根描边内嵌分隔线 |
+
+### 令牌分层
+
+基础元素只有三层，改风格时只动第一层：
+
+```text
+① 风格令牌    --ctl-h / --ctl-pad / --ctl-radius        按钮与文字按钮
+              --sw-w / --sw-h / --sw-pad / --sw-knob /
+              --sw-knob-active / --sw-shift              开关
+              --sl-h / --sl-track / --sl-thumb / --sl-thumb-mt   滑轨
+              --field-h                                   输入
+              --chip-h / --chip-pad / --chip-radius       胶囊
+② 控件规则    每条只写一次（.gb / .desk-switch / .slider-input / .desk-field / .chip），
+              全部读上面这些令牌
+③ 风格差异    只剩配色与状态层（MD3 的 state layer、native 的 b3 变量映射），不再重复几何
+```
+
+三条实现规矩：
+
+1. 覆盖**最终令牌**（`--dg-panel-fill` / `--dg-card-fill` / `--dg-surface-shadow` / `--desk-r-*`），不要在 `body` 上改 `--dg-panel-tint` —— `:root` 的 `color-mix` 链在声明处已求值；
+2. 非玻璃风格用一条 `backdrop-filter: none` 彻底摘掉滤镜，而不是留 `blur(0px)`；
+3. 控件分两类：`native` 渲染思源 DOM（样式全部来自 `base.css`，悬停/聚焦/禁用/主题同步零维护），`md3` 复用我们自己的 DOM 只换几何与状态层。控件通过 `ui/style.ts` 的 `deskStyle` 读取当前风格（core 写全局初值、`DeskShell` 同步），保持 `ui/controls` 不依赖 core。
+
+### 图标按钮（三套各自的定义）
+
+| | liquid | native | md3 |
+|---|---|---|---|
+| 形状 | 28px 圆形，玻璃镜片 | **32×32、16px 图标、满不透明**、透明底、`--b3-border-radius`，hover 才出 `--b3-list-icon-hover` | **40px 圆形 tonal surface**（`--md-surface-variant`），hover 加深、选中 22% 主题色 |
+
+原生下的 `.block__icon` 要显式补规格：思源默认 `opacity: 0`（只在工具栏 hover 时显形），而且弹层里拿不到完整级联会露出浏览器默认按钮边框。补全后是「透明底 + 4px 内边距 + b3 圆角 + hover `--b3-list-icon-hover`」，和思源自己的图标按钮一致。
+
+### 胶囊与分段（三套各自的定义）
+
+| | liquid | native | md3 |
+|---|---|---|---|
+| 胶囊 | 药丸、玻璃面色 + 1px 描边；选中实心主题色 | 28 高、`--b3-border-radius`、`--b3-list-hover` 底；选中 `--b3-theme-primary` | 32 高、8px 圆角、1px 描边；选中 16% 主题浅底 + 主题字 |
+| 照片上 | 深色 44% 底 + 白字；选中白 90% 底 + 深字 | 白 16% 底 + 白字；选中白 92% + 深字 | 深色 28% 底 + 白字；选中白 92% + 深字 |
+| 分段 | 药丸容器、选中实心 | 一排 `b3-button--outline`，选中 `--b3-theme-primary-lightest`（思源没有分段组件） | 一根描边容器 + 内部分隔线，选中 tonal |
+
+`native` 的胶囊要显式补规格：思源的 `.b3-chip` 规则在插件弹层里拿不到完整级联（浏览器默认按钮边框会露出来），所以按 b3-chip 的规格自己补齐，颜色仍取 `--b3-*` 变量。
+
+设置页在 `native` 与 `md3` 下都是「白卡 + 行间细线 + 右侧控件」，行高 40/44、滑块固定 160px。
+
+**候选但没做的风格**：新拟物（阴影方向冲突、暗色易脏）、霓虹描边（和用户主题打架）、无面极简（可读性完全依赖壁纸）。要加的话按同一套「令牌 + 控件几何」扩展，不动布局。
+
+## 卡片上没有控件
+
+一张卡只有一件事：**点一下打开详情**。卡片四角不再有 hover 出现的「全屏 / 更多」按钮——全屏在详情标题栏里（弹层通用能力），移除 / 刷新走右键原生菜单。因此 `CardFrame` 只剩 `expand / refresh / remove` 三个事件，注册表里的 `controls` 开关也一并删除。

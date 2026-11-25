@@ -1,4 +1,4 @@
-﻿import { computed, ref, type Ref } from "vue"
+import { computed, ref, type Ref } from "vue"
 import { getCard, type CardConstrain } from "@/core/registry"
 import { PANEL_TOOLS, appearance, computeGrid, desk, setDeskDims } from "@/core/store"
 

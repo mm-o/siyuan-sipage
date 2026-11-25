@@ -5,6 +5,7 @@
  * 图标一律 lucide（stroke 1.7），不自绘 SVG。
  */
 import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, Teleport, watch, type Component, type PropType, type Ref } from "vue"
+import { isNative } from "@/ui/style"
 import { Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-vue-next"
 
 /** 插件和验证页注册同一图形，各使用处只引用 iconDeskCards。 */
@@ -101,25 +102,46 @@ export const GlassButton = defineComponent({
   },
   setup(props) {
     onMounted(ensureGlassFilters)
-    return () => h("button", {
-      class: ["gb", { "gb-text": props.text, "is-on": props.active, "on-photo": props.tone === "photo", "is-primary": props.variant === "primary", "is-danger": props.variant === "danger", ariaLabel: !props.text }],
-      type: props.type,
-      disabled: props.disabled,
-      "data-position": "north",
-      "data-tooltip-encoding": "none",
-      "aria-label": props.label,
-      "aria-pressed": props.active,
-      onPointermove: glassPointer,
-      onPointerleave: (e: PointerEvent) => {
-        const button = e.currentTarget as HTMLElement
-        button.style.removeProperty("--dg-light-x")
-        button.style.removeProperty("--dg-light-y")
-      },
-    }, [
-      h("span", { class: "gb-lens", "aria-hidden": "true" }),
-      props.icon ? h(props.icon, { size: 14, "stroke-width": 1.7, "aria-hidden": "true" }) : null,
-      props.text ? h("span", { class: "gb-label" }, props.label) : null,
-    ])
+    return () => {
+      /* 原生风格：直接用思源的按钮组件——图标按钮 block__icon，文字按钮 b3-button */
+      if (isNative()) {
+        const look = props.variant === "primary" ? "" : props.variant === "danger" ? " b3-button--cancel" : " b3-button--outline"
+        return h(
+          "button",
+          {
+            class: props.text || props.variant !== "default" ? `b3-button${look}` : "block__icon block__icon--show desk-native-icon",
+            type: props.type,
+            disabled: props.disabled,
+            "aria-label": props.label,
+            "aria-pressed": props.active,
+            style: props.variant === "danger" ? { color: "var(--b3-theme-error)" } : undefined,
+          },
+          [
+            props.icon ? h(props.icon, { size: props.text ? 14 : 16, "stroke-width": 1.7, "aria-hidden": "true" }) : null,
+            props.text ? h("span", { class: "gb-label" }, props.label) : null,
+          ],
+        )
+      }
+      return h("button", {
+        class: ["gb", { "gb-text": props.text, "is-on": props.active, "on-photo": props.tone === "photo", "is-primary": props.variant === "primary", "is-danger": props.variant === "danger", ariaLabel: !props.text }],
+        type: props.type,
+        disabled: props.disabled,
+        "data-position": "north",
+        "data-tooltip-encoding": "none",
+        "aria-label": props.label,
+        "aria-pressed": props.active,
+        onPointermove: glassPointer,
+        onPointerleave: (e: PointerEvent) => {
+          const button = e.currentTarget as HTMLElement
+          button.style.removeProperty("--dg-light-x")
+          button.style.removeProperty("--dg-light-y")
+        },
+      }, [
+        h("span", { class: "gb-lens", "aria-hidden": "true" }),
+        props.icon ? h(props.icon, { size: 14, "stroke-width": 1.7, "aria-hidden": "true" }) : null,
+        props.text ? h("span", { class: "gb-label" }, props.label) : null,
+      ])
+    }
   },
 })
 
@@ -146,7 +168,10 @@ export const GlassField = defineComponent({
       emit("input", event)
     }
     return () => h(props.as, {
-      class: ["desk-field", "gf", "desk-input", { "is-multiline": props.as === "textarea", "is-invalid": props.invalid, "on-photo": props.tone === "photo" }],
+      /* 原生风格：直接吃思源的输入框样式 */
+      class: isNative()
+        ? ["b3-text-field", "gf", { "is-multiline": props.as === "textarea", "is-invalid": props.invalid }]
+        : ["desk-field", "gf", "desk-input", { "is-multiline": props.as === "textarea", "is-invalid": props.invalid, "on-photo": props.tone === "photo" }],
       type: props.as === "input" ? props.type : undefined,
       value: props.modelValue,
       disabled: props.disabled,
@@ -163,15 +188,27 @@ export const GlassSwitch = defineComponent({
   props: { modelValue: Boolean, label: { type: String, required: true }, disabled: Boolean },
   emits: ["update:modelValue"],
   setup(props, { emit }) {
-    return () => h("button", {
-      class: ["desk-switch", "gs", { "is-on": props.modelValue }],
-      type: "button",
-      role: "switch",
-      disabled: props.disabled,
-      "aria-label": props.label,
-      "aria-checked": props.modelValue,
-      onClick: () => emit("update:modelValue", !props.modelValue),
-    }, [h("span", { class: "gs-knob", "aria-hidden": "true" })])
+    return () => {
+      if (isNative()) {
+        return h("input", {
+          class: "b3-switch desk-native-switch",
+          type: "checkbox",
+          checked: props.modelValue,
+          disabled: props.disabled,
+          "aria-label": props.label,
+          onChange: (e: Event) => emit("update:modelValue", (e.target as HTMLInputElement).checked),
+        })
+      }
+      return h("button", {
+        class: ["desk-switch", "gs", { "is-on": props.modelValue }],
+        type: "button",
+        role: "switch",
+        disabled: props.disabled,
+        "aria-label": props.label,
+        "aria-checked": props.modelValue,
+        onClick: () => emit("update:modelValue", !props.modelValue),
+      }, [h("span", { class: "gs-knob", "aria-hidden": "true" })])
+    }
   },
 })
 
@@ -360,13 +397,16 @@ function segmentKey(e: KeyboardEvent, props: { modelValue: string; options: SegO
 export const Segmented = (props: { modelValue: string; options: SegOption[] } & Emit) =>
   h(
     "div",
-    { class: "seg", role: "tablist", onKeydown: (e: KeyboardEvent) => segmentKey(e, props) },
+    { class: ["seg", { "desk-seg-native": isNative() }], role: "tablist", onKeydown: (e: KeyboardEvent) => segmentKey(e, props) },
     props.options.map((opt) =>
       h(
         "button",
         {
           key: opt.value,
-          class: ["seg-item", { active: props.modelValue === opt.value }],
+          /* 原生风格没有分段组件：用一排思源描边按钮，选中借 b3 的浅色态 */
+          class: isNative()
+            ? `b3-button b3-button--outline desk-seg-native-item${props.modelValue === opt.value ? " is-active" : ""}`
+            : ["seg-item", { active: props.modelValue === opt.value }],
           role: "tab",
           "aria-selected": props.modelValue === opt.value,
           tabindex: props.modelValue === opt.value ? 0 : -1,
@@ -398,7 +438,7 @@ export const Chips = (props: {
         "button",
         {
           key: String(opt.value),
-          class: ["chip", { active: props.modelValue === opt.value, "on-photo": (props.tone ?? "plain") === "on-photo" }],
+          class: isNative() ? `b3-chip b3-chip--small desk-native-chip${props.modelValue === opt.value ? " b3-chip--primary" : ""}` : ["chip", { active: props.modelValue === opt.value, "on-photo": (props.tone ?? "plain") === "on-photo" }],
           "aria-pressed": props.modelValue === opt.value,
           type: "button",
           onClick: () => emit(props)(opt.value),

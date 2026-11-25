@@ -60,7 +60,6 @@
             @expand="(r) => expand(inst, r)"
             @remove="removeFromDesk(inst.uid)"
             @refresh="refreshKey++"
-            @fullscreen="openFull(inst)"
           >
             <component :is="cardOf(inst.cardId)" :key="refreshKey" :size="label(inst)" :w="inst.w" :h="inst.h" :uid="inst.uid" />
           </CardFrame>
@@ -143,7 +142,8 @@
 <script setup lang="ts">
 import { GlassButton, toast } from "@/ui/controls"
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
-import { detailRequest, stateOf } from "@/core/store"
+import { appearance, detailRequest, stateOf } from "@/core/store"
+import { syncDeskStyle } from "@/ui/style"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
@@ -227,8 +227,6 @@ function itemStyle(c: { x: number; y: number; w: number; h: number }) {
 const label = (c: { w: number; h: number }) => `${c.w}x${c.h}` as CardSize
 const cardOf = (id: string) => getCard(id)?.component
 
-
-
 /* 详情 / 全屏：每张卡一个独立弹窗。钉住的那个不被顶替，可以同时钉住多个。 */
 interface DetailSheet {
   key: number
@@ -248,12 +246,6 @@ const defOf = (s: DetailSheet) => getCard(s.cardId)
 const sizeOf = (s: DetailSheet) => defOf(s)?.detailSize
 
 const dropSheet = (s: DetailSheet) => { sheets.value = sheets.value.filter((item) => item !== s) }
-
-function openFull(inst: { uid: string; cardId: string; w: number; h: number }) {
-  if (!getCard(inst.cardId)) return
-  full.value = { open: true, uid: inst.uid, cardId: inst.cardId, size: label(inst) }
-  sheets.value = sheets.value.filter((s) => s.cardId !== inst.cardId)
-}
 
 function expand(inst: { uid: string; cardId: string; w: number; h: number }, origin?: DOMRect) {
   if (arranging.value || !getCard(inst.cardId)) return
@@ -393,6 +385,9 @@ onMounted(() => {
   })
   if (scrollRef.value) observer.observe(scrollRef.value)
 })
+
+/* 风格变了先同步给控件层：它决定用我们的 DOM 还是思源的 b3-* 组件 */
+watch(() => appearance.style, (value) => syncDeskStyle(value), { immediate: true })
 
 /* 卡片点了自己的某个入口（分组、某一天）→ 这里替它打开详情 */
 watch(

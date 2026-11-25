@@ -59,8 +59,6 @@ const emit = defineEmits<{ select: [string] }>()
   cursor: pointer;
 }
 
-
-
 .lib-icon {
   display: grid;
   place-items: center;

@@ -66,6 +66,27 @@ try {
   await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--desk-r-card').trim() === '18px')
   checks.push('all settings tabs work; appearance slider updates shared CSS variables and reset restores defaults')
 
+  /* 四套材质：切换只改令牌，不动布局 */
+  for (const [label, style, blur, radius] of [['原生', 'native', '0px', null], ['MD3', 'md3', '0px', '20px'], ['玻璃', 'liquid', '18px', null]]) {
+    await page.getByRole('tab', { name: label, exact: true }).click()
+    await page.waitForFunction((want) => document.body.dataset.deskStyle === want, style)
+    assert.equal(
+      await page.locator('.set-preview-card').first().evaluate((el) => getComputedStyle(el).backdropFilter),
+      blur === '0px' ? 'none' : 'blur(18px) saturate(1.35)',
+      `${style} swaps the surface material`,
+    )
+    /* 控件也跟着换：非玻璃风格没有镜片、也没有模糊 */
+    const chrome = await page.locator('.set-nav-item').first().evaluate((el) => {
+      const cs = getComputedStyle(el)
+      return { filter: cs.backdropFilter, radius: cs.borderTopLeftRadius }
+    })
+    assert.equal(chrome.filter, blur === '0px' ? 'none' : chrome.filter, `${style} swaps control chrome`)
+    if (radius) assert.equal(chrome.radius, radius, `${style} uses its own control radius`)
+  }
+  await page.getByRole('button', { name: '恢复默认', exact: true }).click()
+  await page.waitForFunction(() => document.body.dataset.deskStyle === 'liquid')
+  checks.push('three surfaces (liquid / native / md3) switch by tokens without touching layout')
+
   // 每次注入旧运行时图像，再用真实来源按钮切换，验证统一入口清理缓存。
   await nav.getByRole('button', { name: '壁纸', exact: true }).click()
   const source = name => page.locator('.source').filter({ has: page.locator('strong', { hasText: new RegExp(`^${name}$`) }) })
@@ -184,17 +205,8 @@ try {
   await page.waitForTimeout(280)
   const calendar = frames.nth(1)
   await calendar.scrollIntoViewIfNeeded()
-  await calendar.hover()
-  await calendar.getByRole('button', { name: '全屏', exact: true }).click()
-  await page.locator('.desk-full').waitFor()
-  assert.equal(await dialog.count(), 0, 'Fullscreen button does not bubble into detail')
-  await page.getByRole('button', { name: '退出全屏（Esc）', exact: true }).click()
-  await page.locator('.desk-full').waitFor({ state: 'detached' })
-  await calendar.hover()
-  await calendar.getByRole('button', { name: '更多', exact: true }).click()
-  assert.equal(await dialog.count(), 0, 'More button does not bubble into detail')
-  const menu = await page.evaluate(() => globalThis.__siyuanMenus.at(-1))
-  assert.deepEqual(menu.items.map(item => item.label).filter(Boolean), ['打开', '刷新', '移除'])
+  /* 卡片上没有悬浮控件：hover 之后也只能找到 0 个按钮，点卡面就是详情 */
+  assert.equal(await calendar.locator(':scope > button').count(), 0, 'cards carry no hover controls')
   await calendar.locator('.body').click({ position: { x: 50, y: 50 } })
   await dialog.waitFor()
   assert.equal(await dialog.locator('.desk-sheet-head-title').textContent(), '日历')
@@ -204,7 +216,7 @@ try {
   assert.equal(await dialog.count(), 0, 'Detail fullscreen closes the sheet')
   await page.keyboard.press('Escape')
   await page.locator('.desk-full').waitFor({ state: 'detached' })
-  checks.push('card click opens detail; more/fullscreen do not bubble; native menu contract and Escape exit work')
+  checks.push('cards have no hover controls; a click opens the detail, fullscreen lives in the sheet header')
 
   // 验证框架销毁嵌套内嵌实例：保留 DOM 引用后移除整个父容器。
   await page.evaluate(() => {

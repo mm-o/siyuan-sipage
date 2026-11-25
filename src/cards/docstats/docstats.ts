@@ -1,4 +1,4 @@
-﻿import { computed } from "vue"
+import { computed } from "vue"
 import { persisted } from "@/core/store"
 import { BODY_TYPES, pad, sql } from "@/core/util"
 

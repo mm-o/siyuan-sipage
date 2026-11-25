@@ -4,6 +4,12 @@
     <p class="set-p">整屏生效：所有卡片共用这套参数。</p>
 
     <div class="set-group">
+      <h4 class="set-group-title">风格</h4>
+      <Segmented v-model="a.style" :options="STYLE_OPTIONS" />
+      <p class="set-p">{{ styleHint }}</p>
+    </div>
+
+    <div class="set-group">
       <h4 class="set-group-title">布局</h4>
       <Slider v-model="a.cell" label="单格边长" :min="CELL_MIN" :max="CELL_MAX" :step="1" suffix="px" :default-value="D.cell" />
     </div>
@@ -47,9 +53,24 @@
 <script setup lang="ts">
 /** 全局外观参数；预览和恢复默认统一由 SettingsSheet 提供。 */
 import { computed } from "vue"
-import { GlassSwitch } from "@/ui/controls"
+import { GlassSwitch, Segmented } from "@/ui/controls"
 import Slider from "@/ui/Slider.vue"
-import { appearance as a, DEFAULT_APPEARANCE as D, CELL_MIN, CELL_MAX, wallpaper } from "@/core/store"
+import { appearance as a, DEFAULT_APPEARANCE as D, CELL_MIN, CELL_MAX, wallpaper, type DeskStyle } from "@/core/store"
+
+/** 三套材质：质感 / 思源组件 / Material 3 */
+const STYLE_OPTIONS: { label: string; value: DeskStyle }[] = [
+  { label: "玻璃", value: "liquid" },
+  { label: "原生", value: "native" },
+  { label: "MD3", value: "md3" },
+]
+
+const STYLE_HINTS: Record<DeskStyle, string> = {
+  liquid: "液态玻璃：半透明 + 背景模糊 + 高光内描边。",
+  native: "思源原生：按钮、开关、滑块、输入框直接用思源组件，最省性能。",
+  md3: "Material 3：药丸按钮、52×32 开关、4px 滑轨、8px 胶囊、12px 卡片。",
+}
+
+const styleHint = computed(() => STYLE_HINTS[a.style] ?? "")
 
 /** 跟随思源不看模糊/遮罩：那两层只服务于照片底片 */
 const isTheme = computed(() => wallpaper.type === "theme")

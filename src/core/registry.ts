@@ -63,12 +63,6 @@ interface CardDef {
    */
   surface?: "glass" | "solid"
   /**
-   * 卡片右上角控件开关（默认全开）：
-   *   expand 点击卡片打开详情   menu ⋯ 按钮   full 全屏按钮
-   * 关闭后右键菜单仍在，不会丢失能力。
-   */
-  controls?: { expand?: boolean; menu?: boolean; full?: boolean }
-  /**
    * 尺寸约束（可选，唯一入口）：拖到哪里都先过这一套
    *   step   段落式步长：尺寸只落在 step 的倍数上（如拼图 3 的倍数，5×5 直接跳成 6×6）
    *   min/max 边长范围（格）
@@ -211,7 +205,6 @@ export const CARDS: CardDef[] = [
     component: QuickPickCard,
     icon: FolderOpen,
     detail: QuickPickPanel,
-    controls: { menu: false, full: false },
     detailSize: { width: "min(560px, 92vw)", height: "min(520px, 82vh)" },
     surface: "solid",
   },
@@ -222,7 +215,6 @@ export const CARDS: CardDef[] = [
     component: RecentDocsCard,
     icon: History,
     detail: RecentPanel,
-    controls: { menu: false, full: false },
     detailSize: { width: "min(760px, 92vw)", height: "min(620px, 86vh)" },
     surface: "solid",
   },
@@ -233,7 +225,6 @@ export const CARDS: CardDef[] = [
     component: ShortcutCard,
     icon: Zap,
     detail: ShortcutPanel,
-    controls: { menu: false, full: false },
     constrain: { step: 2, min: 2, max: 16 },
     detailSize: { width: "min(720px, 92vw)", height: "min(520px, 82vh)" },
     surface: "solid",
@@ -253,4 +244,3 @@ export const CARDS: CardDef[] = [
 export function getCard(id: string): CardDef | undefined {
   return CARDS.find((c) => c.id === id)
 }
-

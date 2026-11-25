@@ -2,7 +2,7 @@
   <label class="slider desk-slider" :class="{ 'is-disabled': disabled, ariaLabel: defaultValue !== undefined }" data-position="north" data-tooltip-encoding="none" :aria-label="hint">
     <span class="slider-label">{{ label }}</span>
     <input
-      class="slider-input"
+      :class="isNative() ? 'b3-slider desk-native-slider' : 'slider-input'"
       type="range"
       :aria-label="label"
       :aria-valuetext="display"
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import { isNative } from "@/ui/style"
 
 const props = withDefaults(defineProps<{
   modelValue: number

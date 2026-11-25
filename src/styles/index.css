@@ -144,6 +144,25 @@
 
   /* 命中区 */
   --desk-hit: 28px;
+  /* 控件尺寸：三套风格只改这三个值 */
+  --ctl-h: 28px;
+  --ctl-pad: var(--desk-sp-3);
+  --ctl-radius: var(--desk-r-pill);
+  /* 开关 / 滑轨 / 输入 / 胶囊的几何：三套风格只改这些值 */
+  --sw-w: 46px;
+  --sw-h: 28px;
+  --sw-pad: 3px;
+  --sw-knob: 22px;
+  --sw-knob-active: 24px;
+  --sw-shift: 18px;
+  --sl-h: 28px;
+  --sl-track: 6px;
+  --sl-thumb: 20px;
+  --sl-thumb-mt: -8px;
+  --field-h: 32px;
+  --chip-h: 28px;
+  --chip-pad: var(--desk-sp-3);
+  --chip-radius: var(--desk-r-pill);
 
   /* 阴影 */
   --desk-shadow-2: 0 8px 24px rgb(0 0 0 / 16%);
@@ -392,7 +411,6 @@ html.dark,
 .desk-seq > :nth-child(8) { animation-delay: calc(var(--desk-seq-step, 40ms) * 7); }
 .desk-seq > :nth-child(n + 9) { animation-delay: calc(var(--desk-seq-step, 40ms) * 8); }
 
-
 @media (prefers-reduced-motion: reduce) {
   .desk-enter {
     animation: none;
@@ -449,7 +467,6 @@ html.dark,
   }
 }
 
-
 /* ═══ 语义工具类（跨卡片同构的部分，卡片里不要再抄一遍）═══ */
 
 /* 详情面板骨架：三栏面板的根节点（左右列 + 自适应中列） */
@@ -501,7 +518,6 @@ html.dark,
   letter-spacing: 0.01em;
   color: var(--desk-text);
 }
-
 
 .set .set-row {
   display: flex;
@@ -844,7 +860,6 @@ html.dark,
 .desk-pane.is-solo {
   border-radius: var(--desk-r-pane-in) var(--desk-r-pane-in) var(--desk-r-pane) var(--desk-r-pane);
 }
-
 
 /* 动作组：详情的「上一条 / 下一条 · 喜欢 / 复制 / 换背景」都装在这个 flex 行里
    （`SeriesNav` 的 ‹ › 也用它）。少了这条，组内按钮会跟着行高各自落位 → 看起来不在一条线上。 */
@@ -1340,7 +1355,6 @@ html.dark,
   text-overflow: ellipsis;
 }
 
-
 /* ═══ 基础控件（原 ui/primitives/*.vue，样式集中在这里） ═══ */
 /* 液态玻璃控件：与已确认样板同源的清透表面、折射边缘和高光。 */
 .gb {
@@ -1353,11 +1367,11 @@ html.dark,
   flex: none;
   gap: var(--desk-sp-1h);
   width: var(--desk-hit);
-  min-width: var(--desk-hit);
-  height: var(--desk-hit);
+  min-width: var(--ctl-h);
+  height: var(--ctl-h);
   padding: 0;
   border: 0;
-  border-radius: var(--desk-r-pill);
+  border-radius: var(--ctl-radius);
   background: transparent;
   color: var(--dg-ink);
   box-shadow: var(--dg-shadow);
@@ -1371,7 +1385,7 @@ html.dark,
   touch-action: manipulation;
   transition: transform var(--desk-dur-fast) var(--desk-ease), box-shadow var(--desk-dur-fast) var(--desk-ease), opacity var(--desk-dur-fast) var(--desk-ease);
 }
-.gb-text { --dg-filter: var(--dg-pill-filter, blur(1px)); width: auto; padding-inline: var(--desk-sp-3); font-size: var(--desk-fs-body); }
+.gb-text { --dg-filter: var(--dg-pill-filter, blur(1px)); width: auto; padding-inline: var(--ctl-pad); font-size: var(--desk-fs-body); }
 .gb > .gb-lens {
   position: absolute;
   inset: 0;
@@ -1431,7 +1445,7 @@ html.dark,
 .seg-item:hover { color: var(--desk-text); background: var(--dg-hover); }
 .seg-item.active { background: var(--dg-selected); border-color: var(--dg-rim); color: var(--desk-text); font-weight: var(--desk-fw-medium); box-shadow: var(--dg-shadow), inset 0 1px 0 var(--dg-highlight); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--desk-sp-1h); }
-.chip { flex: none; min-height: var(--desk-hit); padding: 0 var(--desk-sp-3); border-radius: var(--desk-r-pill); border: 1px solid var(--dg-rim); background: var(--dg-fill); color: var(--dg-ink); box-shadow: inset 0 1px 0 var(--dg-highlight); font: inherit; font-size: var(--desk-fs-caption); white-space: nowrap; cursor: pointer; transition: background var(--desk-dur-fast) var(--desk-ease), color var(--desk-dur-fast) var(--desk-ease); }
+.chip { flex: none; min-height: var(--chip-h); padding: 0 var(--chip-pad); border-radius: var(--chip-radius); border: 1px solid var(--dg-rim); background: var(--dg-fill); color: var(--dg-ink); box-shadow: inset 0 1px 0 var(--dg-highlight); font: inherit; font-size: var(--desk-fs-caption); white-space: nowrap; cursor: pointer; transition: background var(--desk-dur-fast) var(--desk-ease), color var(--desk-dur-fast) var(--desk-ease); }
 .chip:hover { background: var(--dg-hover); }
 .chip.active { color: #fff; background: var(--dg-primary); }
 .chip.on-photo { border-color: rgb(255 255 255 / 42%); color: #fff; background: rgb(15 27 44 / 44%); }
@@ -1505,8 +1519,8 @@ html.dark,
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
-  min-height: 32px;
-  height: 32px;
+  min-height: var(--field-h);
+  height: var(--field-h);
   padding: 5px 12px;
   border: 1px solid var(--dg-field-rim);
   border-radius: var(--desk-r-control);
@@ -1603,9 +1617,9 @@ html.dark,
   display: inline-flex;
   align-items: center;
   flex: none;
-  width: 46px;
-  height: 28px;
-  padding: 3px;
+  width: var(--sw-w);
+  height: var(--sw-h);
+  padding: var(--sw-pad);
   border: 1px solid var(--dg-field-rim);
   border-radius: var(--desk-r-pill);
   background: linear-gradient(180deg, rgb(255 255 255 / 26%), transparent 46%), var(--dg-track);
@@ -1622,8 +1636,8 @@ html.dark,
 }
 .gs-knob {
   display: block;
-  width: 22px;
-  height: 22px;
+  width: var(--sw-knob);
+  height: var(--sw-knob);
   border-radius: 50%;
   border: 1px solid rgb(255 255 255 / 88%);
   background: radial-gradient(circle at 34% 26%, #fff 0%, rgb(244 248 252 / 96%) 52%, rgb(214 224 236 / 94%) 100%);
@@ -1631,8 +1645,8 @@ html.dark,
   pointer-events: none;
   transition: transform var(--desk-dur) var(--desk-ease-out);
 }
-.desk-switch.is-on .gs-knob { transform: translateX(18px); }
-.desk-switch:active .gs-knob { width: 24px; }
+.desk-switch.is-on .gs-knob { transform: translateX(var(--sw-shift)); }
+.desk-switch:active .gs-knob { width: var(--sw-knob-active); }
 .desk-switch:focus-visible { outline: var(--desk-ring); outline-offset: 3px; }
 .desk-switch:disabled { opacity: .45; cursor: default; }
 
@@ -1646,16 +1660,16 @@ html.dark,
   -webkit-appearance: none;
   width: 100%;
   min-width: 0;
-  height: 28px;
+  height: var(--sl-h);
   margin: 0;
   border: 0;
   border-radius: var(--desk-r-pill);
-  background: linear-gradient(to right, var(--dg-primary) 0 var(--range-progress), transparent var(--range-progress) 100%) center / 100% 6px no-repeat;
+  background: linear-gradient(to right, var(--dg-primary) 0 var(--range-progress), transparent var(--range-progress) 100%) center / 100% var(--sl-track) no-repeat;
   outline: none;
   cursor: pointer;
 }
 .desk-slider .slider-input::-webkit-slider-runnable-track {
-  height: 6px;
+  height: var(--sl-track);
   border: 1px solid var(--dg-field-rim);
   border-radius: var(--desk-r-pill);
   background: var(--dg-track);
@@ -1663,16 +1677,16 @@ html.dark,
 }
 .desk-slider .slider-input::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  margin-top: -8px;
+  width: var(--sl-thumb);
+  height: var(--sl-thumb);
+  margin-top: var(--sl-thumb-mt);
   border: 1px solid rgb(255 255 255 / 88%);
   border-radius: 50%;
   background: radial-gradient(circle at 34% 26%, #fff 0%, rgb(244 248 252 / 96%) 52%, rgb(212 222 235 / 94%) 100%);
   box-shadow: 0 1px 3px rgb(12 28 52 / 26%), 0 3px 8px rgb(12 28 52 / 16%), inset 0 1px 1px #fff, inset 0 -1px 1px rgb(148 168 194 / 34%);
 }
 .desk-slider .slider-input:active::-webkit-slider-thumb { transform: scale(1.06); }
-.desk-slider .slider-input::-moz-range-track { height: 6px; border: 1px solid var(--dg-field-rim); border-radius: var(--desk-r-pill); background: var(--dg-track); }
+.desk-slider .slider-input::-moz-range-track { height: var(--sl-track); border: 1px solid var(--dg-field-rim); border-radius: var(--desk-r-pill); background: var(--dg-track); }
 .desk-slider .slider-input::-moz-range-thumb { width: 20px; height: 20px; border: 1px solid rgb(255 255 255 / 88%); border-radius: 50%; background: radial-gradient(circle at 34% 26%, #fff, #d4deeb); box-shadow: 0 1px 3px rgb(12 28 52 / 26%), inset 0 1px 1px #fff; }
 .desk-slider .slider-input:focus-visible { outline: var(--desk-ring); outline-offset: 2px; }
 .desk-slider.is-disabled { opacity: .45; }
@@ -1858,4 +1872,464 @@ body.desk-overlay .protyle-util {
 .db-block table,
 .db-block pre {
   max-width: 100% !important;
+}
+
+/* ══ 材质风格 ════════════════════════════════════════════════════════
+ * 三套，全部挂在 body[data-desk-style] 上（Teleport 出去的弹层一起换）：
+ *   liquid  液态玻璃（默认，就是上面那套令牌）
+ *   native  思源原生：控件直接用 b3-* 组件，面取思源主题变量
+ *   md3     Material 3：药丸按钮 / 52×32 开关 / 4px 滑轨 / 8px 胶囊
+ *
+ * 原则：只改「面、模糊、阴影、圆角、控件外观」；布局、字号、间距、动效不动。
+ * 覆盖的是**最终令牌**（--dg-panel-fill / --dg-card-fill …），
+ * 因为 :root 上的 color-mix 链在声明处就已求值，改 tint 不会重算。
+ */
+
+/* ── 思源原生：面与圆角全部取思源主题 ── */
+body[data-desk-style="native"] {
+  --dg-panel-fill: var(--b3-theme-surface, #fff);
+  --dg-card-fill: var(--b3-theme-surface, #fff);
+  --dg-card-regular: var(--b3-theme-surface, #fff);
+  --dg-content-fill: var(--b3-theme-background, #f5f6f7);
+  --dg-field-fill: var(--b3-theme-background, #f5f6f7);
+  --dg-panel-glow: transparent;
+  --dg-highlight: transparent;
+  --dg-bottom: transparent;
+  --dg-panel-shadow: none;
+  --dg-surface-shadow: inset 0 0 0 1px var(--b3-border-color, rgb(0 0 0 / 10%));
+  --desk-card-shadow: 0;
+  --desk-blur-regular: 0px;
+  --desk-blur-clear: 0px;
+  --desk-saturate: 1;
+  --dg-surface-blur: 0px;
+  --dg-panel-blur: 0px;
+  --desk-stroke: var(--b3-border-color, rgb(0 0 0 / 10%));
+  /* 圆角整组对齐思源：面板 / 卡片 / 弹层 / 控件都用同一个 b3 半径 */
+  --desk-r-sheet: var(--b3-border-radius-b, 8px);
+  --desk-r-card: var(--b3-border-radius, 6px);
+  --desk-r-pane: var(--b3-border-radius, 6px);
+  --desk-r-pane-in: var(--b3-border-radius, 6px);
+  --desk-r-control: var(--b3-border-radius, 6px);
+  --desk-r-sm: var(--b3-border-radius, 6px);
+  --desk-r-md: var(--b3-border-radius-b, 8px);
+  --desk-r-pill: var(--b3-border-radius-b, 8px);
+  /* 控件配色 */
+  --dg-fill: var(--b3-theme-surface, #fff);
+  --dg-rim: var(--b3-border-color, rgb(0 0 0 / 10%));
+  --dg-field-rim: var(--b3-border-color, rgb(0 0 0 / 10%));
+  --dg-hover: var(--b3-list-hover, rgb(0 0 0 / 4%));
+  --dg-selected: var(--b3-theme-surface-lighter, rgb(0 0 0 / 6%));
+  --dg-primary: var(--b3-theme-primary, #3575f0);
+  --dg-ink: var(--b3-theme-on-surface, var(--desk-text));
+  --dg-track: var(--b3-theme-background, #f5f6f7);
+  --dg-shadow: none;
+  --dg-glow: transparent;
+  --dg-icon-filter: none;
+  --dg-pill-filter: none;
+}
+
+/* ── Material 3：面、圆角、高度 ── */
+body[data-desk-style="md3"] {
+  /* 控件尺寸：MD3 的按钮 40、胶囊 32、开关 52×32、滑轨 4、输入 44 */
+  --ctl-h: 40px;
+  --ctl-pad: var(--desk-sp-4);
+  --sw-w: 52px;
+  --sw-h: 32px;
+  --sw-pad: 4px;
+  --sw-knob: 16px;
+  --sw-knob-active: 28px;
+  --sw-shift: 20px;
+  --sl-h: 32px;
+  --sl-track: 4px;
+  --sl-thumb: 20px;
+  --sl-thumb-mt: -8px;
+  --field-h: 44px;
+  --chip-h: 32px;
+  --chip-pad: 16px;
+  --chip-radius: 8px;
+
+  --md-surface: #fffbfe;
+  --md-surface-variant: #f3edf7;
+  --md-outline: #79747e;
+  --md-outline-soft: rgb(121 116 126 / 38%);
+  --dg-panel-fill: var(--md-surface);
+  --dg-card-fill: var(--md-surface);
+  --dg-card-regular: var(--md-surface-variant);
+  --dg-content-fill: var(--md-surface-variant);
+  --dg-field-fill: var(--md-surface-variant);
+  --dg-panel-glow: transparent;
+  --dg-highlight: transparent;
+  --dg-bottom: transparent;
+  --dg-panel-shadow: 0 1px 2px rgb(0 0 0 / 8%), 0 2px 6px rgb(0 0 0 / 6%);
+  --dg-surface-shadow: 0 1px 3px rgb(0 0 0 / 10%), 0 1px 2px rgb(0 0 0 / 6%);
+  --desk-card-shadow: 0.2;
+  --desk-blur-regular: 0px;
+  --desk-blur-clear: 0px;
+  --desk-saturate: 1;
+  --dg-surface-blur: 0px;
+  --dg-panel-blur: 0px;
+  --desk-stroke: var(--md-outline-soft);
+  --desk-r-sheet: 28px;
+  --desk-r-card: 12px;
+  --desk-r-pane: 16px;
+  --desk-r-pane-in: 8px;
+  --desk-r-control: 20px;
+  --desk-r-sm: 8px;
+  --desk-r-md: 12px;
+  --desk-r-pill: 999px;
+  /* 控件配色 */
+  --dg-fill: var(--md-surface);
+  --dg-rim: var(--md-outline-soft);
+  --dg-field-rim: var(--md-outline-soft);
+  --dg-hover: rgb(121 116 126 / 12%);
+  --dg-selected: color-mix(in srgb, var(--desk-accent) 16%, transparent);
+  --dg-primary: var(--desk-accent);
+  --dg-ink: var(--desk-text);
+  --dg-track: var(--md-surface-variant);
+  --dg-shadow: none;
+  --dg-glow: transparent;
+  --dg-icon-filter: none;
+  --dg-pill-filter: none;
+}
+body.body--dark[data-desk-style="md3"] {
+  --md-surface: #1c1b1f;
+  --md-surface-variant: #2b2930;
+  --md-outline: #938f99;
+  --md-outline-soft: rgb(147 143 153 / 40%);
+}
+
+/* ── 非玻璃风格：彻底摘掉滤镜（不是 blur(0px)）── */
+body[data-desk-style]:not([data-desk-style="liquid"])
+  :is(.desk-pane, .desk-surface, .frame, .desk-pop, .desk-full) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── 原生：控件就是思源组件，这里只补布局黏合与照片上的对比 ── */
+/* 思源的 .block__icon：默认 opacity:0（靠工具栏 hover 才显形），
+   而且在插件弹层里拿不到完整级联（浏览器默认按钮边框会露出来）。
+   这里按 block__icon 的规格补全：28 命中区、4px 内边距、透明底、b3 圆角与 hover。 */
+/* 规格对齐思源工具栏图标：32 命中区、16px 图标、满不透明、hover 才出底色 */
+body[data-desk-style="native"] .block__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 8px;
+  border: 0;
+  border-radius: var(--b3-border-radius, 6px);
+  background: transparent;
+  color: var(--b3-theme-on-surface, var(--desk-text));
+  opacity: 1;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: background 120ms ease, color 120ms ease;
+}
+body[data-desk-style="native"] .block__icon:hover:not(:disabled) {
+  background: var(--b3-list-icon-hover, rgb(0 0 0 / 6%));
+  color: var(--b3-theme-on-background, var(--desk-text));
+}
+body[data-desk-style="native"] .block__icon:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+body[data-desk-style="native"] .block__icon svg {
+  width: 16px;
+  height: 16px;
+}
+.desk-native-icon {
+  flex: none;
+}
+.desk-native-switch {
+  flex: none;
+  margin: 0;
+}
+.desk-native-slider {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 思源下拉：宽度跟设置行的控件列一致 */
+.desk-native-select {
+  min-width: 160px;
+  flex: 0 0 auto;
+}
+
+/* 照片卡上的图标按钮 / 胶囊：思源组件默认是深色字，压在照片上看不见 */
+/* 思源的 .b3-chip 在插件的弹层里拿不到完整级联（浏览器默认按钮边框会露出来），
+   这里按 b3-chip 的规格补全：32 高、8/12 内边距、圆角、--b3-list-hover 底、选中主题色 */
+body[data-desk-style="native"] .b3-chip {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--b3-border-radius, 6px);
+  background: var(--b3-list-hover, rgb(0 0 0 / 6%));
+  color: var(--b3-theme-on-background, var(--desk-text));
+  font-family: inherit;
+  font-size: var(--desk-fs-caption);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+body[data-desk-style="native"] .b3-chip:hover {
+  background: var(--b3-list-icon-hover, rgb(0 0 0 / 9%));
+}
+body[data-desk-style="native"] .b3-chip.b3-chip--primary {
+  background: var(--b3-theme-primary, #3575f0);
+  color: var(--b3-theme-on-primary, #fff);
+}
+body[data-desk-style="native"] .on-photo .block__icon,
+body[data-desk-style="native"] .on-photo .b3-button,
+body[data-desk-style="native"] .on-photo .b3-chip {
+  color: #fff;
+  background: rgb(255 255 255 / 16%);
+}
+body[data-desk-style="native"] .on-photo .block__icon:hover,
+body[data-desk-style="native"] .on-photo .b3-button:hover,
+body[data-desk-style="native"] .on-photo .b3-chip:hover {
+  background: rgb(255 255 255 / 18%);
+}
+body[data-desk-style="native"] .on-photo .b3-chip.b3-chip--primary {
+  background: rgb(255 255 255 / 92%);
+  color: #1d2836;
+}
+
+/* 原生风格的分段：一排思源描边按钮，选中借 b3 的浅色态（思源没有分段组件） */
+.desk-seg-native {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.desk-seg-native-item {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 8px;
+}
+.desk-seg-native-item.is-active {
+  background: var(--b3-theme-primary-lightest, rgb(53 117 240 / 10%));
+  box-shadow: inset 0 0 0 1px var(--b3-theme-primary, #3575f0);
+}
+/* ── Material 3：我们自己的 DOM，换成 MD3 几何与状态层 ── */
+body[data-desk-style="md3"] .gb {
+  border: 0;
+  background: transparent;
+  color: var(--dg-primary);
+  width: auto;
+  font-weight: 500;
+}
+
+/* MD3 图标按钮：40×40 的 tonal surface（不然就是几个裸图标，看不出是按钮） */
+body[data-desk-style="md3"] .gb:not(.gb-text) {
+  background: var(--md-surface-variant);
+  color: var(--desk-text-2);
+}
+body[data-desk-style="md3"] .gb:not(.gb-text):hover {
+  background: color-mix(in srgb, var(--md-surface-variant) 82%, var(--desk-text) 10%);
+  color: var(--desk-text);
+}
+body[data-desk-style="md3"] .gb.is-on:not(.gb-text) {
+  background: color-mix(in srgb, var(--dg-primary) 22%, transparent);
+  color: var(--dg-primary);
+}
+
+/* 镜片换成 MD3 的 state layer：透明，只留悬停/按下的 8% / 12% 覆盖 */
+body[data-desk-style="md3"] .gb > .gb-lens {
+  background: transparent;
+  backdrop-filter: none;
+  border-radius: inherit;
+}
+body[data-desk-style="md3"] .gb::before,
+body[data-desk-style="md3"] .gb::after {
+  display: none;
+}
+body[data-desk-style="md3"] .gb:not(:disabled):hover {
+  transform: none;
+  background: rgb(121 116 126 / 8%);
+}
+body[data-desk-style="md3"] .gb.is-on {
+  background: color-mix(in srgb, var(--dg-primary) 16%, transparent);
+}
+
+/* 实心药丸（主操作） */
+body[data-desk-style="md3"] .gb.is-primary {
+  background: var(--dg-primary);
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 14%);
+}
+body[data-desk-style="md3"] .gb.is-primary:hover {
+  background: color-mix(in srgb, var(--dg-primary) 88%, #000);
+}
+body[data-desk-style="md3"] .gb.is-danger {
+  color: var(--b3-theme-error, #d9534f);
+}
+
+/* 开关：MD3 52×32，轨道 4px 内边距，选中填主题色 */
+/* MD3 开关：几何来自令牌，这里只换配色（描边轨道 / 主题色填充 / 白色旋钮） */
+body[data-desk-style="md3"] .desk-switch {
+  border: 2px solid var(--md-outline);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+}
+body[data-desk-style="md3"] .desk-switch .gs-knob {
+  border: 0;
+  background: var(--md-outline);
+  box-shadow: none;
+  transition: width var(--desk-dur-fast) var(--desk-ease), transform var(--desk-dur-fast) var(--desk-ease), background var(--desk-dur-fast) var(--desk-ease);
+}
+body[data-desk-style="md3"] .desk-switch.is-on {
+  border-color: var(--dg-primary);
+  background: var(--dg-primary);
+}
+body[data-desk-style="md3"] .desk-switch.is-on .gs-knob {
+  background: var(--md-surface);
+}
+/* 滑块：4px 轨道 + 20px 旋钮，选中段填主题色 */
+/* MD3 滑轨：几何来自令牌，这里只换配色（主题色已选段 + 20 旋钮） */
+body[data-desk-style="md3"] .desk-slider .slider-input::-webkit-slider-runnable-track {
+  border: 0;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    var(--dg-primary) 0 var(--range-progress, 50%),
+    var(--md-surface-variant) var(--range-progress, 50%) 100%
+  );
+  box-shadow: none;
+}
+body[data-desk-style="md3"] .desk-slider .slider-input::-webkit-slider-thumb {
+  border: 0;
+  background: var(--dg-primary);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 18%);
+}
+body[data-desk-style="md3"] .desk-slider .slider-input::-moz-range-track {
+  border: 0;
+  border-radius: 2px;
+  background: var(--md-surface-variant);
+}
+body[data-desk-style="md3"] .desk-slider .slider-input::-moz-range-thumb {
+  border: 0;
+  background: var(--dg-primary);
+}
+/* 输入：MD3 filled field —— 浅面 + 上方留白，聚焦只换下边线 */
+body[data-desk-style="md3"] .desk-field {
+  height: auto;
+  padding: 10px var(--ctl-pad);
+  border: 0;
+  border-bottom: 1px solid var(--md-outline);
+  border-radius: 4px 4px 0 0;
+  background: var(--md-surface-variant);
+  box-shadow: none;
+}
+body[data-desk-style="md3"] .desk-field:focus {
+  border-bottom: 2px solid var(--dg-primary);
+  background: color-mix(in srgb, var(--md-surface-variant) 88%, var(--dg-primary) 6%);
+}
+
+/* 胶囊：MD3 filter chip 32 高、8 圆角、1px 描边，选中用主题色浅底 */
+body[data-desk-style="md3"] .chip {
+  border: 1px solid var(--md-outline-soft);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--desk-text-2);
+  box-shadow: none;
+}
+body[data-desk-style="md3"] .chip:hover {
+  background: rgb(121 116 126 / 8%);
+}
+body[data-desk-style="md3"] .chip.active {
+  background: color-mix(in srgb, var(--dg-primary) 16%, transparent);
+  border-color: transparent;
+  color: var(--dg-primary);
+  font-weight: 500;
+}
+
+/* MD3 在照片上：描边换白、选中用白底深字，和思源/玻璃两套一样能读 */
+body[data-desk-style="md3"] .on-photo .chip {
+  border-color: rgb(255 255 255 / 48%);
+  color: #fff;
+  background: rgb(15 27 44 / 28%);
+}
+body[data-desk-style="md3"] .on-photo .chip.active {
+  background: rgb(255 255 255 / 92%);
+  border-color: transparent;
+  color: #1d2836;
+}
+
+/* 分段：MD3 segmented button —— 一根描边，内部用分隔线 */
+body[data-desk-style="md3"] .seg {
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--md-outline-soft);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+body[data-desk-style="md3"] .seg-item {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--desk-text-2);
+}
+body[data-desk-style="md3"] .seg-item + .seg-item {
+  border-left: 1px solid var(--md-outline-soft);
+}
+body[data-desk-style="md3"] .seg-item.active {
+  background: color-mix(in srgb, var(--dg-primary) 16%, transparent);
+  color: var(--dg-primary);
+  box-shadow: none;
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-page {
+  gap: 16px;
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-group {
+  padding: 4px 16px 8px;
+  border: 1px solid var(--b3-border-color, rgb(0 0 0 / 10%));
+  border-radius: var(--b3-border-radius-b, 8px);
+  background: var(--b3-theme-surface, #fff);
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-group-title {
+  margin: 12px 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set :is(.set-row, .desk-slider) {
+  padding: 9px 0;
+  min-height: 40px;
+  border-bottom: 1px solid var(--b3-border-color, rgb(0 0 0 / 10%));
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set :is(.set-row, .desk-slider):last-child {
+  border-bottom: 0;
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-label b {
+  font-size: 14px;
+  color: var(--b3-theme-on-background, var(--desk-text));
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .desk-slider {
+  grid-template-columns: minmax(0, 1fr) 160px 40px;
+  gap: 12px;
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-nav-item {
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--b3-theme-on-background, var(--desk-text));
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-nav-item:hover {
+  background: var(--b3-list-hover, rgb(0 0 0 / 4%));
+}
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-nav-item.is-active {
+  background: var(--b3-theme-surface-lighter, rgb(0 0 0 / 6%));
+  color: var(--b3-theme-on-background, var(--desk-text));
 }

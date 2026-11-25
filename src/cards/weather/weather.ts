@@ -484,8 +484,6 @@ export async function preciseLocate(): Promise<WeatherPlace> {
   }
 }
 
-
-
 /** 某个地点的当前天气 + 24 小时 + 7 日（10 分钟内直接吃缓存） */
 
 /* ══ 5. Vue 钩子 ═════════════════════════════════════════ */

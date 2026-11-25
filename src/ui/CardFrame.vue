@@ -11,9 +11,6 @@
       <slot />
     </div>
 
-    <!-- 悬浮控件：全屏 / 更多，按注册表开关决定是否渲染（hover 才出现） -->
-    <GlassButton v-if="can.full" class="fs" :icon="Maximize2" label="全屏" :tone="solid ? 'auto' : 'photo'" @click.stop="emit('fullscreen')" />
-    <GlassButton v-if="can.menu" class="more" :icon="MoreHorizontal" label="更多" :tone="solid ? 'auto' : 'photo'" @click.stop="openMenu" />
   </article>
 </template>
 
@@ -23,14 +20,12 @@
  *
  * 设计要点（apple-design-skill）：
  *   - 「内容优先」：卡片本身就是内容，不加标题栏（HIG 的 widget 惯例）
- *   - 控件克制：只留一个 hover 出现的「⋯」，命中区 28pt（liquid-glass.md）
+ *   - 卡片上没有悬浮控件：点一下就是详情，全屏在详情标题栏里（少就是多）
  *   - 材质统一：圆角/模糊/不透明度/阴影全部来自 CSS 变量（styles/index.css）
  *   - 菜单直接用思源原生 Menu：样式、图标、键盘、点外关闭全部跟思源一致，
  *     也不会有「图标被思源全局 svg{fill:currentColor} 填实」的问题（自绘菜单会被 Teleport 到 body 之外）。
  */
-import { GlassButton } from "@/ui/controls"
 import { computed, ref } from "vue"
-import { Maximize2, MoreHorizontal } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard } from "@/core/registry"
 
@@ -41,8 +36,6 @@ const emit = defineEmits<{
   expand: [DOMRect]
   refresh: []
   remove: []
-  /** 全屏（框架能力：任何卡片都能放大到整屏，卡片自己不用实现） */
-  fullscreen: []
 }>()
 
 const def = computed(() => getCard(props.cardId))
@@ -61,12 +54,9 @@ const tier = computed(() => {
 const big = computed(() => props.w * props.h >= 8)
 /** 信息卡使用较厚的玻璃面，保留文字对比度。 */
 const solid = computed(() => def.value?.surface === "solid")
-/** 控件开关：注册表没写就当全开。 */
-const can = computed(() => ({
-  expand: !props.preview && def.value?.controls?.expand !== false,
-  menu: !props.preview && def.value?.controls?.menu !== false,
-  full: !props.preview && def.value?.controls?.full !== false,
-}))
+/** 卡片只做一件事：点开详情（全屏在详情里）。 */
+/** 卡片只做一件事：点一下打开详情（全屏在详情里） */
+const can = computed(() => ({ expand: !props.preview }))
 const frameRef = ref<HTMLElement>()
 
 const rect = (): DOMRect | undefined => frameRef.value?.getBoundingClientRect()
@@ -124,25 +114,6 @@ function anchorOf(target: EventTarget | null) {
 .body > * {
   width: 100%;
   height: 100%;
-}
-
-/* 更多：默认隐形，hover/键盘聚焦出现（外观由 GlassButton 提供） */
-.more,
-.fs {
-  position: absolute;
-  top: var(--desk-sp-2);
-  z-index: 2;
-  opacity: 0;
-  transition: opacity var(--desk-dur) var(--desk-ease);
-}
-.more { right: var(--desk-sp-2); }
-.fs { left: var(--desk-sp-2); }
-
-.frame:hover .more,
-.frame:hover .fs,
-.more:focus-visible,
-.fs:focus-visible {
-  opacity: 0.92;
 }
 
 </style>
