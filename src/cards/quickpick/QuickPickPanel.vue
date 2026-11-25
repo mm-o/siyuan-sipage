@@ -42,14 +42,14 @@
           <span v-if="used(d.id)" class="desk-badge is-on">{{ used(d.id) }}</span>
           <GlassButton :icon="Plus" label="加入" :disabled="full" @click.stop="pick(d)" />
         </li>
-        <li v-if="!hits.length && !recent.length" class="qp-empty desk-note">没有可添加的文档</li>
+        <li v-if="!hits.length && !recent.length" class="qp-empty desk-empty is-tight"><EmptyArt /><span>没有可添加的文档</span></li>
       </ul>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { GlassButton, GlassField } from "@/ui/controls"
+import { EmptyArt, GlassButton, GlassField } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { FileText, GripVertical, Plus, Search, Trash2 } from "lucide-vue-next"
 import { QUICK_SLOTS, addDoc, quickOf, recentDocs, removeDocAt, reorderQuick, searchDocs, tint, type PickDoc } from "@/core/quickdocs"

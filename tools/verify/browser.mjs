@@ -35,10 +35,11 @@ function apiData(request) {
     if (/from blocks where id = 'daily-doc'/.test(stmt)) return { code: 0, data: [{ title: '2026-11-24' }] }
     if (/root_id = 'daily-doc'/.test(stmt)) {
       if (/sum\(length\)/.test(stmt)) return { code: 0, data: [{ words: 128, blocks: 4 }] }
+      /* 待办与正文现在是两条独立查询 */
+      if (/type = 'i'/.test(stmt)) return { code: 0, data: [{ id: 'todo-1', content: '[ ] 给日记卡加联动' }] }
       return { code: 0, data: [
-        { type: 'p', content: '上午整理桌面卡片\n第二行不进卡片', updated: '20261124100000' },
-        { type: 'p', content: '下午写日记卡', updated: '20261124110000' },
-        { id: 'todo-1', type: 'i', content: '[ ] 给日记卡加联动', updated: '20261124120000' },
+        { type: 'p', content: '上午整理桌面卡片\n第二行不进卡片' },
+        { type: 'p', content: '下午写日记卡' },
       ] }
     }
     if (/count\(\*\) as docs/i.test(stmt)) return { code: 0, data: [{ docs: 0, words: 0, today: 0, week: 0, month: 0 }] }

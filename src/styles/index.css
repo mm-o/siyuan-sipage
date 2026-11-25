@@ -93,6 +93,13 @@
   --desk-r-control: 10px;
   --desk-r-card: 16px;
   /* 卡内图标：与卡片同一曲率（卡片 16px ≈ 其边长的 10%） */
+  /* 层级：卡片 < 详情弹层 9000 < 全屏 9200 < 下拉 9600 < 编辑器提示 9800 < 思源浮层 10000 < toast 99999 */
+  --desk-z-sheet: 9000;
+  --desk-z-full: 9200;
+  --desk-z-pop: 9600;
+  --desk-z-hint: 9800;
+  --desk-z-foreign: 10000;
+
   --desk-r-sheet: 18px;
   --desk-r-pill: 999px;
 
@@ -600,7 +607,7 @@ html.dark,
   position: fixed;
   top: 16px;
   left: 50%;
-  z-index: 99999;
+  z-index: var(--desk-z-toast, 99999);
   padding: 7px 14px;
   border: 1px solid var(--dg-panel-rim);
   border-radius: var(--desk-r-pill);
@@ -900,7 +907,7 @@ html.dark,
 .desk-full {
   position: fixed;
   inset: 0;
-  z-index: 9200;
+  z-index: var(--desk-z-full);
 }
 
 .desk-full-inner,
@@ -1551,7 +1558,7 @@ html.dark,
 .gs-trigger.is-open .gs-arrow { transform: rotate(180deg); }
 .desk-pop {
   position: fixed;
-  z-index: 9600;
+  z-index: var(--desk-z-pop);
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1712,4 +1719,143 @@ html.dark,
 /* 思源的斜杠 / 引用 / 表情提示菜单默认 z-index 7，会被插件弹层盖住：抬到弹层之上 */
 .protyle-hint {
   z-index: 10000 !important;
+}
+
+/* ── 详情里的「块」：小标题 + 列表 + 动作，三栏共用一套 ── */
+.desk-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-1);
+  min-height: 0;
+}
+
+.desk-block + .desk-block {
+  padding-top: var(--desk-sp-2);
+  border-top: 1px solid var(--desk-stroke);
+}
+
+.desk-block.is-grow {
+  flex: 1 1 auto;
+}
+
+.desk-block-head {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1);
+  min-width: 0;
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-3);
+}
+
+.desk-block-head > b {
+  color: var(--desk-text-2);
+  font-weight: var(--desk-fw-medium);
+}
+
+.desk-block-grow {
+  flex: 1 1 auto;
+}
+
+.desk-block-list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-0);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 空态：插图 + 一句话（+ 可选动作），列表与卡片用 .is-tight */
+.desk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--desk-sp-1);
+  padding: var(--desk-sp-4) var(--desk-sp-2);
+  text-align: center;
+  font-size: var(--desk-fs-caption);
+  line-height: 1.5;
+  color: var(--desk-text-3);
+  list-style: none;
+}
+
+.desk-empty-art {
+  width: 96px;
+  height: 96px;
+  opacity: 0.9;
+}
+
+.desk-empty.is-tight {
+  gap: var(--desk-sp-1h);
+  padding: var(--desk-sp-3) var(--desk-sp-1);
+}
+
+.desk-empty.is-tight .desk-empty-art {
+  width: 40px;
+  height: 40px;
+  opacity: 0.75;
+}
+
+.desk-form-row {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1h);
+  padding-top: var(--desk-sp-2);
+}
+/* 弹层打开时，思源的弹窗（资源选择 / 模板 / 属性）与菜单默认只有 z-index 100 与 3，
+   会被详情弹层盖住导致点不到：只在这一刻把这几层抬到插件之上，平时不动全局。 */
+body.desk-overlay #dialog,
+body.desk-overlay #commonMenu,
+body.desk-overlay .b3-menu,
+body.desk-overlay .protyle-util {
+  z-index: var(--desk-z-foreign) !important;
+}
+
+/* ── 思源内容预览（块卡 / 日记卡 / 日记详情 / 日历右栏共用，作用域 .db-block）── */
+/**
+ * 块内容容器（卡片与弹窗共用，作用域 .db-block，不影响主编辑器）。
+ * 只做三件事：隐藏 Protyle 外壳、清掉主题给容器加的框、约束内容不溢出。
+ */
+.db-block .protyle > :not(.protyle-content),
+.db-block .protyle-content > :not(.protyle-wysiwyg),
+.db-block .protyle-toolbar,
+.db-block .protyle-hint,
+.db-block .protyle-util {
+  display: none !important;
+}
+
+.db-block .protyle,
+.db-block .protyle-content,
+.db-block .protyle-wysiwyg {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  padding: 0 !important;
+}
+
+.db-block .protyle-content::before,
+.db-block .protyle-content::after,
+.db-block .protyle-wysiwyg::before,
+.db-block .protyle-wysiwyg::after {
+  content: none !important;
+  display: none !important;
+}
+
+.db-block .protyle-wysiwyg > [data-node-id] {
+  border: 0 !important;
+  box-shadow: none !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.db-block img,
+.db-block table,
+.db-block pre {
+  max-width: 100% !important;
 }

@@ -15,6 +15,29 @@ export const DESK_ICON = `<symbol id="iconDeskCards" viewBox="0 0 32 32"><g fill
   <rect x="17.5" y="17.5" width="11" height="11" rx="3"/>
 </g></symbol>`
 
+/**
+ * 空态插图：一页纸 + 一颗星，颜色跟 `currentColor`。
+ * 尺寸与间距交给 `.desk-empty`（列表/卡片用 `.is-tight`），这里只出图形。
+ */
+export const EmptyArt = defineComponent({
+  name: "EmptyArt",
+  render: () =>
+    h("svg", {
+      class: "desk-empty-art",
+      viewBox: "0 0 64 64",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "aria-hidden": "true",
+      innerHTML:
+        '<path d="M10 18c7-3 14-2 22 4v30c-8-6-15-7-22-4z" opacity=".5" stroke-width="2"/>' +
+        '<path d="M54 18c-7-3-14-2-22 4v30c8-6 15-7 22-4z" opacity=".5" stroke-width="2"/>' +
+        '<path d="M32 22v30" opacity=".26" stroke-width="2"/>' +
+        '<path d="M16 28c3-1 6-1 9 1M16 34c3-1 6-1 9 1M39 29c3-2 6-2 9-1M39 35c3-2 6-2 9-1" opacity=".3" stroke-width="1.6"/>' +
+        '<path d="M50 5l1.9 4.6 4.6 1.9-4.6 1.9L50 18l-1.9-4.6L43.5 11.5l4.6-1.9z" opacity=".7" stroke-width="1.6"/>',
+    }),
+})
 /* ── 液态玻璃：整页共用两张折射图，不逐按钮创建滤镜或观察器。 ── */
 function ensureGlassFilters() {
   if (document.getElementById("desk-glass-filters")) return

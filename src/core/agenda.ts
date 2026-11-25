@@ -13,7 +13,7 @@
  */
 import { computed, ref } from "vue"
 import { persisted, takeLegacy } from "@/core/store"
-import { pad, post } from "@/core/util"
+import { pad } from "@/core/util"
 
 export interface PlanItem {
   id: string
@@ -31,7 +31,6 @@ export interface PlanItem {
   /** 创建时间 */
   at: number
   /** 最近一次写入日记的时间；0 = 没写过 */
-  syncedAt: number
 }
 
 /** 详情的五个分组：今天 / 逾期 / 即将 / 收件箱 / 已完成 */
@@ -192,7 +191,6 @@ export function addItem(input: { text: string; date?: string; time?: string; not
     done: false,
     doneAt: 0,
     at: Date.now(),
-    syncedAt: 0,
   }
   agenda.items.push(item)
   return item
@@ -205,7 +203,6 @@ export function patchItem(id: string, patch: Partial<Pick<PlanItem, "text" | "no
   const item = findItem(id)
   if (!item) return
   Object.assign(item, patch)
-  if (patch.date !== undefined) item.syncedAt = 0
 }
 
 export function toggleItem(id: string) {
@@ -235,27 +232,6 @@ export function scheduleItem(id: string, date: string) {
  * 本地仍然是唯一真源，写日记只是把「今天还没做的」抄一份到文档里，
  * 失败时抛错由调用方提示，绝不因为写日记失败丢掉本地条目。
  */
-export async function mirrorToDailyNote(items: PlanItem[]) {
-  const pending = items.filter((item) => !item.done)
-  if (!pending.length) throw new Error("没有未完成的条目")
-
-  const books = await post<{ notebooks: Array<{ id: string }> }>("/api/notebook/lsNotebooks")
-  const notebook = books?.notebooks?.[0]?.id
-  if (!notebook) throw new Error("未找到笔记本")
-
-  const doc = await post<{ id: string }>("/api/filetree/createDailyNote", { notebook, app: "" })
-  if (!doc?.id) throw new Error("打开今天的日记失败")
-
-  await post("/api/block/appendBlock", {
-    dataType: "markdown",
-    data: pending.map((item) => `- [ ] ${item.text}`).join("\n"),
-    parentID: doc.id,
-  })
-
-  const at = Date.now()
-  for (const item of pending) item.syncedAt = at
-}
-
 /* ── 迁移与示例 ───────────────────────────────────────────── */
 
 /** 老版备忘录（desk:memo）：有日期就到日历，没日期就进收件箱 */
@@ -273,8 +249,7 @@ function migrateLegacy() {
       done: !!old.done,
       doneAt: old.done ? Date.now() : 0,
       at: Number(old.at) || Date.now(),
-      syncedAt: 0,
-    })
+      })
   }
 }
 /** 首次运行种两条示例：一条今天的日程，一条收件箱里的备忘 */

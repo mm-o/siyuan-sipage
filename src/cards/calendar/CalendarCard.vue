@@ -22,6 +22,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { SolarDay } from "tyme4ts"
 import { itemsOf, todayKey } from "@/core/agenda"
+
 import MiniCalendar from "@/ui/MiniCalendar.vue"
 import { calendarOf } from "./calendar"
 

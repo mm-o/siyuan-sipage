@@ -62,49 +62,53 @@
         </ul>
       </section>
 
-      <!-- 右：这一天的日程（和日程备忘卡是同一份数据） -->
+      <!-- 右：这一天的日程 + 日记（日程与备忘卡同一份数据，日记与日记卡同一份取数） -->
       <aside class="cal-agenda desk-pane is-right">
-        <header class="cal-agenda-head">
-          <span class="cal-agenda-title">日程</span>
-          <span class="desk-badge" :class="{ 'is-on': openOnDay > 0 }">{{ openOnDay }}/{{ dayItems.length }}</span>
-          <span class="cal-grow" />
-          <GlassButton
-            v-if="onToday"
-            :icon="NotebookPen"
-            label="写入今天的日记"
-            text
-            :disabled="!openOnDay"
-            @click="mirror"
-          />
-        </header>
+        <section class="desk-block">
+          <header class="desk-block-head">
+            <b>日程</b>
+            <span class="desk-badge" :class="{ 'is-on': openOnDay > 0 }">{{ openOnDay }}/{{ dayItems.length }}</span>
+            <span class="desk-block-grow" />
+          </header>
 
-        <ul class="cal-list mm-scroll">
-          <li v-for="item in dayItems" :key="item.id" class="mm-row mm-line" :class="{ 'is-done': item.done }">
-            <button
-              class="mm-dot"
-              type="button"
-              role="checkbox"
-              :aria-checked="item.done"
-              :aria-label="item.done ? '标记未完成' : '标记完成'"
-              @click="toggleItem(item.id)"
-            />
-            <span v-if="item.time" class="mm-time">{{ item.time }}</span>
-            <span class="mm-text">{{ item.text }}</span>
-          </li>
-          <li v-if="!dayItems.length" class="cal-empty desk-note">这一天还没有安排</li>
-        </ul>
+          <ul class="desk-block-list mm-scroll">
+            <li v-for="item in dayItems" :key="item.id" class="mm-row mm-line" :class="{ 'is-done': item.done }">
+              <button
+                class="mm-dot"
+                type="button"
+                role="checkbox"
+                :aria-checked="item.done"
+                :aria-label="item.done ? '标记未完成' : '标记完成'"
+                @click="toggleItem(item.id)"
+              />
+              <span v-if="item.time" class="mm-time">{{ item.time }}</span>
+              <span class="mm-text">{{ item.text }}</span>
+            </li>
+            <li v-if="!dayItems.length" class="desk-empty is-tight"><EmptyArt /><span>这一天还没有安排</span></li>
+          </ul>
 
-        <form class="cal-new" @submit.prevent="addToDay">
-          <GlassField v-model="draft" class="cal-new-field" label="新日程" placeholder="回车加到这一天" />
-          <GlassButton :icon="Plus" label="添加" variant="primary" :disabled="!draft.trim()" @click="addToDay" />
-        </form>
+          <form class="desk-form-row" @submit.prevent="addToDay">
+            <GlassField v-model="draft" class="cal-new-field" label="新日程" placeholder="回车加到这一天" />
+            <GlassButton :icon="Plus" label="添加" variant="primary" :disabled="!draft.trim()" @click="addToDay" />
+          </form>
+        </section>
 
-        <label class="cal-mirror">
-          <GlassSwitch v-model="mirrorDaily" label="同时写入今天的日记" :disabled="!onToday" />
-          <span class="desk-note">{{ onToday ? "写进今天的日记，手机上也能看到" : "只有今天能写入日记" }}</span>
-        </label>
-
-        <GlassButton class="cal-diary" text :icon="NotebookPen" label="打开这天的日记" @click="openDiary" />
+        <section class="desk-block cal-day-diary">
+          <header class="desk-block-head">
+            <b>日记</b>
+            <span v-if="diary">· {{ diary.words }} 字</span>
+            <span class="desk-block-grow" />
+            <GlassButton text :icon="NotebookPen" :label="diary ? '打开' : '写这天的日记'" @click="diary ? openDiary() : createDiary()" />
+          </header>
+          <div v-if="diary" class="cal-diary-body">
+            <ProtyleView :id="diary.id" />
+          </div>
+          <div v-else class="desk-empty is-tight">
+            <EmptyArt />
+            <span>{{ onToday ? "今天还没写" : "这天还没有日记" }}</span>
+            <GlassButton text :icon="NotebookPen" label="写这天的日记" @click="createDiary" />
+          </div>
+        </section>
       </aside>
     </div>
   </div>
@@ -118,12 +122,13 @@
  * 日程与备忘是同一份数据（`core/agenda`），右栏勾选、新增立刻反映到桌面卡片和备忘详情；
  * 写日记只是可选出口（默认关、只对今天），失败只提示，不动本地条目。
  */
-import { GlassButton, GlassField, GlassSelect, GlassSwitch, Segmented, toast } from "@/ui/controls"
-import { computed, ref } from "vue"
+import { EmptyArt, GlassButton, GlassField, GlassSelect, Segmented, toast } from "@/ui/controls"
+import ProtyleView from "@/ui/ProtyleView.vue"
+import { computed, ref, watch } from "vue"
 import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
-import { addItem, dateKey, dayDots, itemsOf, mirrorToDailyNote, todayKey, toggleItem } from "@/core/agenda"
-import { ensureToday, findDaily, openDaily } from "@/core/dailyNote"
+import { addItem, dateKey, dayDots, itemsOf, todayKey, toggleItem } from "@/core/agenda"
+import { ensureDaily, loadDaily, openDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
 import { calendarOf } from "./calendar"
 import "./styles.css"
 
@@ -149,11 +154,16 @@ const mondayFirst = computed(() => weekBegin.value === "mon")
 const headLabels = computed(() => (mondayFirst.value ? MONDAY_FIRST : [...WEEK_NAMES]))
 
 /** 这张卡上次看的月份（YYYY-MM）；没有就从今天开始 */
-const startMonth = (() => {
-  const [year, month] = state.month.split("-").map(Number)
-  return year && month ? new Date(year, month - 1, 1, 12) : new Date()
+/** 打开就落在今天：钉的月份就是这个月时选今天，钉在别的月才落到 1 号 */
+const startDay = (() => {
+  const today = new Date()
+  const pin = state.month
+  const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`
+  if (!pin || pin === key) return today
+  const [year, month] = pin.split("-").map(Number)
+  return year && month ? new Date(year, month - 1, 1, 12) : today
 })()
-const selected = ref<Date>(startMonth)
+const selected = ref<Date>(startDay)
 
 /** 选日期，同时把「这张卡看的月份」记下来：多张日历卡各看各的月 */
 function picked(date: Date) {
@@ -265,6 +275,17 @@ function lunarLabel(date: Date): { text: string; isFestival: boolean } {
 
 const selectedKey = computed(() => dateKey(selected.value))
 const dayItems = computed(() => itemsOf(selectedKey.value))
+
+/** 这天的日记摘要：跟着选中日加载，三行封顶 */
+const diary = ref<DailyPreview | null>(null)
+
+function loadDiary() {
+  loadDaily(selected.value)
+    .then((hit) => (diary.value = hit))
+    .catch(() => (diary.value = null))
+}
+
+watch(selectedKey, loadDiary, { immediate: true })
 const openOnDay = computed(() => dayItems.value.filter((item) => !item.done).length)
 const onToday = computed(() => selectedKey.value === todayKey())
 
@@ -359,29 +380,25 @@ function onWheel(event: WheelEvent) {
 /* ── 这一天的日程：内联添加 + 手写日记 ─────────────────── */
 
 const draft = ref("")
-const mirrorDaily = computed({
-  get: () => state.mirrorDaily,
-  set: (value: boolean) => {
-    state.mirrorDaily = value
-  },
-})
-
 async function addToDay() {
   const item = addItem({ text: draft.value, date: selectedKey.value })
   if (!item) return
   draft.value = ""
-  if (!mirrorDaily.value || !onToday.value) return
+}
+
+/** 创建这天的日记并就地显示（建的是真正的日记文档，带 custom-dailynote 属性） */
+async function createDiary() {
   try {
-    await mirrorToDailyNote([item])
-    toast("已加到今天，并写进今天的日记")
+    /* 用返回的文档直接生成摘要：属性索引有延迟，不能立刻靠日期反查 */
+    diary.value = await previewOf(await ensureDaily(selected.value))
   } catch (e) {
-    toast(`已加到今天，写日记失败：${(e as Error).message}`, 3000)
+    toast(`创建日记失败：${(e as Error).message}`, 3000)
   }
 }
 
 async function openDiary() {
   try {
-    const note = onToday.value ? await ensureToday() : await findDaily(selected.value)
+    const note = await ensureDaily(selected.value)
     if (!note) {
       toast("这天没有日记", 2000)
       return
@@ -392,12 +409,4 @@ async function openDiary() {
   }
 }
 
-async function mirror() {
-  try {
-    await mirrorToDailyNote(dayItems.value)
-    toast("已写入今天的日记")
-  } catch (e) {
-    toast(`写入日记失败：${(e as Error).message}`, 3000)
-  }
-}
 </script>

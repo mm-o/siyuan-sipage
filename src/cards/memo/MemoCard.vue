@@ -8,24 +8,24 @@
 
       <ul ref="list" class="mm-list desk-seq">
         <template v-for="row in rows" :key="row.key">
-          <li v-if="row.kind === 'head'" class="mm-sec">
+          <li v-if="row.kind === 'head'" class="mm-sec" @click.stop="openGroup(row.group)">
             <span>{{ row.text }}</span>
             <span class="mm-sec-count">{{ row.count }}</span>
           </li>
-          <li v-else class="mm-row" :class="{ 'is-done': row.item.done }">
+          <li v-else class="mm-row is-link" :class="{ 'is-done': row.item.done }" @click.stop="openGroup(row.group)">
             <button
               class="mm-dot"
               type="button"
               role="checkbox"
               :aria-checked="row.item.done"
               :aria-label="row.item.done ? '标记未完成' : '标记完成'"
-              @click="toggleItem(row.item.id)"
+              @click.stop="toggleItem(row.item.id)"
             />
             <span v-if="row.item.time" class="mm-time">{{ row.item.time }}</span>
             <span class="mm-text" :class="{ 'is-late': row.late }">{{ row.item.text }}</span>
           </li>
         </template>
-        <li v-if="!rows.length" class="mm-empty desk-note">{{ empty }}</li>
+        <li v-if="!rows.length" class="mm-empty desk-empty is-tight"><EmptyArt /><span>{{ empty }}</span></li>
       </ul>
 
       <form v-if="showInput" class="mm-add" @submit.prevent="submit">
@@ -46,8 +46,10 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { GlassField } from "@/ui/controls"
 import { addItem, counts, inbox, itemsOf, overdue, todayKey, toggleItem, weekdayOf } from "@/core/agenda"
+import { requestDetail } from "@/core/store"
+import { EmptyArt } from "@/ui/controls"
 
-const props = defineProps<{ size?: string; w?: number; h?: number }>()
+const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
 
 /** 列表实测高度：行数由它算，不由格子数猜（同一张卡可以拖成任意 w×h） */
 const list = ref<HTMLElement>()
@@ -85,10 +87,10 @@ const rows = computed(() => {
     if (!group.items.length) continue
     /* 分段标题也要占一行：剩下的位置不够「标题 + 至少一条」就不起标题 */
     if (sections.value && group.text && out.length + 1 >= slots && out.length) break
-    if (sections.value && group.text) out.push({ kind: "head", key: `h-${group.key}`, text: group.text, count: group.count })
+    if (sections.value && group.text) out.push({ kind: "head", key: `h-${group.key}`, group: group.key, text: group.text, count: group.count })
     for (const item of group.items) {
       if (out.length >= slots) break
-      out.push({ kind: "item", key: item.id, item, late: group.late })
+      out.push({ kind: "item", key: item.id, group: group.key, item, late: group.late })
     }
     if (out.length >= slots) break
   }
@@ -96,8 +98,13 @@ const rows = computed(() => {
 })
 
 type Row =
-  | { kind: "head"; key: string; text: string; count: number }
-  | { kind: "item"; key: string; item: ReturnType<typeof itemsOf>[number]; late: boolean }
+  | { kind: "head"; key: string; group: string; text: string; count: number }
+  | { kind: "item"; key: string; group: string; item: ReturnType<typeof itemsOf>[number]; late: boolean }
+
+/** 点分组标题：把详情切到这一组，然后打开它 */
+function openGroup(group: string) {
+  requestDetail("memo", { group })
+}
 
 const meta = computed(() => {
   const hit = counts.value
@@ -204,6 +211,11 @@ function submit() {
 }
 
 /* 分段标题：逾期 / 备忘 */
+
+.mm-row.is-link,
+.mm-sec {
+  cursor: pointer;
+}
 .mm-sec {
   flex: 0 0 auto;
   display: flex;

@@ -101,7 +101,7 @@ export const CARDS: CardDef[] = [
     component: CalendarCard,
     icon: CalendarDays,
     detail: CalendarPanel,
-    /* 左黄历 240 + 中月历 + 右日程 300，三栏都要站得住 */
+    /* 左黄历 240 + 中月历 + 右「日程 / 日记」上下各半 */
     detailSize: { width: "min(1040px, 94vw)", height: "min(720px, 90vh)" },
     constrain: { step: 1, min: 2, max: 16 },
     // 参考实现 的日历是白卡（--bg-card: #fff / #222），不是玻璃

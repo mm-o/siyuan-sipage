@@ -1,4 +1,4 @@
-﻿/** 共享表面/字段/开关/滑轨：使用真实页面与交互，所有数据留在隔离浏览器。 */
+/** 共享表面/字段/开关/滑轨：使用真实页面与交互，所有数据留在隔离浏览器。 */
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
@@ -95,7 +95,7 @@ try {
   const editor = dialog.getByRole('textbox', { name: '日程标题', exact: true })
   await editor.fill('公共字段输入即时更新模型')
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('desk:agenda') || '{}').items?.some(item => item.id === 'surfaces-memo' && item.text === '公共字段输入即时更新模型'))
-  assert.equal(await dialog.locator('.mm-list .mm-text').first().textContent(), '公共字段输入即时更新模型')
+  assert.equal(await dialog.locator('.desk-block-list .mm-text').first().textContent(), '公共字段输入即时更新模型')
   await screenshot('surfaces-memo-fields.png')
   const frameLight = await surface(memoFrame)
   await theme(true)

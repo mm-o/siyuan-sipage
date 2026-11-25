@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
 .desk-sheet-mask {
   position: fixed;
   inset: 0;
-  z-index: 9000;
+  z-index: var(--desk-z-sheet);
   display: grid;
   place-items: center;
   padding: 24px;

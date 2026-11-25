@@ -5,11 +5,11 @@
       <span class="dl-meta">{{ meta }}</span>
     </header>
 
-    <ul class="dl-lines desk-seq">
-      <li v-for="(line, i) in shown" :key="i" class="dl-line" :class="{ 'is-head': line.type === 'h' }">{{ line.text }}</li>
-      <li v-if="!shown.length" class="dl-empty desk-note">{{ empty }}</li>
-    </ul>
-
+    <!-- 正文就是思源渲染出来的那篇日记，只读、不拦点击 -->
+    <div v-if="preview" class="dl-body">
+      <ProtyleView :id="preview.id" />
+    </div>
+    <div v-else class="dl-empty desk-empty is-tight"><EmptyArt /><span>{{ empty }}</span></div>
   </div>
 </template>
 
@@ -22,7 +22,9 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { stateOf } from "@/core/store"
-import { dateKey, dayLabel, weekdayOf } from "@/core/agenda"
+import { EmptyArt } from "@/ui/controls"
+import ProtyleView from "@/ui/ProtyleView.vue"
+import { dateKey, dayLabel, itemsOf, weekdayOf } from "@/core/agenda"
 import { dayOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
 
 const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
@@ -40,15 +42,11 @@ const empty = computed(() => (state.offset === 0 ? "今天还没写 · 点开写
 
 const meta = computed(() => {
   const p = preview.value
-  if (!p) return "0 字"
-  const open = p.todos.filter((todo) => !todo.done).length
-  return [`${p.words} 字`, open ? `${open} 待办` : ""].filter(Boolean).join(" · ")
-})
-
-/** 行数按卡片高度切（每格约两行，留一行给头部） */
-const shown = computed(() => {
-  const rows = Math.max(1, Math.round((props.h ?? 4) * 2 - 1))
-  return (preview.value?.lines ?? []).slice(0, rows)
+  /* 待办 = 那天的日程 + 日记里的待办块，和详情左栏同一个口径 */
+  const open =
+    itemsOf(dateKey(date.value)).filter((item) => !item.done).length +
+    (p?.todos.filter((todo) => !todo.done).length ?? 0)
+  return [`${p?.words ?? 0} 字`, open ? `${open} 待办` : ""].filter(Boolean).join(" · ")
 })
 
 async function load() {
@@ -101,29 +99,13 @@ watch(() => state.offset, () => void load())
   text-overflow: ellipsis;
 }
 
-.dl-lines {
+/* 正文：思源渲染，卡片里只读——不吞点击，点卡仍开详情 */
+.dl-body {
   flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--desk-sp-1);
   min-height: 0;
-  margin: 0;
-  padding: 0;
   overflow: hidden;
-  list-style: none;
-}
-
-.dl-line {
-  flex: 0 0 auto;
-  overflow: hidden;
+  pointer-events: none;
   font-size: clamp(11px, 4.4cqh, 13px);
-  line-height: 1.35;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.dl-line.is-head {
-  font-weight: var(--desk-fw-semibold);
 }
 
 .dl-empty {

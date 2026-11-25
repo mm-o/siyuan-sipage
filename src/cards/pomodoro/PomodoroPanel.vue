@@ -50,14 +50,14 @@
           <span>{{ new Date(r.at).toLocaleString("zh-CN", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) }}</span>
           <b>{{ r.minutes }} 分钟</b>
         </li>
-        <li v-if="!records.length" class="pm-empty desk-note">还没有记录，完成一个番茄就会出现在这里</li>
+        <li v-if="!records.length" class="pm-empty desk-empty is-tight"><EmptyArt /><span>完成一个番茄就会出现在这里</span></li>
       </ul>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { GlassButton } from "@/ui/controls"
+import { EmptyArt, GlassButton } from "@/ui/controls"
 import { Pause, Play, RotateCcw, SkipForward } from "lucide-vue-next"
 import Slider from "@/ui/Slider.vue"
 import { COVERS } from "@/core/image"

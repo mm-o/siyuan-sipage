@@ -5,7 +5,7 @@ import { Check, Search } from "lucide-vue-next"
 import { blockOf, blockTitle, setId } from "./block"
 import { searchDocs, type PickDoc } from "@/core/quickdocs"
 import { mountProtyle } from "./block"
-import "./styles.css"
+
 
 /** 弹窗：上方输入/搜索，下方完整预览（预览区可滚动，所以内容能看全） */
 const props = defineProps<{ mode?: string; uid?: string }>()

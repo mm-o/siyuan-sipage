@@ -15,11 +15,6 @@ interface DailyNote {
   title: string
 }
 
-interface DailyLine {
-  type: string
-  text: string
-}
-
 interface DailyTodo {
   /** 待办块的 id：点一下能滚到正文那一行 */
   id: string
@@ -30,9 +25,7 @@ interface DailyTodo {
 export interface DailyPreview extends DailyNote {
   words: number
   blocks: number
-  lines: DailyLine[]
   todos: DailyTodo[]
-  updated: string
 }
 
 /** 相对今天偏移几天 */
@@ -53,16 +46,55 @@ export async function findDaily(date: Date): Promise<DailyNote | null> {
   return { id, title: String((docs[0] as { title?: string } | undefined)?.title || dateKey(date)) }
 }
 
-/** 今天的日记：没有就让内核建一个（只对今天：日记文档的日期由内核按「今天」决定） */
-export async function ensureToday(): Promise<DailyNote> {
-  const hit = await findDaily(new Date())
-  if (hit) return hit
+/** 日记该建在哪个笔记本：优先用最近一篇日记所在的库，没有才退到第一个 */
+async function dailyNotebook(): Promise<string> {
+  const rows = await sql(`select box from attributes where name like 'custom-dailynote-%' order by name desc limit 1`).catch(() => [])
+  const box = String((rows[0] as { box?: string } | undefined)?.box || "")
+  if (box) return box
   const books = await post<{ notebooks?: { id: string }[] }>("/api/notebook/lsNotebooks")
-  const notebook = books?.notebooks?.[0]?.id
+  return books?.notebooks?.[0]?.id || ""
+}
+
+/** 最近一篇日记所在的笔记本与目录：新建别的日期时放在同样的位置 */
+async function dailySeed(): Promise<{ box: string; dir: string }> {
+  const rows = await sql(`select b.box as box, b.path as path from attributes a join blocks b on b.id = a.block_id
+    where a.name like 'custom-dailynote-%' order by a.name desc limit 1`).catch(() => [])
+  const row = (rows[0] || {}) as { box?: string; path?: string }
+  const dir = String(row.path || "").replace(/\/[^/]+$/, "")
+  return { box: String(row.box || ""), dir }
+}
+
+/**
+ * 取某天的日记，没有就建一个
+ *
+ * 今天交给内核（它会按日记模板建）；别的日期在「最近一篇日记」的同一个笔记本、同一层目录下建，
+ * 建完补上 `custom-dailynote-YYYYMMDD` 属性，之后 findDaily 就能找到它。
+ */
+export async function ensureDaily(date: Date): Promise<DailyNote> {
+  const hit = await findDaily(date)
+  if (hit) return hit
+  const key = dateKey(date)
+  const notebook = await dailyNotebook()
   if (!notebook) throw new Error("未找到笔记本")
-  const doc = await post<{ id: string }>("/api/filetree/createDailyNote", { notebook, app: "" })
-  if (!doc?.id) throw new Error("创建日记失败")
-  return { id: doc.id, title: dateKey(new Date()) }
+  if (key === dateKey(new Date())) {
+    const doc = await post<{ id: string }>("/api/filetree/createDailyNote", { notebook, app: "" })
+    if (!doc?.id) throw new Error("创建日记失败")
+    return { id: doc.id, title: key }
+  }
+  const seed = await dailySeed()
+  /* 这个接口的 data 直接是文档 id（字符串），跟 createDailyNote 的 { id } 不一样 */
+  const created = await post<string | { id?: string }>("/api/filetree/createDocWithMd", {
+    notebook,
+    path: `${seed.dir}/${key}`,
+    markdown: "",
+  })
+  const id = typeof created === "string" ? created : created?.id || ""
+  if (!id) throw new Error("创建日记失败")
+  await post("/api/attr/setBlockAttrs", {
+    id,
+    attrs: { [`custom-dailynote-${key.replace(/-/g, "")}`]: "" },
+  })
+  return { id, title: key }
 }
 
 /** 某篇日记的字数与块数（编辑时就地刷新统计，不重挂 Protyle） */
@@ -75,43 +107,31 @@ export async function dailyStat(id: string): Promise<{ words: number; blocks: nu
   return { words: Number(hit.words) || 0, blocks: Number(hit.blocks) || 0 }
 }
 
-/** 日记预览：字数 / 块数 / 前几行 / 未勾掉的待办 */
+/** 日记里的待办（单独查：不受正文行数限制，编辑时可单独刷新） */
+export async function dailyTodos(id: string): Promise<DailyTodo[]> {
+  const rows = await sql(
+    `select id, content from blocks
+     where root_id = '${id}' and type = 'i' and content != '' order by sort asc limit 60`,
+  ).catch(() => [])
+  const out: DailyTodo[] = []
+  for (const row of rows as { id?: string; content?: string }[]) {
+    const text = String(row.content || "").split("\n").map((line) => line.trim()).find(Boolean) || ""
+    const todo = /^\[([ xX])\]\s*(.+)$/.exec(text)
+    if (todo) out.push({ id: String(row.id || ""), text: todo[2], done: todo[1] !== " " })
+  }
+  return out
+}
+
+/** 已知文档时直接取摘要：新建的日记不必等属性索引刷新 */
+export async function previewOf(note: DailyNote): Promise<DailyPreview> {
+  const [stat, todos] = await Promise.all([dailyStat(note.id), dailyTodos(note.id)])
+  return { ...note, words: stat.words, blocks: stat.blocks, todos }
+}
+
+/** 某天的日记摘要（找不到就是 null；正文由 Protyle 直接渲染） */
 export async function loadDaily(date: Date): Promise<DailyPreview | null> {
   const note = await findDaily(date)
-  if (!note) return null
-
-  const stat = await dailyStat(note.id)
-  const rows = await sql(
-    `select id, type, content, updated from blocks
-     where root_id = '${note.id}' and type in ('p','h','i','c','m','t','callout','q','s') and content != ''
-     order by sort asc limit 40`,
-  ).catch(() => [])
-
-  const lines: DailyLine[] = []
-  const todos: DailyTodo[] = []
-  for (const row of rows as { id?: string; type?: string; content?: string; updated?: string }[]) {
-    /* 段落 content 可能带换行：卡片只取第一行，剩下的留给详情 */
-    const text = String(row.content || "").split("\n").map((line) => line.trim()).find(Boolean) || ""
-    if (!text) continue
-    const type = String(row.type || "")
-    if (type === "i") {
-      const todo = /^\[([ xX])\]\s*(.+)$/.exec(text)
-      if (todo) {
-        todos.push({ id: String(row.id || ""), text: todo[2], done: todo[1] !== " " })
-        continue
-      }
-    }
-    if (lines.length < 8) lines.push({ type, text })
-  }
-
-  return {
-    ...note,
-    words: stat.words,
-    blocks: stat.blocks,
-    lines,
-    todos,
-    updated: String((rows[0] as { updated?: string } | undefined)?.updated || ""),
-  }
+  return note ? previewOf(note) : null
 }
 
 /** 打开日记文档（在本页签里打开） */

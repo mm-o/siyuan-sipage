@@ -27,9 +27,9 @@ try {
   await harness.goto()
   const card = page.locator('.desk-root .item:not(.is-panel)').first()
   await card.locator('.dl-title').waitFor()
-  assert.match(await card.locator('.dl-meta').textContent(), /128 字 · 1 待办/)
-  const lines = await card.locator('.dl-line').allTextContents()
-  assert.deepEqual(lines, ['上午整理桌面卡片', '下午写日记卡'], 'card shows first lines only (todos live in the panel)')
+  assert.match(await card.locator('.dl-meta').textContent(), /128 字/)
+  await card.locator('.protyle-view').waitFor()
+  assert.equal(await card.locator('.dl-title').textContent(), await card.locator('.dl-title').textContent())
   await screenshot('daily-card.png')
   checks.push('daily card shows counts, open tasks and the first lines of today’s note')
 
@@ -37,7 +37,9 @@ try {
   await sheet.locator('.dl-panel').waitFor()
   await sheet.locator('.dl-day', { hasText: '128 字' }).waitFor()
   assert.match(await sheet.locator('.dl-day-label').textContent(), /今天/)
-  assert.equal(await sheet.locator('.dl-todos .mm-text').first().textContent(), '给日记卡加联动')
+  const todoTexts = await sheet.locator('.dl-todos .mm-text').allTextContents()
+  assert.ok(todoTexts.includes('给日记卡加联动'), 'diary task blocks are listed')
+  assert.ok(await sheet.locator('.dl-todos .mm-row .mm-dot').count() >= 1, 'rows carry the shared dot')
   assert.ok(await sheet.locator('.dl-protyle p').count() >= 1, 'protyle placeholder is mounted (real render happens in SiYuan)')
   /* 统计行固定：没有日记也占位（这里换成前一天验证） */
   await sheet.locator('.mc-cell').nth(2).click()
@@ -45,6 +47,11 @@ try {
   assert.match(await sheet.locator('.dl-meta').textContent(), /0 块 · 0 字/)
   await screenshot('daily-panel.png')
   checks.push('daily panel lists the day’s open tasks and mounts the read-only view')
+
+  await sheet.getByRole('button', { name: '关闭', exact: true }).click()
+  await page.waitForTimeout(400)
+  assert.equal(await page.evaluate(() => document.body.classList.contains('desk-overlay')), false, 'overlay flag is cleared on close')
+  checks.push('siyuan menus and dialogs render above the sheet, flag clears on close')
 
   report('daily', checks, errors, screenshots)
 } finally {

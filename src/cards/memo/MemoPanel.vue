@@ -23,14 +23,14 @@
     <section class="mm-list-pane desk-pane is-mid">
 
 
-      <header class="mm-bar">
-        <span class="mm-bar-title">{{ current.name }}</span>
-        <span class="mm-bar-hint desk-note">{{ current.hint }}</span>
-        <span class="mm-grow" />
+      <header class="desk-block-head mm-bar">
+        <b>{{ current.name }}</b>
+        <span>{{ current.hint }}</span>
+        <span class="desk-block-grow" />
         <GlassButton v-if="state.group === 'done'" :icon="Trash2" label="清空已完成" variant="danger" @click="clearDone" />
       </header>
 
-      <ul class="mm-scroll mm-list">
+      <ul class="desk-block-list mm-scroll">
         <template v-for="row in listRows" :key="row.key">
           <li v-if="row.kind === 'date'" class="mm-date">{{ row.text }}</li>
           <li
@@ -53,10 +53,10 @@
             <GlassButton :icon="X" label="删除" variant="danger" @click.stop="drop(row.item.id)" />
           </li>
         </template>
-        <li v-if="!listRows.length" class="mm-empty desk-note">{{ current.empty }}</li>
+        <li v-if="!listRows.length" class="desk-empty is-tight"><EmptyArt /><span>{{ current.empty }}</span></li>
       </ul>
 
-      <form v-if="state.group !== 'done'" class="mm-new" @submit.prevent="create">
+      <form v-if="state.group !== 'done'" class="desk-form-row" @submit.prevent="create">
         <GlassField v-model="fresh" class="mm-input" :label="current.add" :placeholder="`${current.add}，回车`" />
         <GlassButton :icon="Plus" label="添加" variant="primary" text :disabled="!fresh.trim()" @click="create" />
       </form>
@@ -101,7 +101,7 @@
         <footer class="mm-foot">
           <GlassSwitch :model-value="active.done" label="标记完成" @update:model-value="toggleItem(active.id)" />
           <span class="desk-note">{{ active.done ? "已完成" : "未完成" }}</span>
-          <span class="mm-grow" />
+          <span class="desk-block-grow" />
           <GlassButton :icon="Trash2" label="删除" variant="danger" @click="drop(active.id)" />
         </footer>
       </template>
@@ -122,7 +122,7 @@
  * 有日期进「今天 / 逾期 / 即将」，没日期进「收件箱」；右栏改日期就在两边移动，
  * 勾掉立刻反映到卡片和日历（同一份 core/agenda 状态）。
  */
-import { Chips, GlassButton, GlassField, GlassSwitch } from "@/ui/controls"
+import { Chips, EmptyArt, GlassButton, GlassField, GlassSwitch } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { AlarmClock, CalendarDays, CircleCheck, Inbox, Plus, StickyNote, Trash2, X } from "lucide-vue-next"
 import { stateOf } from "@/core/store"
@@ -361,35 +361,9 @@ function create() {
   min-width: 0;
 }
 
-.mm-bar-title {
-  font-size: var(--desk-fs-title);
-  font-weight: var(--desk-fw-semibold);
-}
-
-.mm-bar-hint {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mm-grow {
-  flex: 1 1 auto;
-}
-
 .mm-scroll {
   min-height: 0;
   overflow-y: auto;
-}
-
-.mm-list {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--desk-sp-0);
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
 .mm-date {
@@ -414,19 +388,6 @@ function create() {
 .mm-item:is(:hover, .is-active) > .gb,
 .mm-item > .gb:focus-visible {
   opacity: 1;
-}
-
-.mm-empty {
-  padding: var(--desk-sp-3) 0;
-}
-
-.mm-new {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-1h);
-  padding-top: var(--desk-sp-2);
-  border-top: 1px solid var(--desk-stroke);
 }
 
 .mm-input {
@@ -511,9 +472,33 @@ function create() {
 }
 
 /* 窄窗只收左栏：列表与编辑永远在场 */
+/* 窄窗：左栏收成 44px 图标条，分组照样切（不再整栏隐藏） */
 @container (max-width: 720px) {
   .mm-side {
+    flex: 0 0 44px;
+    width: 44px;
+    padding: var(--desk-sp-1);
+  }
+
+  .mm-tip,
+  .mm-nav-name {
     display: none;
+  }
+
+  .mm-nav-btn {
+    justify-content: center;
+    padding: var(--desk-sp-1h) 0;
+  }
+
+  .mm-nav-btn .desk-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 10px;
+  }
+
+  .mm-nav-btn {
+    position: relative;
   }
 }
 </style>

@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { blockOf } from "./block"
 import { mountProtyle } from "./block"
-import "./styles.css"
+
 
 /**
  * 思源块卡片：用内核 Protyle 渲染（自定义块只有它能挂载），只显示块本体。

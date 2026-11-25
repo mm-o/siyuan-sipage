@@ -79,7 +79,7 @@
         </ul>
 
         <div v-else class="cd-empty">
-          <p class="cd-empty-title">还没有倒数日</p>
+          <div class="cd-empty-title desk-empty"><EmptyArt /><span>还没有倒数日</span></div>
           <GlassButton class="cd-primary" :icon="Plus" label="新建第一个" variant="primary" text @click="startCreate" />
         </div>
       </section>
@@ -115,7 +115,8 @@
  * 编辑不弹二级弹层：详情栏整块切成表单（标题 / 日期 / 分类胶囊 / 重复 / 置顶），保存后回到详情。
  * 数据全在 `core/store.ts` 的 `countdown` 里，这里只做筛选、排序、单位换算（`./countdown.ts`）。
  */
-import { GlassButton, Segmented } from "@/ui/controls"
+import { EmptyArt, GlassButton, Segmented } from "@/ui/controls"
+
 import { computed, ref, watch } from "vue"
 import { ChevronRight, Plus } from "lucide-vue-next"
 import {

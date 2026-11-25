@@ -142,7 +142,8 @@
 
 <script setup lang="ts">
 import { GlassButton, toast } from "@/ui/controls"
-import { computed, onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { detailRequest, stateOf } from "@/core/store"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
 import { getCard, type CardSize } from "@/core/registry"
@@ -393,7 +394,29 @@ onMounted(() => {
   if (scrollRef.value) observer.observe(scrollRef.value)
 })
 
+/* 卡片点了自己的某个入口（分组、某一天）→ 这里替它打开详情 */
+watch(
+  () => detailRequest.value,
+  (req) => {
+    if (!req) return
+    const inst = desk.cards.find((c) => c.cardId === req.cardId && !c.cardId.startsWith("@"))
+    detailRequest.value = null
+    if (!inst) return
+    if (req.patch) Object.assign(stateOf<Record<string, unknown>>(inst.uid, {}), req.patch)
+    expand({ uid: inst.uid, cardId: inst.cardId, w: inst.w, h: inst.h })
+  },
+)
+
+/* 有任一弹层（详情 / 全屏）打开时打个标记：思源的弹窗与菜单要抬到插件之上才点得到，
+   平时不加，避免影响思源自己的层级。 */
+watch(
+  () => sheets.value.filter((s) => s.open).length + (full.value.open ? 1 : 0),
+  (n) => document.body.classList.toggle("desk-overlay", n > 0),
+  { immediate: true },
+)
+
 onBeforeUnmount(() => {
+  document.body.classList.remove("desk-overlay")
   cancelAnimationFrame(enterRaf)
   io.disconnect()
   observer?.disconnect()

@@ -1,4 +1,4 @@
-import { reactive, watch } from "vue"
+import { reactive, ref, watch } from "vue"
 import { LunarDay } from "tyme4ts"
 import { listFavs, removeFav, saveFav } from "@/core/image"
 import { pad } from "@/core/util"
@@ -196,6 +196,14 @@ export function stateOf<T extends object>(uid: string, defaults: T): T {
   return cardStates.data[uid] as T
 }
 
+/** 卡片请求打开自己的详情（卡片不能开弹层，交给 DeskShell 执行） */
+export const detailRequest = ref<{ cardId: string; patch?: Record<string, unknown>; at: number } | null>(null)
+
+/** 卡片请求打开某张卡的详情，可带一小份实例状态（如「哪一天」「哪一组」） */
+export function requestDetail(cardId: string, patch?: Record<string, unknown>) {
+  /* at 让同一张卡连点也能触发一次新的请求 */
+  detailRequest.value = { cardId, patch, at: Date.now() }
+}
 /** 卡片从桌面移除时连带清掉它的状态，避免越攒越多 */
 function dropState(uid: string) {
   delete cardStates.data[uid]

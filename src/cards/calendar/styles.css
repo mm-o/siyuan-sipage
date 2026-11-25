@@ -271,62 +271,9 @@
   min-height: 0;
 }
 
-.cal-agenda-head {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-1h);
-  min-width: 0;
-}
-
-.cal-agenda-title {
-  font-size: var(--desk-fs-title);
-  font-weight: var(--desk-fw-semibold);
-}
-
-.cal-grow {
-  flex: 1 1 auto;
-}
-
-.cal-list {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.cal-empty {
-  padding: var(--desk-sp-2) 0;
-}
-
-.cal-new {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-1h);
-}
-
 .cal-new-field {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-.cal-mirror {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--desk-sp-2);
-  min-width: 0;
-}
-
-.cal-mirror .desk-note {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* 窄窗：先收起黄历，工具栏宁可换行也不截成省略号 */
@@ -358,6 +305,17 @@
   }
 }
 
-.cal-diary {
-  align-self: flex-start;
+/* 日记摘要：贴着右栏底部，三行封顶，跟日程同一条视觉线 */
+/* 右栏：日程与日记上下一半，各自内部滚动 */
+.cal-agenda > .desk-block {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* 日记正文：思源渲染，占满下半块 */
+.cal-diary-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  font-size: var(--desk-fs-caption);
 }

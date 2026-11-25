@@ -11,18 +11,19 @@
 
       <MiniCalendar v-model="selectedKey" nav today class="dl-cal" />
 
-      <ul class="dl-todos mm-scroll">
+      <ul class="desk-block-list mm-scroll dl-todos">
         <li
-          v-for="todo in todos"
-          :key="todo.id || todo.text"
-          class="mm-line"
-          :class="{ 'is-done': todo.done }"
-          :title="todo.text"
-          @click="reveal(todo.id)"
+          v-for="row in rows"
+          :key="row.id"
+          class="mm-row mm-line"
+          :class="{ 'is-done': row.done }"
+          :title="row.text"
+          @click="row.kind === 'agenda' ? toggleItem(row.id) : view?.reveal(row.id)"
         >
-          <span class="mm-text">{{ todo.text }}</span>
+          <span class="mm-dot" :class="{ 'is-on': row.done }" role="checkbox" :aria-checked="row.done" />
+          <span class="mm-text">{{ row.text }}</span>
         </li>
-        <li v-if="!todos.length" class="desk-note">没有待办</li>
+        <li v-if="!rows.length" class="desk-empty is-tight"><EmptyArt /><span>这天没有待办</span></li>
       </ul>
 
       <GlassButton v-if="!preview && state.offset === 0" class="dl-open" text variant="primary" :icon="PenLine" label="写今天的日记" @click="create" />
@@ -30,8 +31,12 @@
 
     <!-- 右：只读全文（思源 Protyle 渲染） -->
     <section class="dl-body desk-pane is-right">
-      <div ref="host" class="dl-protyle" />
-      <p v-if="!preview" class="dl-empty desk-note">{{ state.offset === 0 ? "点左下「写今天的日记」，写完这里就是编辑器" : "这天没有日记" }}</p>
+      <ProtyleView v-if="preview" ref="view" class="dl-protyle" :id="preview.id" editable full :on-input="refreshStat" />
+      <div v-if="!preview" class="dl-empty desk-empty">
+        <EmptyArt />
+        <span>{{ state.offset === 0 ? "今天还没写，写一句吧" : "这天还没有日记" }}</span>
+        <GlassButton text variant="primary" :icon="PenLine" label="写这天的日记" @click="create" />
+      </div>
     </section>
   </div>
 </template>
@@ -43,14 +48,14 @@
  * 只读用的是和「思源块」卡同一个 Protyle 挂载（`ui/protyle`）；
  * 每张日记卡一份日期偏移，所以开着两张卡能同时看两天。
  */
-import { computed, onBeforeUnmount, ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { PenLine } from "lucide-vue-next"
-import { GlassButton, toast } from "@/ui/controls"
+import { EmptyArt, GlassButton, toast } from "@/ui/controls"
 import { stateOf } from "@/core/store"
-import { mountProtyle } from "@/ui/protyle"
 import MiniCalendar from "@/ui/MiniCalendar.vue"
-import { dateKey, dayLabel, weekdayOf } from "@/core/agenda"
-import { dailyStat, dayOf, ensureToday, loadDaily, type DailyPreview } from "@/core/dailyNote"
+import ProtyleView from "@/ui/ProtyleView.vue"
+import { dateKey, dayLabel, itemsOf, toggleItem, weekdayOf } from "@/core/agenda"
+import { dailyStat, dailyTodos, dayOf, ensureDaily, loadDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
 
 const props = defineProps<{ mode?: string; uid?: string }>()
 
@@ -78,71 +83,52 @@ const selectedKey = computed({
 const meta = computed(() => {
   const p = preview.value
   if (!p) return "0 块 · 0 字"
-  const open = p.todos.filter((todo) => !todo.done).length
+  const open = openTodos.value
   return `${p.blocks} 块 · ${p.words} 字${open ? ` · ${open} 待办` : ""}`
 })
 
 const preview = ref<DailyPreview | null>(null)
+const view = ref<InstanceType<typeof ProtyleView>>()
 const todos = computed(() => preview.value?.todos ?? [])
-const host = ref<HTMLElement>()
-let handle: { destroy: () => void } | null = null
 
+/** 左栏待办 = 那天的日程 + 日记里自己写的待办块（日程可勾，日记块点了滚到正文） */
+const rows = computed(() => [
+  ...itemsOf(dateKey(date.value)).map((item) => ({ id: item.id, text: item.text, done: item.done, kind: "agenda" as const })),
+  ...todos.value.map((todo) => ({ id: todo.id || todo.text, text: todo.text, done: todo.done, kind: "diary" as const })),
+])
 
-function render() {
-  const el = host.value
-  handle?.destroy?.()
-  handle = null
-  if (!el) return
-  el.replaceChildren()
-  const note = preview.value
-  if (!note) return
-  /* 就地编辑 + 思源文档的完整功能：标题、面包屑、块图标、工具栏都保留 */
-  handle = mountProtyle((window as any).siyuan?.ws?.app, el, note.id, {
-    editable: true,
-    full: true,
-    onInput: () => void refreshStat(),
-  })
-}
-
-/** 点待办：滚到正文里那一行，同一个编辑器，不另开窗口 */
-function reveal(id: string) {
-  if (!id) return
-  host.value?.querySelector<HTMLElement>(`[data-node-id="${id}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" })
-}
-
+/** 统计行里的待办数：两个来源的未完成合计 */
+const openTodos = computed(() => rows.value.filter((row) => !row.done).length)
 async function load() {
   preview.value = await loadDaily(date.value).catch(() => null)
-  render()
 }
 
-/** 停笔后只刷新字数/块数：不重挂 Protyle，光标不丢 */
+/** 停笔后就地刷新字数与待办：不重挂 Protyle，光标不丢 */
 async function refreshStat() {
   const note = preview.value
   if (!note) return
-  const stat = await dailyStat(note.id).catch(() => null)
-  if (!stat) return
-  note.words = stat.words
-  note.blocks = stat.blocks
+  const [stat, list] = await Promise.all([
+    dailyStat(note.id).catch(() => null),
+    dailyTodos(note.id).catch(() => []),
+  ])
+  if (stat) {
+    note.words = stat.words
+    note.blocks = stat.blocks
+  }
+  note.todos = list
 }
 
-/** 新建今天的日记，然后就地开写（不跳去文档页签） */
-/** 新建今天的日记，然后走同一条加载/挂载路径（不另开窗口） */
+/** 新建今天的日记：建完走同一条加载路径，编辑器自己会挂上 */
 async function create() {
   try {
-    await ensureToday()
-    await load()
+    preview.value = await previewOf(await ensureDaily(date.value))
   } catch (e) {
     toast(`创建日记失败：${(e as Error).message}`, 3000)
   }
 }
 
 watch(() => state.offset, () => void load())
-watch(host, render, { flush: "post" })
 load()
-onBeforeUnmount(() => {
-  handle?.destroy?.()
-  handle = null
-})
 </script>
 
 <style scoped>
@@ -186,17 +172,10 @@ onBeforeUnmount(() => {
   font-size: var(--desk-fs-sm);
 }
 
-/* 待办直接挂在日历下面：分隔线常驻，日期一换内容跟着换，行比可点列表收紧一档 */
+/* 待办直接挂在日历下面：分隔线常驻，日期一换内容跟着换 */
 .dl-todos {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--desk-sp-0);
-  min-height: 0;
-  margin: 0;
-  padding: var(--desk-sp-2) 0 0;
+  padding-top: var(--desk-sp-2);
   border-top: 1px solid var(--desk-stroke);
-  list-style: none;
   font-size: var(--desk-fs-caption);
 }
 
@@ -210,17 +189,13 @@ onBeforeUnmount(() => {
   align-self: flex-start;
 }
 
-/* 文档页：实底 + 不做 backdrop-filter，否则会给 fixed 提示菜单造包含块，斜杠菜单会飘/被裁 */
+/* 和其它栏同一套玻璃：提示菜单已经被收养到 body，不再需要为 fixed 定位牺牲背景 */
 .dl-body {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-  background: var(--desk-surface);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  /* 不裁切：斜杠 / 引用提示菜单要能盖到栏外 */
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* 高度交给 Protyle 自己（.protyle 是 flex 列，内容区自己滚），这里不抢 overflow */
@@ -235,8 +210,8 @@ onBeforeUnmount(() => {
 .dl-empty {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

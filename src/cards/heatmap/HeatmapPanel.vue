@@ -90,7 +90,7 @@
             <span class="hm-recent-num">{{ item.count }}</span>
           </li>
         </ul>
-        <p v-else class="hm-recent-empty desk-note">还没有记录</p>
+        <div v-else class="hm-recent-empty desk-empty is-tight"><EmptyArt /><span>还没有记录</span></div>
       </section>
     </aside>
     </div>
@@ -108,7 +108,7 @@
  * accessibility「不要只靠颜色」→ 数字与列表同时给结论；layout「对齐与分组」→ 图与统计各自成组、统一基线；
  * typography「macOS 正文 13pt、最小 10pt」→ 数字 22 / 标签 11 / 读数 12。
  */
-import { GlassButton } from "@/ui/controls"
+import { EmptyArt, GlassButton } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { buildGrid, buildStats, recentActive, splitGrid, useHeatmap, WEEKS_YEAR } from "./heatmap"
 import "./styles.css"
