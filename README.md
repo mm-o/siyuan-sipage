@@ -183,4 +183,4 @@ The bazaar requirements and the first-listing steps live in **[docs/RELEASE.md](
 
 ## License
 
-MIT — see [LICENSE.md](LICENSE.md). Third-party code shipped in the bundle (Vue, Lucide, tyme4ts, SiYuan Petal type declarations) and its licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); both files are packed into `package.zip`.
+MIT — see [LICENSE](LICENSE); `LICENSE.md` is the same text packed into `package.zip`. Third-party code shipped in the bundle (Vue, Lucide, tyme4ts, SiYuan Petal type declarations) and its licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); both files are packed into `package.zip`.

@@ -1,6 +1,6 @@
 {
   "name": "siyuan-sipage",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "packageManager": "pnpm@10.33.4",
   "type": "module",
   "description": "思页（SiPage）——思源插件：把思源的一个页签变成一屏卡片桌面（壁纸 + 16 张活卡片，可拖拽、一键整理、可插进文档）",

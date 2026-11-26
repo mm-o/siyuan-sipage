@@ -33,12 +33,14 @@ index.css
 README.md
 README.zh-CN.md
 LICENSE.md
-THIRD-PARTY-NOTICES.md
+THIRD_PARTY_NOTICES.md
 icon.png
 preview.webp
 i18n/zh_CN.json     # 命令的 langKey 由思源从这里读
 i18n/en_US.json
 ```
+
+仓库根目录另需 `LICENSE`（无扩展名）：集市 PR Check 校验的是**仓库根目录**，只认 `LICENSE` / `LICENSE.txt`，包内有 `LICENSE.md` 不算；`check:dist` 会断言根目录那份存在、且与包内的 `LICENSE.md` 逐字一致。
 
 另外三条硬约束（`check:dist` 会拦）：
 

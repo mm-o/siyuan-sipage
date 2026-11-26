@@ -53,6 +53,18 @@ for (const required of ['README.md', 'README.zh-CN.md', 'LICENSE.md', 'THIRD_PAR
   if (!has(required)) bazaar.push(`package.zip 缺少 ${required}`)
 }
 
+/* 仓库根目录必须有 LICENSE（GitHub 与集市只认这个文件名；包内保留 LICENSE.md 供集市区看），
+   两份同文，改一处忘另一处会在这里被拦住 */
+const rootLicense = path.join(process.cwd(), 'LICENSE')
+if (!fs.existsSync(rootLicense)) {
+  bazaar.push('仓库根目录缺少 LICENSE（集市校验要求 LICENSE 或 LICENSE.txt）')
+} else if (has('LICENSE.md')) {
+  const norm = (text) => text.replace(/\r\n/g, '\n').trim()
+  if (norm(fs.readFileSync(rootLicense, 'utf8')) !== norm(fs.readFileSync(path.join(dist, 'LICENSE.md'), 'utf8'))) {
+    bazaar.push('根目录 LICENSE 与包内 LICENSE.md 内容不一致')
+  }
+}
+
 /* 图片体积与尺寸（集市：icon 160×160 ≤64KiB；preview 1024×768 ≤512KiB） */
 function imageInfo(file) {
   if (!fs.existsSync(file)) return null

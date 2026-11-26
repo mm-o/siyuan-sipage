@@ -183,4 +183,4 @@ pnpm check:browser   # 构建独立验证页并跑五组隔离浏览器回归
 
 ## 许可
 
-MIT，见 [LICENSE.md](LICENSE.md)。随包分发的第三方代码（Vue、Lucide、tyme4ts、SiYuan Petal 类型声明）及其许可写在 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，两份文件都会打进 `package.zip`。
+MIT，见 [LICENSE](LICENSE)（`LICENSE.md` 是同一份文字，随 `package.zip` 分发）。随包分发的第三方代码（Vue、Lucide、tyme4ts、SiYuan Petal 类型声明）及其许可写在 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，两份文件都会打进 `package.zip`。

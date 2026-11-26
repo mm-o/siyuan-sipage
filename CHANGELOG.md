@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.2 — 集市校验补正：仓库根目录补 `LICENSE`
+
+- 集市 PR Check 报「仓库根目录缺少 `LICENSE` / `LICENSE.txt`」：包内的 `LICENSE.md` 不算，校验看的是仓库根目录。补上无扩展名的 `LICENSE`（与包内同文），`LICENSE.md` 保留给 `package.zip`。
+- `check:dist` 增加一条守卫：根目录 `LICENSE` 必须存在，且与包内 `LICENSE.md` 逐字一致，避免两份许可各改一半。
+- `docs/RELEASE.md` 记下这条硬性要求，并修掉产物清单里 `THIRD-PARTY-NOTICES.md` 的文件名笔误（实际是 `THIRD_PARTY_NOTICES.md`）。
+- 版权行里的包名笔误（`sipage` → `siyuan-sipage`）一并修正。
+
 ## v1.0.1 — 首个正式版：思页（日程 / 日历 / 日记三位一体 + 三套材质）
 
 > 1.0.1 是第一个对外发布的版本（此前的 0.x 只在本地迭代，没有上架）。
@@ -16,9 +23,9 @@
 
 ### 许可
 
-- `LICENSE` → `LICENSE.md`（Markdown 扩展名才能进 `package.zip` 的白名单），版权行补上「思页 / SiPage，包名 siyuan-sipage」。
+- `LICENSE`（无扩展名，GitHub 与集市只认这个名字）+ `LICENSE.md`（Markdown 扩展名才能进 `package.zip` 的白名单）两份同文，版权行补上「思页 / SiPage，包名 siyuan-sipage」；`check:dist` 断言根目录文件存在且与包内那份逐字一致，改一处忘另一处会被拦住。
 - 新增 `THIRD_PARTY_NOTICES.md`：`index.js` 里打进的三份开源代码（Vue 3 MIT、Lucide ISC、tyme4ts MIT）逐条列出署名与许可全文，并注明只做开发期依赖、不进产物的那一批。
-- 两份文件都进 `package.zip`（`vite.config.ts` 的静态拷贝列表），`check:dist` 断言它们存在。
+- `LICENSE.md` 与 `THIRD_PARTY_NOTICES.md` 都进 `package.zip`（`vite.config.ts` 的静态拷贝列表），`check:dist` 断言它们存在。
 
 ### 精简（没有历史包袱就不要背负它）
 
