@@ -40,7 +40,7 @@
 
         <div class="cd-toolbar">
           <Segmented v-model="filter" :options="FILTERS" class="cd-time-tabs" />
-          <GlassButton class="cd-primary" :icon="Plus" label="新建" variant="primary" text @click="startCreate" />
+          <GlassButton class="cd-primary" :icon="Plus" :label="t('card.countdown.new')" variant="primary" text @click="startCreate" />
         </div>
 
         <ul v-if="list.length" class="cd-scroll cd-items">
@@ -79,8 +79,8 @@
         </ul>
 
         <div v-else class="cd-empty">
-          <div class="cd-empty-title desk-empty"><EmptyArt /><span>还没有倒数日</span></div>
-          <GlassButton class="cd-primary" :icon="Plus" label="新建第一个" variant="primary" text @click="startCreate" />
+          <div class="cd-empty-title desk-empty"><EmptyArt /><span>{{ t("card.countdown.empty") }}</span></div>
+          <GlassButton class="cd-primary" :icon="Plus" :label="t('card.countdown.newFirst')" variant="primary" text @click="startCreate" />
         </div>
       </section>
 
@@ -119,6 +119,7 @@ import { EmptyArt, GlassButton, Segmented } from "@/ui/controls"
 
 import { computed, ref, watch } from "vue"
 import { ChevronRight, Plus } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import {
   addCountdownEvent,
   countdown,

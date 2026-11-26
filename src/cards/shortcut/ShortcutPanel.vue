@@ -2,13 +2,13 @@
   <div class="sc-panel desk-seq desk-panel-row">
     <!-- 左：分类 -->
     <section class="sc-col desk-pane is-left">
-      <h4 class="sc-sub desk-note">分类</h4>
+      <h4 class="sc-sub desk-note">{{ t("card.shortcut.categories") }}</h4>
       <ul class="sc-list">
         <li v-for="g in GROUPS" :key="g" class="row" :class="{ 'is-on': g === active }" @click="active = g">
           <span class="tile" :style="{ background: GROUP_STYLE[g].soft, color: GROUP_STYLE[g].color }">
             <component :is="GROUP_STYLE[g].icon" :size="14" :stroke-width="1.9" />
           </span>
-          <span class="name desk-ellipsis">{{ g }}</span>
+          <span class="name desk-ellipsis">{{ groupLabel(g) }}</span>
           <em class="num">{{ countOf(g) }}</em>
         </li>
       </ul>
@@ -16,7 +16,7 @@
 
     <!-- 中：点一下执行；右侧与卡片库一致，已添加显示数量，可以继续添加 -->
     <section class="sc-col desk-pane is-mid">
-      <h4 class="sc-sub desk-note">{{ active }} · 点一下执行</h4>
+      <h4 class="sc-sub desk-note">{{ t("card.shortcut.runHint", { group: groupLabel(active) }) }}</h4>
       <ul class="sc-list">
         <li v-for="s in byGroup(active)" :key="s.id" class="row" @click="runShortcut(s)">
           <span class="tile" :style="{ background: GROUP_STYLE[s.group].soft, color: GROUP_STYLE[s.group].color }">
@@ -25,14 +25,14 @@
           </span>
           <span class="name desk-ellipsis">{{ s.label }}</span>
           <span v-if="used(s.id)" class="desk-badge is-on">{{ used(s.id) }}</span>
-          <GlassButton :icon="Plus" label="加入" @click.stop="addShortcut(state, s.id)" />
+          <GlassButton :icon="Plus" :label="t('card.shortcut.add')" @click.stop="addShortcut(state, s.id)" />
         </li>
       </ul>
     </section>
 
     <!-- 右：已启用（拖动排序 / 垃圾桶移除一次） -->
     <section class="sc-col desk-pane is-right">
-      <h4 class="sc-sub desk-note">已启用 {{ enabled.length }}</h4>
+      <h4 class="sc-sub desk-note">{{ t("card.shortcut.enabled", { n: enabled.length }) }}</h4>
       <ul class="sc-list">
         <li
           v-for="(s, i) in enabled"
@@ -51,9 +51,9 @@
             <component :is="s.fallback" v-else :size="13" :stroke-width="2" />
           </span>
           <span class="name desk-ellipsis">{{ s.label }}</span>
-          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeShortcutAt(state, i)" />
+          <GlassButton :icon="Trash2" :label="t('common.remove')" variant="danger" @click="removeShortcutAt(state, i)" />
         </li>
-        <li v-if="!enabled.length" class="sc-sub desk-note">空</li>
+        <li v-if="!enabled.length" class="sc-sub desk-note">{{ t("card.shortcut.empty") }}</li>
       </ul>
     </section>
   </div>
@@ -63,12 +63,14 @@
 import { computed, ref } from "vue"
 import { GlassButton } from "@/ui/controls"
 import { GripVertical, Plus, Trash2 } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import {
   GROUPS,
   GROUP_STYLE,
   addShortcut,
   byGroup,
   enabledShortcuts,
+  groupLabel,
   removeShortcutAt,
   reorderShortcut,
   runShortcut,
@@ -82,7 +84,7 @@ const props = defineProps<{ mode?: string; uid?: string }>()
 /* 详情跟着卡片实例走：同一张卡放多张，各配各的 */
 const state = shortcutOf(props.uid || "shortcut")
 
-const active = ref<ShortcutGroup>("导航")
+const active = ref<ShortcutGroup>("导航") // i18n-keep
 const sprite = useSprite()
 const dragFrom = ref(-1)
 const enabled = computed(() => enabledShortcuts(state))

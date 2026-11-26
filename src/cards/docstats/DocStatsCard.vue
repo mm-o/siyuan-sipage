@@ -5,7 +5,7 @@
       :viewBox="`0 0 ${box.w} ${box.h}`"
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="文档统计"
+      :aria-label="t('card.docstats.title')"
     >
       <defs>
         <linearGradient id="ds-a" x1="0" y1="0" x2="1" y2="1">
@@ -65,6 +65,7 @@
  */
 import { computed, onMounted } from "vue"
 import { getCard } from "@/core/registry"
+import { t } from "@/core/i18n"
 import { compact, loadDocStats, stats } from "./docstats"
 
 type P = [number, number]
@@ -102,18 +103,18 @@ const dims = computed(() => {
   const second = v?.top?.[1]?.value ?? 0
 
   return [
-    { label: "文档", value: compact(docs) },
-    { label: "字数", value: compact(words) },
-    { label: "今日", value: compact(today) },
-    { label: "近 7 天", value: compact(week) },
-    { label: "近 30 天", value: compact(month) },
-    { label: "笔记本", value: compact(notebooks) },
-    { label: "篇均字数", value: docs ? compact(Math.round(words / docs)) : "0" },
-    { label: "最长一篇", value: compact(longest) },
-    { label: "次长一篇", value: compact(second) },
-    { label: "本均篇数", value: notebooks ? compact(Math.round(docs / notebooks)) : "0" },
-    { label: "日均 30 天", value: compact(Math.round(month / 30)) },
-    { label: "今日占比", value: week ? `${Math.round((today / week) * 100)}%` : "0%" },
+    { label: t("card.docstats.dim.docs"), value: compact(docs) },
+    { label: t("card.docstats.dim.words"), value: compact(words) },
+    { label: t("card.docstats.dim.today"), value: compact(today) },
+    { label: t("card.docstats.dim.week"), value: compact(week) },
+    { label: t("card.docstats.dim.month"), value: compact(month) },
+    { label: t("card.docstats.dim.notebooks"), value: compact(notebooks) },
+    { label: t("card.docstats.dim.wordsPerDoc"), value: docs ? compact(Math.round(words / docs)) : "0" },
+    { label: t("card.docstats.dim.longest"), value: compact(longest) },
+    { label: t("card.docstats.dim.second"), value: compact(second) },
+    { label: t("card.docstats.dim.docsPerNotebook"), value: notebooks ? compact(Math.round(docs / notebooks)) : "0" },
+    { label: t("card.docstats.dim.daily30"), value: compact(Math.round(month / 30)) },
+    { label: t("card.docstats.dim.todayShare"), value: week ? `${Math.round((today / week) * 100)}%` : "0%" },
   ]
 })
 

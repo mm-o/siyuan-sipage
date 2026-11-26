@@ -6,10 +6,11 @@
  */
 import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, Teleport, watch, type Component, type PropType, type Ref } from "vue"
 import { isNative } from "@/ui/style"
+import { t } from "@/core/i18n"
 import { Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-vue-next"
 
-/** 插件和验证页注册同一图形，各使用处只引用 iconDeskCards。 */
-export const DESK_ICON = `<symbol id="iconDeskCards" viewBox="0 0 32 32"><g fill="currentColor">
+/** 插件和验证页注册同一图形，各使用处只引用 iconSiPage。 */
+export const SIPAGE_ICON = `<symbol id="iconSiPage" viewBox="0 0 32 32"><g fill="currentColor">
   <rect x="3.5" y="3.5" width="11" height="11" rx="3"/>
   <rect x="17.5" y="3.5" width="11" height="11" rx="3" opacity=".55"/>
   <rect x="3.5" y="17.5" width="11" height="11" rx="3" opacity=".55"/>
@@ -367,8 +368,8 @@ export const GlassSelect = defineComponent({
 /* ── 序列翻页组（上一条 / 下一条） ── */
 export const SeriesNav = (props: { series: { step: (dir: "prev" | "next") => Promise<void> } }) =>
   h("div", { class: "desk-fab" }, [
-    h(GlassButton, { icon: ChevronLeft, label: "上一条", onClick: () => void props.series.step("prev") }),
-    h(GlassButton, { icon: ChevronRight, label: "下一条", onClick: () => void props.series.step("next") }),
+    h(GlassButton, { icon: ChevronLeft, label: t("ui.ctl.prev"), onClick: () => void props.series.step("prev") }),
+    h(GlassButton, { icon: ChevronRight, label: t("ui.ctl.next"), onClick: () => void props.series.step("next") }),
   ])
 SeriesNav.props = ["series"]
 

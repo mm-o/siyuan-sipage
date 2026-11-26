@@ -2,11 +2,11 @@
   <div class="cal">
     <!-- 今日格（参考实现 CalendarDay）：日号 + 农历 + 星期 + 班/休 -->
     <div class="day">
-      <i v-if="v.rest" class="mark">休</i>
+      <i v-if="v.rest" class="mark">{{ t("card.calendar.restMark") }}</i>
       <b class="num" :class="`wk${v.wk}`">{{ v.day }}</b>
       <span class="lunar">{{ v.lunar }}</span>
       <span class="week">{{ v.week }}</span>
-      <span v-if="today.open" class="agenda">{{ today.open }} 项日程</span>
+      <span v-if="today.open" class="agenda">{{ t("card.calendar.agendaOpen", { n: today.open }) }}</span>
     </div>
 
     <!-- 整月网格：复用 ui/MiniCalendar，够宽才出 -->
@@ -22,6 +22,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { SolarDay } from "tyme4ts"
 import { itemsOf, todayKey } from "@/core/agenda"
+import { t } from "@/core/i18n"
 
 import MiniCalendar from "@/ui/MiniCalendar.vue"
 import { calendarOf } from "./calendar"
@@ -31,7 +32,15 @@ const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string 
 /* 每张日历卡一份：看哪个月、一周从哪天开始 */
 const state = calendarOf(props.uid || "calendar")
 
-const WEEK = ["一", "二", "三", "四", "五", "六", "日"]
+const WEEK = [
+  t("card.calendar.week.1"),
+  t("card.calendar.week.2"),
+  t("card.calendar.week.3"),
+  t("card.calendar.week.4"),
+  t("card.calendar.week.5"),
+  t("card.calendar.week.6"),
+  t("card.calendar.week.7"),
+]
 const tick = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
 
@@ -53,7 +62,7 @@ const v = computed(() => {
     day: d.getDate(),
     wk,
     rest: wk >= 5,
-    week: `周${WEEK[wk]}`,
+    week: WEEK[wk],
     lunar: `${lunar.getLunarMonth().getName()}${lunar.getName()}`,
   }
 })

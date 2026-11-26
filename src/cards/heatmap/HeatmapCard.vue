@@ -8,11 +8,11 @@
             :key="day.date"
             class="hc-cell"
             :class="`is-${day.level}`"
-            :title="`${day.date} · ${day.count} 块`"
+            :title="t('card.heatmap.cell', { date: day.date, count: day.count })"
           />
         </template>
       </div>
-      <div v-else class="hc-state">{{ error || "加载中…" }}</div>
+      <div v-else class="hc-state">{{ error || t("common.loading") }}</div>
     </div>
   </div>
 </template>
@@ -26,6 +26,7 @@
  * 周数按卡片形状自适应，只显示最近一部分。取数与分档在 `./heatmap.ts`。
  */
 import { computed } from "vue"
+import { t } from "@/core/i18n"
 import { buildGrid, useHeatmap } from "./heatmap"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number }>(), { size: "2x2", w: 4, h: 2 })

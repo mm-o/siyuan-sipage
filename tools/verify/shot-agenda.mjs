@@ -17,7 +17,7 @@ const item = (id, text, date = '', time = '') => ({
 })
 
 const harness = await openBrowser({ storage: {
-  'desk-cards:desk': { cards: [
+  'siyuan-sipage-petal:desk': { cards: [
     { uid: 'panel-clock', cardId: '@clock', w: 12, h: 6, x: 20, y: 0, auto: true },
     { uid: 'panel-tools', cardId: '@tools', w: 2, h: 2, x: 49, y: 0, auto: true },
     /* 卡片放到底部：弹窗居中，背后只有壁纸，截图不会被桌面卡片串味 */
@@ -25,7 +25,7 @@ const harness = await openBrowser({ storage: {
     { uid: 'agenda-cal', cardId: 'calendar', w: 12, h: 8, x: 20, y: 26 },
     { uid: 'agenda-daily', cardId: 'daily', w: 8, h: 6, x: 34, y: 26 },
   ] },
-  'desk:agenda': { group: 'today', seeded: true, items: [
+  'siyuan-sipage-petal:agenda': { group: 'today', seeded: true, items: [
     item('ag1', '今天的站会', today, '09:30'),
     item('ag2', '收件箱里的一条备忘'),
     item('ag3', '昨天没做完的事', day(-1)),
@@ -37,7 +37,7 @@ const { page, errors } = harness
 const checks = []
 const screenshots = []
 const sheet = page.locator('.desk-sheet')
-const store = () => page.evaluate(() => JSON.parse(localStorage.getItem('desk:agenda') || '{}'))
+const store = () => page.evaluate(() => JSON.parse(localStorage.getItem('siyuan-sipage-petal:agenda') || '{}'))
 
 async function screenshot(name) {
   if (process.env.VERIFY_NO_SCREENSHOTS) return
@@ -91,7 +91,7 @@ try {
   await sheet.locator('.mm-nav-btn', { hasText: '收件箱' }).click()
   await sheet.locator('.desk-block-list .mm-row', { hasText: '收件箱里的一条备忘' }).locator('.mm-text').click()
   await sheet.locator('.chips').getByRole('button', { name: '今天', exact: true }).click()
-  await page.waitForFunction(([id, date]) => JSON.parse(localStorage.getItem('desk:agenda')).items.find(entry => entry.id === id)?.date === date, ['ag2', today])
+  await page.waitForFunction(([id, date]) => JSON.parse(localStorage.getItem('siyuan-sipage-petal:agenda')).items.find(entry => entry.id === id)?.date === date, ['ag2', today])
   assert.equal((await store()).items.find(entry => entry.id === 'ag2').date, today)
   checks.push('inbox memo becomes a scheduled item the moment it is moved to today')
 
@@ -99,9 +99,9 @@ try {
   await sheet.locator('.mm-nav-btn', { hasText: '今天' }).click()
   await sheet.locator('.desk-form-row .desk-field').fill('新加的一条日程')
   await sheet.locator('.desk-form-row').getByRole('button', { name: '添加', exact: true }).click()
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('desk:agenda')).items.some(entry => entry.text === '新加的一条日程' && entry.date))
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('siyuan-sipage-petal:agenda')).items.some(entry => entry.text === '新加的一条日程' && entry.date))
   await sheet.locator('.desk-block-list .mm-row', { hasText: '新加的一条日程' }).locator('.mm-dot').click()
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('desk:agenda')).items.find(entry => entry.text === '新加的一条日程')?.done === true)
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('siyuan-sipage-petal:agenda')).items.find(entry => entry.text === '新加的一条日程')?.done === true)
   const created = (await store()).items.find(entry => entry.text === '新加的一条日程')
   assert.equal(created.date, today, 'new items in 今天 land on today')
   assert.equal(created.done, true)
@@ -138,23 +138,12 @@ try {
   assert.equal((await store()).items.length, 5, 'agenda data is untouched by the calendar panel')
   checks.push('calendar day pane has no mirror button left')
 
-  /* 7. 老版 desk:memo：迁进收件箱，旧键删掉，不会两边各一份 */
-  await page.evaluate(() => {
-    localStorage.setItem('desk:memo', JSON.stringify({ items: [{ id: 'legacy', text: '旧备忘录的一条', done: false, at: 1 }], filter: 'all' }))
-  })
-  await page.reload({ waitUntil: 'networkidle' })
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('desk:agenda') || '{}').items?.some(item => item.text === '旧备忘录的一条'))
-  const migrated = await page.evaluate(() => ({
-    legacy: localStorage.getItem('desk:memo'),
-    item: JSON.parse(localStorage.getItem('desk:agenda')).items.find(entry => entry.text === '旧备忘录的一条'),
-  }))
-  assert.equal(migrated.legacy, null, 'the old key is dropped after migrating')
-  assert.equal(migrated.item.date, '', 'legacy memos land in the inbox')
-  checks.push('old desk:memo items migrate into the inbox once and the old key is dropped')
-
   /* 7. 备忘卡的行/分组 → 备忘详情并停在那一组；日历卡点日期只是打开日历自己的详情 */
-  await sheet.getByRole('button', { name: '关闭', exact: true }).click().catch(() => {})
-  await page.waitForTimeout(400)
+  /* 先把上一步打开的日历详情关干净：两个弹窗叠着会命中多个关闭键 */
+  while (await page.locator('.desk-sheet').count()) {
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(200)
+  }
   await page.evaluate(() => document.querySelector('.desk-root .mm-row.is-link')?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await sheet.locator('.mm-panel').waitFor()
   assert.equal(await sheet.locator('.mm-nav-btn.is-active .mm-nav-name').textContent(), '今天')

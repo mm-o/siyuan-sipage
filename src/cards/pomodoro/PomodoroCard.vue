@@ -6,8 +6,8 @@
   >
     <div class="pm-body desk-seq">
       <header class="pm-head">
-        <span class="pm-label">{{ pomodoro.phase === "focus" ? "专注" : "休息" }}</span>
-        <span class="pm-round">第 {{ pomodoro.round + 1 }} 个</span>
+        <span class="pm-label">{{ t(pomodoro.phase === "focus" ? "card.pomodoro.phase.focus" : "card.pomodoro.phase.rest") }}</span>
+        <span class="pm-round">{{ t("card.pomodoro.round", { n: pomodoro.round + 1 }) }}</span>
       </header>
 
       <div class="pm-dial" :style="{ '--pm-p': percent }">
@@ -15,8 +15,8 @@
       </div>
 
       <footer class="pm-foot">
-        <GlassButton :icon="running ? Pause : Play" :label="running ? '暂停' : '开始'" :variant="running ? 'default' : 'primary'" :tone="pomodoro.cover ? 'photo' : 'auto'" text @click="running ? pause() : start()" />
-        <GlassButton :icon="RotateCcw" label="重置" :tone="pomodoro.cover ? 'photo' : 'auto'" text @click="reset" />
+        <GlassButton :icon="running ? Pause : Play" :label="running ? t('card.pomodoro.pause') : t('card.pomodoro.start')" :variant="running ? 'default' : 'primary'" :tone="pomodoro.cover ? 'photo' : 'auto'" text @click="running ? pause() : start()" />
+        <GlassButton :icon="RotateCcw" :label="t('common.reset')" :tone="pomodoro.cover ? 'photo' : 'auto'" text @click="reset" />
       </footer>
     </div>
   </div>
@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { GlassButton } from "@/ui/controls"
 import { Pause, Play, RotateCcw } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import { clockText, pause, pomodoro, reset, start, usePomodoro } from "./pomodoro"
 
 defineProps<{ size?: string; w?: number; h?: number }>()

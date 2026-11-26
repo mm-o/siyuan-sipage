@@ -8,6 +8,7 @@
  * 两者都按实例偏移找日期，多张日记卡可以各看各的那一天。
  */
 import { dateKey } from "@/core/agenda"
+import { t } from "@/core/i18n"
 import { BODY_TYPES, post, sql } from "@/core/util"
 
 interface DailyNote {
@@ -75,10 +76,10 @@ export async function ensureDaily(date: Date): Promise<DailyNote> {
   if (hit) return hit
   const key = dateKey(date)
   const notebook = await dailyNotebook()
-  if (!notebook) throw new Error("未找到笔记本")
+  if (!notebook) throw new Error(t("core.daily.noNotebook"))
   if (key === dateKey(new Date())) {
     const doc = await post<{ id: string }>("/api/filetree/createDailyNote", { notebook, app: "" })
-    if (!doc?.id) throw new Error("创建日记失败")
+    if (!doc?.id) throw new Error(t("core.daily.createFailed"))
     return { id: doc.id, title: key }
   }
   const seed = await dailySeed()
@@ -89,7 +90,7 @@ export async function ensureDaily(date: Date): Promise<DailyNote> {
     markdown: "",
   })
   const id = typeof created === "string" ? created : created?.id || ""
-  if (!id) throw new Error("创建日记失败")
+  if (!id) throw new Error(t("core.daily.createFailed"))
   await post("/api/attr/setBlockAttrs", {
     id,
     attrs: { [`custom-dailynote-${key.replace(/-/g, "")}`]: "" },

@@ -9,7 +9,7 @@
           :style="panelStyle"
           role="dialog"
           aria-modal="true"
-          :aria-label="title || '对话框'"
+          :aria-label="title || t('ui.sheet.dialog')"
           tabindex="-1"
         >
           <!-- 顶部标题栏：图标 + 标题 + 右侧动作（钉住 / 全屏 / 关闭），自己一块 pane -->
@@ -21,12 +21,12 @@
             <div class="desk-sheet-actions">
               <GlassButton
                 :icon="pinned ? PinOff : Pin"
-                :label="pinned ? '取消钉住' : '钉住（看到背景）'"
+                :label="pinned ? t('ui.sheet.unpin') : t('ui.sheet.pin')"
                 :active="pinned"
                 @click="togglePin"
               />
               <slot name="actions" />
-              <GlassButton class="desk-sheet-close" :icon="X" label="关闭" @click="close" />
+              <GlassButton class="desk-sheet-close" :icon="X" :label="t('common.close')" @click="close" />
             </div>
           </header>
 
@@ -45,6 +45,7 @@
 <script setup lang="ts">
 /** 统一弹层：标题栏、功能按钮和内容面板；origin 用于 FLIP 展开与关闭。 */
 import { GlassButton } from "@/ui/controls"
+import { t } from "@/core/i18n"
 import { computed, nextTick, onBeforeUnmount, ref, watch, type Component } from "vue"
 import { Pin, PinOff, X } from "lucide-vue-next"
 

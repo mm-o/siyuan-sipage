@@ -7,6 +7,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue"
+import { t } from "@/core/i18n"
 import { openDoc } from "@/core/quickdocs"
 import { sql } from "@/core/util"
 
@@ -44,7 +45,7 @@ onMounted(async () => {
   const docs = await sql("select id, content as title, box from blocks where type = 'd' limit 240").catch(() => [])
   if (signal.aborted) return
   if (!docs.length) {
-    hint.value = "还没有文档"
+    hint.value = t("card.docstats.graph.empty")
     return
   }
 
@@ -63,7 +64,7 @@ onMounted(async () => {
     const r = 24 + (i % 5) * 10
     return {
       id: String(d.id),
-      title: String(d.title || "未命名"),
+      title: String(d.title || t("card.docstats.untitled")),
       box,
       hue: c.hue,
       x: c.x + Math.cos(a) * r,

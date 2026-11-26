@@ -28,6 +28,7 @@
 import { computed, ref } from "vue"
 import { Menu } from "siyuan"
 import { getCard } from "@/core/registry"
+import { t } from "@/core/i18n"
 
 /** preview=true 时只做静态展示（设置里的卡片预览用），不渲染悬浮控件、不弹菜单 */
 const props = defineProps<{ cardId: string; w: number; h: number; preview?: boolean }>()
@@ -70,10 +71,10 @@ function onClick() {
 function openMenu(e: MouseEvent) {
   if (props.preview) return
   const menu = new Menu("desk-card")
-  menu.addItem({ icon: "iconOpen", label: "打开", click: () => emit("expand", rect() as DOMRect) })
-  menu.addItem({ icon: "iconRefresh", label: "刷新", click: () => emit("refresh") })
+  menu.addItem({ icon: "iconOpen", label: t("common.open"), click: () => emit("expand", rect() as DOMRect) })
+  menu.addItem({ icon: "iconRefresh", label: t("common.refresh"), click: () => emit("refresh") })
   menu.addSeparator()
-  menu.addItem({ icon: "iconTrashcan", label: "移除", click: () => emit("remove") })
+  menu.addItem({ icon: "iconTrashcan", label: t("common.remove"), click: () => emit("remove") })
 
   // 「⋯」是按钮触发，鼠标没动过时 clientX/Y 为 0，落到按钮左下角
   menu.open(e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : anchorOf(e.currentTarget))

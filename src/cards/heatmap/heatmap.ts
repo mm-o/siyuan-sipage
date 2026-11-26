@@ -10,6 +10,7 @@
  */
 import { onMounted, ref } from "vue"
 import { dateKey } from "@/core/agenda"
+import { t } from "@/core/i18n"
 import { BODY_TYPES, sql } from "@/core/util"
 
 /* ── 日期键（统一用 agenda 的本地时区写法，避免 toISOString 把日期挪一天）── */
@@ -125,7 +126,20 @@ function levelOf(count: number, cuts: number[]) {
   return 4
 }
 
-const MONTH_LABEL = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+const MONTH_LABEL = [
+  t("card.heatmap.month.1"),
+  t("card.heatmap.month.2"),
+  t("card.heatmap.month.3"),
+  t("card.heatmap.month.4"),
+  t("card.heatmap.month.5"),
+  t("card.heatmap.month.6"),
+  t("card.heatmap.month.7"),
+  t("card.heatmap.month.8"),
+  t("card.heatmap.month.9"),
+  t("card.heatmap.month.10"),
+  t("card.heatmap.month.11"),
+  t("card.heatmap.month.12"),
+]
 
 /** 拼成「weeks 列 × 7 天（周一开始）」的网格 + 顶部月份标签 */
 export function buildGrid(counts: Map<string, number>, weeks: number, today = new Date().toLocaleDateString("sv-SE")): HeatGrid {
@@ -264,7 +278,7 @@ export function useHeatmap(weeks = WEEKS_YEAR) {
       const data = await loadCached(weeks)
       if (mine === token) counts.value = data
     } catch (e) {
-      if (mine === token) error.value = (e as Error)?.message || "读取失败"
+      if (mine === token) error.value = (e as Error)?.message || t("card.heatmap.errorRead")
     } finally {
       if (mine === token) loading.value = false
     }

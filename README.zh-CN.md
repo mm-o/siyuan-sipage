@@ -1,15 +1,19 @@
-# 桌面卡片
+# 思页
 
-把一屏卡片放进思源的一个页签：壁纸 + 卡片网格，卡片是活的 —— 点开有详情、能全屏、还能插进文档。
+**思页（SiPage）** 是思源里的「一个页签」：像浏览器标签页那样，把一个页签变成一整块卡片桌面——壁纸 + 卡片网格，卡片是活的，点开有详情、能全屏、还能插进文档。
 
-**在线更新日志**：[CHANGELOG.md](https://github.com/mm-o/desk-cards/blob/main/CHANGELOG.md)（关于页右上角也有入口）
+*听风吹哪页，读哪页。*
+
+> 包名 `siyuan-sipage` 与仓库同名（集市按「仓库名 = 包名」校验）。插件尚未发布过任何版本，所以安装目录 `data/plugins/siyuan-sipage`、数据目录 `data/storage/petal/siyuan-sipage`、收藏目录 `data/public/siyuan-sipage` 直接就是最终形态，不带任何历史包袱。
+
+**在线更新日志**：[CHANGELOG.md](https://github.com/mm-o/siyuan-sipage/blob/main/CHANGELOG.md)（关于页右上角也有入口）
 
 ## 安装与启用
 
 1. 下载 release 里的 `package.zip`，或在仓库里 `pnpm build` 得到 `dist/`。
-2. 解压 / 复制到工作空间的 `data/plugins/desk-cards/`（目录里应能看到 `plugin.json`、`index.js`、`index.css`）。
-3. 打开 **思源 → 设置 → 集市 → 已下载**，找到「桌面卡片」，打开开关。
-4. 刷新页面（或重启思源）。顶栏右侧出现「桌面卡片」图标。
+2. 解压 / 复制到工作空间的 `data/plugins/siyuan-sipage/`（目录里应能看到 `plugin.json`、`index.js`、`index.css`）。
+3. 打开 **思源 → 设置 → 集市 → 已下载**，找到「思页」，打开开关。
+4. 刷新页面（或重启思源）。顶栏右侧出现「思页」图标。
 
 升级时只替换 `index.js` / `index.css`，刷新页面即可；卡片布局、壁纸、收藏都不会丢。
 
@@ -17,9 +21,9 @@
 
 三种入口，效果一样：
 
-- 顶栏右侧的「桌面卡片」图标；
-- 命令面板 → 「打开桌面卡片」；
-- 想用快捷键：**设置 → 快捷键**，搜「打开桌面卡片」自己绑一个。
+- 顶栏右侧的「思页」图标；
+- 命令面板 → 「打开思页」；
+- 想用快捷键：**设置 → 快捷键**，搜「打开思页」自己绑一个。
 
 桌面左侧是一块独立时间（和右上角工具组同一层网格），其余位置放卡片。
 
@@ -31,11 +35,11 @@
 2. 在「卡片库」里点一行选中，右栏会出现这张卡的真卡片预览、已放张数。
 3. 点 **添加到桌面**。同一张卡可以放多张，尺寸、位置各不相同。
 
-### 卡片菜单、详情与全屏
+### 卡片详情与全屏
 
-- **点卡片** → 打开详情弹窗；`Esc` 关闭。
-- **左上角全屏键** → 卡片铺满整屏；再点一次或 `Esc` 退出。
-- **右上角 ⋯**（或右键卡片）→ 打开 / 刷新 / 移除。
+- **点卡片** → 打开详情弹窗；`Esc` 关闭。卡片上没有悬浮按钮，一张卡只有这一个动作。
+- **右键卡片** → 打开 / 刷新 / 移除（思源原生菜单；尺寸在整理模式里调）。
+- **全屏** → 详情标题栏右侧的展开键：卡片铺满整屏，点右下角的退出键或 `Esc` 回来。
 - **弹窗可以拖、可以缩、可以钉**：
   - 拖标题栏移动，双击标题栏回到居中；
   - 拖四角改大小；
@@ -63,7 +67,7 @@
 | 倒数日 | 纪念日与目标日，详情里按分类管理 |
 | 写作热力图 | 按天看写作量，详情里是一整年 |
 | 番茄钟 | 25 分钟专注 + 5 分钟休息 |
-| 日记 | 某一天的日记：块 / 字 / 待办与正文前几行，详情里只读全文 |
+| 日记 | 某一天的日记：块 / 字 / 待办与正文前几行，详情里就地编辑（思源原生编辑体验） |
 | 日程备忘 | 今天 / 逾期 / 备忘三段，勾掉即完成；有日期就是日程，没日期进收件箱 |
 | 文档统计 | 文档数 / 字数 / 今日新建，按笔记本分组 |
 | 每日一言 | 每天一句话，附赠一张壁纸 |
@@ -74,7 +78,7 @@
 | 快捷方式 | 复用思源工具栏的常用动作，一格一个 |
 | 思源块 | 原样显示任意思源块（文档块 / 自定义块） |
 
-尺寸：默认 2×2 格。时钟 / 日历 / 天气可以在 2–16 格之间自由拖；文档统计按 3 格一段（3×3 起步）；快捷方式按 2 格一段（2×2 起步）。单格的实际像素由「组件设置 → 单格边长」决定（24–36px）。
+尺寸：默认 2×2 格。日历 / 天气 / 日记可以在 2–16 格之间自由拖，时钟 3–16 格；文档统计按 3 格一段（3×3 起步）；快捷方式按 2 格一段（2×2 起步）。单格的实际像素由「组件设置 → 单格边长」决定（24–36px）。
 
 ## 壁纸
 
@@ -97,8 +101,8 @@
 ### 收藏壁纸
 
 1. 鼠标移到任意图格右上角，点 **♥** —— 点下立刻变亮，不用等磁盘。
-2. 收藏会把**这张图的真实字节**写进工作空间的 `data/public/siyuan-desk-cards/`。
-3. 之后浏览器可以直接打开 `/public/siyuan-desk-cards/<文件名>`。
+2. 收藏会把**这张图的真实字节**写进工作空间的 `data/public/siyuan-sipage/`。
+3. 之后浏览器可以直接打开 `/public/siyuan-sipage/<文件名>`。
 4. 右栏「收藏」里点缩略图立即切换，点右上角 **×** 删除（磁盘文件一起删）。
 5. 桌面右键 → **收藏当前壁纸**，可以直接收藏正在用的那张（纯色 / 跟随思源没有图片，不显示这一项）。
 
@@ -110,6 +114,7 @@
 
 整屏生效，所有卡片共用一套参数：
 
+- **风格**：液态玻璃（默认）/ 思源原生 / Material 3。三套只换材质与控件几何，布局、字号、间距、动效不动；思源原生那套直接输出思源的 `b3-*` 组件，悬停 / 聚焦 / 禁用跟着主题走。
 - **布局**：单格边长 24–36px，决定桌面网格的疏密。
 - **动效**：入场动效开关、入场时长、逐块间隔、逐字间隔。
 - **卡片**：圆角、玻璃模糊、玻璃不透明度、阴影、悬浮位移。
@@ -122,9 +127,9 @@
 
 | 内容 | 位置 |
 | --- | --- |
-| 插件本体 | `<工作空间>/data/plugins/desk-cards/` |
-| 卡片布局 / 外观 / 壁纸 / 天气 / 倒数日 | `<工作空间>/data/storage/petal/desk-cards/` |
-| 收藏的壁纸 | `<工作空间>/data/public/siyuan-desk-cards/` |
+| 插件本体 | `<工作空间>/data/plugins/siyuan-sipage/` |
+| 卡片布局 / 外观 / 壁纸 / 天气 / 倒数日 | `<工作空间>/data/storage/petal/siyuan-sipage/` |
+| 收藏的壁纸 | `<工作空间>/data/public/siyuan-sipage/` |
 
 备份上面两个目录，换机器时拷回去即可。
 
@@ -140,7 +145,7 @@
 <div data-desk-card="yiyan" data-size="2x2" style="height:320px"></div>
 ```
 
-- `data-desk-card`：卡片 id，可选 `clock` / `calendar` / `weather` / `yiyan` / `shici` / `english` / `countdown` / `heatmap` / `pomodoro` / `memo` / `docstats` / `quickopen` / `recent` / `shortcut` / `block`。
+- `data-desk-card`：卡片 id，可选 `clock` / `calendar` / `weather` / `yiyan` / `shici` / `english` / `countdown` / `heatmap` / `pomodoro` / `memo` / `daily` / `docstats` / `quickopen` / `recent` / `shortcut` / `block`。
 - `data-size`：`1x1` / `1x2` / `2x1` / `2x2` / `2x4` / `4x2`，默认 `2x2`。
 
 ## 常见问题
@@ -149,7 +154,7 @@
 - **天气取不到**：国外地点走 Open-Meteo，国内地点走区县代码；定位失败时在天气详情里搜索城市手动添加。
 - **收藏点了没反应 / 报错**：确认工作空间的 `data/public` 可写（思源有权限写自己的 data 目录）。
 - **更新插件后界面没变**：刷新页面；仍不行就重启思源。
-- **界面语言**：说明文档跟随思源语言，中文显示本文件，其它语言显示 `README.md`。
+- **界面语言**：界面与说明文档都跟随思源语言（中文 / 英文）；切换语言后刷新页面。中文显示本文件，其它语言显示 `README.md`。
 
 ## 开发
 
@@ -160,20 +165,22 @@ pnpm install --frozen-lockfile
 pnpm build           # 产出 dist/ 与 package.zip
 pnpm dev             # 监听构建到 .env 里配置的思源插件目录
 pnpm dev:reload      # 构建、复制并请求思源重载 UI
-pnpm check           # 类型 / 未用符号 / 分层 / 断点 / 产物检查
+pnpm check           # 类型 / 未用符号 / 分层 / 断点 / 中英词条 / 产物检查
 pnpm check:browser   # 构建独立验证页并跑五组隔离浏览器回归
 ```
 
 本机开发先复制 `.env.example` 为 `.env` 并填工作空间路径（Windows 可用正斜杠，如 `E:/sy`）；`dev:reload` 认 `SIYUAN_URL` / `SIYUAN_TOKEN` 或脚本参数，浏览器验证默认用系统 Edge，可用 `EDGE_PATH` 覆盖。
 
-目录：`src/core`（状态 / 取图 / 注册表）、`src/cards`（15 张卡）、`src/ui`（桌面壳 / 设置 / 控件）、`src/embed`（文档内嵌）、`src/styles`（唯一全局样式）。
+目录：`src/core`（状态 / 取图 / 注册表 / 日程与日记模型）、`src/cards`（16 张卡）、`src/ui`（桌面壳 / 设置 / 控件）、`src/embed`（文档内嵌）、`src/styles`（唯一全局样式）。
 
-## 发版
+## 发版与提交集市
 
 `pnpm release:patch` / `release:minor` / `release:major` / `release:manual` 只改两个清单的版本号。
 
-`pnpm release:ship "说明"` 才会检查、构建、提交、打标签、推送并创建 GitHub Release（需要 Git Bash 和已登录的 GitHub CLI）。
+`pnpm release:ship "说明"` 才走完整管线：`pnpm check` → 构建 → 提交 → 打标签 → 推送 → 建 Release 并把 `package.zip` 作为附件（需要 Git Bash 与已登录的 GitHub CLI）。
+
+集市的硬性要求与首次收录步骤见 **[docs/RELEASE.md](docs/RELEASE.md)**：仓库公开、默认分支 `main`、Release 必须带 `package.zip`、`plugin.json` 的 `name` 必须等于仓库名、图标 160×160 ≤64KiB、预览 1024×768 ≤512KiB。
 
 ## 许可
 
-MIT
+MIT，见 [LICENSE.md](LICENSE.md)。随包分发的第三方代码（Vue、Lucide、tyme4ts、SiYuan Petal 类型声明）及其许可写在 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，两份文件都会打进 `package.zip`。

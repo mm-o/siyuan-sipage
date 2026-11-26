@@ -1,12 +1,12 @@
 <template>
   <aside class="wx-places desk-pane is-right" :class="{ 'is-open': open }" :style="{ backgroundImage: sky }">
-        <h2 class="wx-places-title">天气列表</h2>
+        <h2 class="wx-places-title">{{ t("card.weather.places.title") }}</h2>
 
-        <GlassField v-model="keyword" class="wx-search" label="搜索天气地点" tone="photo" placeholder="输入城市、区县、乡镇" @input="onInput" />
+        <GlassField v-model="keyword" class="wx-search" :label="t('card.weather.places.search')" tone="photo" :placeholder="t('card.weather.places.placeholder')" @input="onInput" />
 
-        <GlassButton class="wx-locate" :icon="LocateFixed" :label="locating ? '定位中…' : '使用我的位置'" text variant="primary" tone="photo" :disabled="locating" @click="locate" />
+        <GlassButton class="wx-locate" :icon="LocateFixed" :label="locating ? t('card.weather.places.locating') : t('card.weather.places.locate')" text variant="primary" tone="photo" :disabled="locating" @click="locate" />
 
-        <p v-if="searching" class="wx-places-hint">搜索中…</p>
+        <p v-if="searching" class="wx-places-hint">{{ t("card.weather.places.searching") }}</p>
         <p v-else-if="searchError" class="wx-places-hint">{{ searchError }}</p>
         <ul v-else-if="hits.length" class="wx-hits">
           <li v-for="hit in hits" :key="hit.id">
@@ -31,13 +31,13 @@
               <span class="wx-loc-side">
                 <span class="wx-loc-deg">{{ metas[loc.id] ? `${metas[loc.id].now.temp}°` : "—" }}</span>
                 <span v-if="metas[loc.id]" class="wx-loc-range">
-                  最高{{ metas[loc.id].days[0].max }}° 最低{{ metas[loc.id].days[0].min }}°
+                  {{ t("card.weather.high", { n: metas[loc.id].days[0].max }) }} {{ t("card.weather.low", { n: metas[loc.id].days[0].min }) }}
                 </span>
               </span>
             </button>
             <span class="wx-loc-acts">
-              <GlassButton v-if="!isFirst(loc)" :icon="Pin" label="置顶" tone="photo" @click.stop="pinWeatherPlace(loc.id)" />
-              <GlassButton v-if="locations.length > 1" :icon="Trash2" label="删除" variant="danger" tone="photo" @click.stop="removeWeatherPlace(loc.id)" />
+              <GlassButton v-if="!isFirst(loc)" :icon="Pin" :label="t('card.weather.places.pin')" tone="photo" @click.stop="pinWeatherPlace(loc.id)" />
+              <GlassButton v-if="locations.length > 1" :icon="Trash2" :label="t('common.delete')" variant="danger" tone="photo" @click.stop="removeWeatherPlace(loc.id)" />
             </span>
           </li>
         </ul>
@@ -53,6 +53,7 @@
  */
 import { computed, onBeforeUnmount, ref } from "vue"
 import { LocateFixed, Pin, Trash2 } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import {
   addWeatherPlace,
   pinWeatherPlace,
@@ -103,11 +104,11 @@ async function run(q: string) {
     const list = await searchPlaces(q)
     if (mine !== token) return
     hits.value = list
-    if (!list.length) searchError.value = "没有找到这个地点"
+    if (!list.length) searchError.value = t("card.weather.places.notFound")
   } catch {
     if (mine !== token) return
     hits.value = []
-    searchError.value = "搜索失败，请重试"
+    searchError.value = t("card.weather.places.searchFailed")
   } finally {
     if (mine === token) searching.value = false
   }
@@ -132,7 +133,7 @@ async function locate() {
   try {
     addWeatherPlace(await preciseLocate())
   } catch {
-    searchError.value = "定位失败，请手动搜索地点"
+    searchError.value = t("card.weather.places.locateFailed")
   } finally {
     locating.value = false
   }

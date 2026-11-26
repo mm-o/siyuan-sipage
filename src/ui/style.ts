@@ -8,7 +8,7 @@ import { ref } from "vue"
 
 export type DeskStyle = "liquid" | "native" | "md3"
 
-export const deskStyle = ref<DeskStyle>(((globalThis as Record<string, unknown>).__deskStyle as DeskStyle) || "liquid")
+export const deskStyle = ref<DeskStyle>(((globalThis as Record<string, unknown>).__sipageStyle as DeskStyle) || "liquid")
 
 /** 原生风格：控件直接用思源组件（b3-button / b3-switch / b3-slider / b3-chip …） */
 export const isNative = () => deskStyle.value === "native"

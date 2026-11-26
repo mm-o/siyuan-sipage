@@ -9,8 +9,8 @@ import path from 'node:path'
 import { openBrowser, out, report } from './browser.mjs'
 
 const harness = await openBrowser({ storage: {
-  'desk-cards:wallpaper': { type: 'theme', value: '', blur: 12, mask: 0.42 },
-  'desk-cards:desk': { cards: [
+  'siyuan-sipage-petal:wallpaper': { type: 'theme', value: '', blur: 12, mask: 0.42 },
+  'siyuan-sipage-petal:desk': { cards: [
     { uid: 'panel-clock', cardId: '@clock', w: 12, h: 6, x: 20, y: 0, auto: true },
     { uid: 'panel-tools', cardId: '@tools', w: 2, h: 2, x: 49, y: 0, auto: true },
     { uid: 'cal', cardId: 'calendar', w: 10, h: 6, x: 2, y: 9 },
@@ -75,10 +75,10 @@ try {
   /* 3. 换回照片底：图片、模糊、遮罩都回来，主题类摘掉 */
   await page.evaluate(() => document.body.classList.remove('body--dark'))
   await page.evaluate(() => {
-    const { type, ...rest } = globalThis.__deskWallpaper
-    Object.assign(globalThis.__deskWallpaper, { ...rest, type: 'cover', value: '/appearance/covers/cover_002.webp', resolved: undefined })
+    const { type, ...rest } = globalThis.__sipageWallpaper
+    Object.assign(globalThis.__sipageWallpaper, { ...rest, type: 'cover', value: '/appearance/covers/cover_002.webp', resolved: undefined })
   })
-  await page.waitForFunction(() => globalThis.__deskWallpaper.type === 'cover')
+  await page.waitForFunction(() => globalThis.__sipageWallpaper.type === 'cover')
   await page.locator('.desk-wallpaper-mask').waitFor()
   assert.equal(await page.locator('.desk-root').evaluate(el => el.classList.contains('is-theme')), false)
   const photo = await backdrop()

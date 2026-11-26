@@ -10,6 +10,7 @@
  *   2. 本地资源（`/appearance/**`、`data:`）直接返回，不绕代理。
  *   3. 清单/接口都有缓存，重复调用不产生额外请求；拿不到就退回内置兜底，保证离线可用。
  */
+import { t } from "@/core/i18n"
 import { post } from "@/core/util"
 
 /* ── 内核转发（唯一出口）────────────────────────────────── */
@@ -60,24 +61,24 @@ export interface CoverGroup {
 
 /** 思源的分类 key → 中文名（取自 SiYuan 的 i18n 词条） */
 const CATEGORY_LABEL: Record<string, string> = {
-  coverNature: "自然",
-  coverCityNight: "城市夜景",
-  coverMistyMorning: "晨雾",
-  coverCountryside: "田园",
-  coverDesert: "沙漠",
-  coverAurora: "极光",
-  coverTeaCeremony: "茶道",
-  coverInkWashLandscape: "水墨山水",
-  coverWildlife: "野生动物",
-  coverStillWater: "静水",
-  coverChineseGarden: "中式园林",
-  coverClassicalArchitecture: "古典建筑",
-  coverReadingNook: "阅读角",
-  coverZenMinimal: "禅意极简",
-  coverAutumnLeaves: "秋叶",
-  coverNeonNights: "霓虹夜色",
-  coverLightGeometry: "光影几何",
-  coverRoadAhead: "前路",
+  coverNature: t("core.cover.nature"),
+  coverCityNight: t("core.cover.cityNight"),
+  coverMistyMorning: t("core.cover.mistyMorning"),
+  coverCountryside: t("core.cover.countryside"),
+  coverDesert: t("core.cover.desert"),
+  coverAurora: t("core.cover.aurora"),
+  coverTeaCeremony: t("core.cover.teaCeremony"),
+  coverInkWashLandscape: t("core.cover.inkWash"),
+  coverWildlife: t("core.cover.wildlife"),
+  coverStillWater: t("core.cover.stillWater"),
+  coverChineseGarden: t("core.cover.garden"),
+  coverClassicalArchitecture: t("core.cover.architecture"),
+  coverReadingNook: t("core.cover.readingNook"),
+  coverZenMinimal: t("core.cover.zen"),
+  coverAutumnLeaves: t("core.cover.autumn"),
+  coverNeonNights: t("core.cover.neon"),
+  coverLightGeometry: t("core.cover.light"),
+  coverRoadAhead: t("core.cover.road"),
 }
 
 /**
@@ -134,7 +135,7 @@ export async function loadCoverGroups(): Promise<CoverGroup[]> {
         }))
       return groupCache
     } catch {
-      groupCache = [{ key: "fallback", label: "内置", items: COVERS.map((f) => ({ file: f.split("/").pop()!, category: "fallback" })) }]
+      groupCache = [{ key: "fallback", label: t("core.cover.fallback"), items: COVERS.map((f) => ({ file: f.split("/").pop()!, category: "fallback" })) }]
       return groupCache
     } finally {
       groupLoading = null
@@ -149,15 +150,15 @@ export async function loadCoverGroups(): Promise<CoverGroup[]> {
 export type WallSource = "theme" | "siyuan" | "cover" | "bing" | "gitee" | "picsum" | "random" | "solid" | "url"
 
 export const SOURCE_LABEL: Record<WallSource, string> = {
-  theme: "跟随思源",
-  siyuan: "思源资源",
-  cover: "思源头图",
-  bing: "必应每日",
-  gitee: "国内图源",
-  picsum: "Picsum 随机",
-  random: "本地随机",
-  solid: "纯色",
-  url: "图片链接",
+  theme: t("core.wall.theme"),
+  siyuan: t("core.wall.siyuan"),
+  cover: t("core.wall.cover"),
+  bing: t("core.wall.bing"),
+  gitee: t("core.wall.gitee"),
+  picsum: t("core.wall.picsum"),
+  random: t("core.wall.random"),
+  solid: t("core.wall.solid"),
+  url: t("core.wall.url"),
 }
 
 /**
@@ -187,7 +188,7 @@ export function wallSource(w: { type: string; source?: string }): WallSource {
 }
 
 const BING_API = "https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=8&mkt=zh-CN"
-/** 官方接口挂掉时的备用图（思桌用的就是它） */
+/** 官方接口挂掉时的备用图（思页用的就是它） */
 const BING_FALLBACK = "https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN"
 const BING_TTL = 6 * 3600 * 1000
 
@@ -215,7 +216,7 @@ export async function loadBingImages(): Promise<BingImage[]> {
   } catch {
     // 官方接口不可用：退回备用单图（图片本身可直接 <img> 加载）
     bingCache = null
-    return [{ url: BING_FALLBACK, date: "", title: "必应每日" }]
+    return [{ url: BING_FALLBACK, date: "", title: t("core.wall.bing") }]
   }
 }
 
@@ -310,7 +311,7 @@ export function loadAssets(): Promise<AssetImage[]> {
 }
 
 /* ── 收藏：真图字节存进思源公开文件夹 /data/public，用 /public/ 直接访问 ── */
-const FAV_DIR = "siyuan-desk-cards"
+const FAV_DIR = "siyuan-sipage"
 
 const FAV_EXT = /\.(png|jpe?g|webp|gif|bmp|avif)$/i
 
@@ -369,7 +370,7 @@ async function putFile(path: string, file?: File) {
   if (file) fd.append("file", file)
   const res = await fetch("/api/file/putFile", { method: "POST", body: fd })
   const json = await res.json().catch(() => null)
-  if (json?.code !== 0) throw new Error(json?.msg || "写文件失败")
+  if (json?.code !== 0) throw new Error(json?.msg || t("core.wall.writeFailed"))
 }
 
 async function ensureFavDir() {
@@ -377,7 +378,7 @@ async function ensureFavDir() {
 }
 
 /**
- * 收藏：把当前壁纸的**真实图片字节**写进 /data/public/siyuan-desk-cards，
+ * 收藏：把当前壁纸的**真实图片字节**写进 /data/public/siyuan-sipage，
  * 返回文件名。写的是字节而不是地址 —— 这样 /public/ 下就是一张能直接打开的图，
  * 内核自己按 mime 供给，重装插件不影响，也不占用插件目录。
  */

@@ -1,16 +1,17 @@
 import "@/styles/index.css"
 import { Plugin, openTab } from "siyuan"
 import { createApp, type App } from "vue"
-import { DESK_ICON } from "@/ui/controls"
+import { SIPAGE_ICON } from "@/ui/controls"
 import { bootStore, useStorage } from "@/core/store"
 import DeskShell from "@/ui/DeskShell.vue"
 import { hydrateCards, startCardObserver, stopCardObserver, pickCardToInsert } from "@/embed/cards"
+import { t } from "@/core/i18n"
 import { setApp } from "@/core/quickdocs"
 
-const TAB_TYPE = "deskcards"
+const TAB_TYPE = "sipage"
 
 /** 插件入口只注册存储、页签、顶栏与命令。 */
-export default class DeskCardsPlugin extends Plugin {
+export default class SiPagePlugin extends Plugin {
   async onload() {
     setApp(this.app)
     // 状态存思源的插件存储（petal 目录），重启后卡片与尺寸都还在
@@ -29,13 +30,13 @@ export default class DeskCardsPlugin extends Plugin {
         el.classList.add("desk-tab-root")
         const app: App = createApp(DeskShell)
         app.mount(el)
-        this.__deskApp = app
+        this.__sipageApp = app
       },
       destroy(this: any) {
         try {
-          this.__deskApp?.unmount()
+          this.__sipageApp?.unmount()
         } catch {}
-        this.__deskApp = undefined
+        this.__sipageApp = undefined
       },
     })
 
@@ -43,10 +44,10 @@ export default class DeskCardsPlugin extends Plugin {
     hydrateCards(document)
     startCardObserver()
 
-    this.addIcons(DESK_ICON)
+    this.addIcons(SIPAGE_ICON)
     this.addTopBar({
-      icon: "iconDeskCards",
-      title: "桌面卡片",
+      icon: "iconSiPage",
+      title: t("ui.app.title"),
       position: "right",
       callback: () => this.openDeskTab(),
     })
@@ -76,7 +77,7 @@ export default class DeskCardsPlugin extends Plugin {
     }
     openTab({
       app: this.app,
-      custom: { id: `${this.name}${TAB_TYPE}`, icon: "iconDeskCards", title: "桌面卡片", data: {} },
+      custom: { id: `${this.name}${TAB_TYPE}`, icon: "iconSiPage", title: t("ui.app.title"), data: {} },
     })
   }
 }

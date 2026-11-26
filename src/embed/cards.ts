@@ -1,5 +1,6 @@
 import { Menu } from "siyuan"
 import { CARDS, getCard, type CardSize } from "@/core/registry"
+import { t } from "@/core/i18n"
 import { post } from "@/core/util"
 import { toast } from "@/ui/controls"
 import { createApp, h, type App } from "vue"
@@ -90,15 +91,15 @@ function mountCard(
 ): App | null {
   const def = getCard(cardId)
   if (!def) {
-    el.textContent = `未注册的卡片：${cardId}`
+    el.textContent = t("embed.unknownCard", { id: cardId })
     return null
   }
 
   const app = createApp({ render: () => h(def.component as never, props) })
 
   app.config.errorHandler = (err) => {
-    console.error(`[desk-cards] ${cardId} 渲染失败`, err)
-    el.textContent = `卡片出错：${(err as Error)?.message || err}`
+    console.error(`[siyuan-sipage] ${cardId} 渲染失败`, err) // i18n-keep
+    el.textContent = t("embed.renderFailed", { msg: String((err as Error)?.message || err) })
   }
 
   app.mount(el)
@@ -145,7 +146,7 @@ function currentBlockId(): string {
 /** 真正写入文档：思源 htmlblock */
 async function insertCardBlock(cardId: string) {
   if (!document.querySelector(".protyle-wysiwyg")) {
-    toast("请先打开一个文档")
+    toast(t("embed.needDocument"))
     return
   }
 
@@ -155,9 +156,9 @@ async function insertCardBlock(cardId: string) {
       data: cardBlockHtml(cardId, "2x2"),
       previousID: currentBlockId(),
     })
-    toast("已插入卡片")
+    toast(t("embed.inserted"))
   } catch {
-    toast("插入失败，可在文档里用 /htmlblock 手动粘贴")
+    toast(t("embed.insertFailed"))
     return
   }
   // 插入后立即挂载（不等 MutationObserver）

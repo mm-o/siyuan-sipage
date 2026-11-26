@@ -5,6 +5,7 @@ import { Check, Search } from "lucide-vue-next"
 import { blockOf, blockTitle, setId } from "./block"
 import { searchDocs, type PickDoc } from "@/core/quickdocs"
 import { mountProtyle } from "./block"
+import { t } from "@/core/i18n"
 
 
 /** 弹窗：上方输入/搜索，下方完整预览（预览区可滚动，所以内容能看全） */
@@ -66,12 +67,12 @@ onBeforeUnmount(() => {
   <div class="bk-panel desk-seq">
     <section class="bk-top desk-pane is-mid">
       <form class="row" @submit.prevent="apply">
-        <GlassField v-model="draft" class="input" label="思源块 ID" placeholder="粘贴块 ID，回车确认" />
-        <GlassButton :icon="Check" label="确认" @click="apply" />
+        <GlassField v-model="draft" class="input" :label="t('card.block.idLabel')" :placeholder="t('card.block.idPlaceholder')" />
+        <GlassButton :icon="Check" :label="t('card.block.confirm')" @click="apply" />
       </form>
       <form class="row" @submit.prevent="search">
-        <GlassField v-model="keyword" class="input" label="搜索文档标题" placeholder="或搜文档标题" />
-        <GlassButton :icon="Search" label="搜索" @click="search" />
+        <GlassField v-model="keyword" class="input" :label="t('card.block.searchLabel')" :placeholder="t('card.block.searchPlaceholder')" />
+        <GlassButton :icon="Search" :label="t('common.search')" @click="search" />
       </form>
       <ul v-if="hits.length" class="hits">
         <li v-for="d in hits" :key="d.id" class="hit" @click="pick(d.id, d.title)">{{ d.title }}</li>
@@ -82,7 +83,7 @@ onBeforeUnmount(() => {
       <div class="scroll">
         <div ref="host" class="db-block" />
       </div>
-      <p v-if="!blockState.id" class="bk-empty">输入块 ID 或搜索文档后，这里显示完整预览</p>
+      <p v-if="!blockState.id" class="bk-empty">{{ t("card.block.previewEmpty") }}</p>
     </section>
   </div>
 </template>

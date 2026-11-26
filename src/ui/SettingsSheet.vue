@@ -1,5 +1,5 @@
 <template>
-  <Sheet v-model:open="open" title="设置" :icon="SettingsIcon" :origin="origin" width="min(1040px, 94vw)" height="min(660px, 86vh)">
+  <Sheet v-model:open="open" :title="t('common.settings')" :icon="SettingsIcon" :origin="origin" width="min(1040px, 94vw)" height="min(660px, 86vh)">
     <div class="set">
       <!-- ① 导航 -->
       <nav class="set-nav desk-pane is-left">
@@ -32,7 +32,7 @@
         <template v-if="current === 'wallpaper' || current === 'cards'">
           <div class="set-preview" :style="previewBg">
             <div class="set-preview-card desk-surface">
-              <span class="pc-date">11.13 星期五</span>
+              <span class="pc-date">{{ t('ui.set.previewDate') }}</span>
               <span class="pc-big">13</span>
               <span class="pc-line" />
               <span class="pc-quote" />
@@ -48,14 +48,14 @@
 
           <!-- 收藏：点一下换过去，右上角叉删掉 -->
           <template v-if="current === 'wallpaper'">
-            <h4 class="set-side-sub">收藏 {{ favorites.length }} 张</h4>
+            <h4 class="set-side-sub">{{ t('ui.set.favCount', { n: favorites.length }) }}</h4>
             <div v-if="favorites.length" class="set-fav">
               <div v-for="name in favorites" :key="name" class="set-fav-item" :class="{ 'is-active': wallpaper.value === favUrl(name) }" :style="{ backgroundImage: `url(${favUrl(name)})` }">
-                <button class="set-fav-pick" type="button" :aria-label="`用这张收藏 · ${name}`" @click="setWallpaper('cover', favUrl(name), 'cover')" />
-                <GlassButton class="set-fav-x" :icon="X" label="删除收藏" tone="photo" variant="danger" @click.stop="dropFav(name)" />
+                <button class="set-fav-pick" type="button" :aria-label="t('ui.set.pickFav', { name })" @click="setWallpaper('cover', favUrl(name), 'cover')" />
+                <GlassButton class="set-fav-x" :icon="X" :label="t('ui.set.removeFav')" tone="photo" variant="danger" @click.stop="dropFav(name)" />
               </div>
             </div>
-            <p v-else class="desk-hint">点壁纸右上角的 ♥ 或桌面右键「收藏当前壁纸」，图会存进思源 public 文件夹。</p>
+            <p v-else class="desk-hint">{{ t('ui.set.favEmptyHint') }}</p>
           </template>
         </template>
 
@@ -71,39 +71,39 @@
             <b class="set-card-name">{{ picked.name }}</b>
             <small class="set-card-desc">{{ picked.desc }}</small>
             <span class="set-count desk-badge" :class="{ 'is-on': countOnDesk(picked.id) }">
-              {{ countOnDesk(picked.id) ? `已添加 ${countOnDesk(picked.id)} 张` : "尚未添加" }}
+              {{ countOnDesk(picked.id) ? t('ui.set.addedCount', { n: countOnDesk(picked.id) }) : t('ui.set.notAdded') }}
             </span>
-            <GlassButton class="set-add" text :variant="countOnDesk(picked.id) ? 'default' : 'primary'" :icon="Plus" label="添加到桌面" @click="addToDesk(picked.id)" />
-            <GlassButton v-if="countOnDesk(picked.id)" class="set-remove" text variant="danger" :icon="Minus" label="移除一张" @click="removeOne(picked.id)" />
+            <GlassButton class="set-add" text :variant="countOnDesk(picked.id) ? 'default' : 'primary'" :icon="Plus" :label="t('common.addToDesk')" @click="addToDesk(picked.id)" />
+            <GlassButton v-if="countOnDesk(picked.id)" class="set-remove" text variant="danger" :icon="Minus" :label="t('common.removeOne')" @click="removeOne(picked.id)" />
           </div>
         </template>
 
         <!-- 关于：版本信息 + 重置桌面 -->
         <template v-else-if="current === 'about'">
           <dl class="set-kv">
-            <dt>版本</dt><dd>v{{ version }}</dd>
-            <dt>运行环境</dt><dd>思源 {{ frontend }}</dd>
-            <dt>仓库</dt>
+            <dt>{{ t('ui.set.aboutVersion') }}</dt><dd>v{{ version }}</dd>
+            <dt>{{ t('ui.set.aboutRuntime') }}</dt><dd>{{ t('ui.set.aboutRuntimeValue', { v: frontend }) }}</dd>
+            <dt>{{ t('ui.set.aboutRepo') }}</dt>
             <dd><a class="set-link" :href="pkg.homepage" target="_blank" rel="noreferrer">{{ pkg.homepage.replace("https://github.com/", "") }}</a></dd>
           </dl>
           <div class="set-about-reset">
-            <b>重置桌面</b>
-            <small>清空卡片，回到默认一张</small>
-            <GlassButton text label="重置" @click="resetDesk()" />
+            <b>{{ t('ui.set.resetDesk') }}</b>
+            <small>{{ t('ui.set.resetDeskHint') }}</small>
+            <GlassButton text :label="t('common.reset')" @click="resetDesk()" />
           </div>
         </template>
 
-        <p v-if="current === 'library'" class="set-side-hint">同一张卡可以放多张；尺寸与位置在桌面「整理模式」里拖。</p>
-        <p v-else-if="current === 'cards'" class="set-side-hint">拖动滑轨立刻生效，双击滑轨恢复该项默认值。</p>
+        <p v-if="current === 'library'" class="set-side-hint">{{ t('ui.set.libraryHint') }}</p>
+        <p v-else-if="current === 'cards'" class="set-side-hint">{{ t('ui.set.cardsHint') }}</p>
 
         <dl v-if="current === 'wallpaper'" class="set-stats">
-          <div><dt>模糊</dt><dd>{{ isTheme ? "—" : wallpaper.blur }}</dd></div>
-          <div><dt>遮罩</dt><dd>{{ isTheme ? "—" : `${Math.round(wallpaper.mask * 100)}%` }}</dd></div>
-          <div><dt>张贴</dt><dd>{{ desk.cards.length }}</dd></div>
+          <div><dt>{{ t('ui.set.statBlur') }}</dt><dd>{{ isTheme ? "—" : wallpaper.blur }}</dd></div>
+          <div><dt>{{ t('ui.set.statMask') }}</dt><dd>{{ isTheme ? "—" : `${Math.round(wallpaper.mask * 100)}%` }}</dd></div>
+          <div><dt>{{ t('ui.set.statPlaced') }}</dt><dd>{{ desk.cards.length }}</dd></div>
         </dl>
 
         <div class="set-side-foot">
-          <GlassButton text label="恢复默认" @click="resetAll" />
+          <GlassButton text :label="t('common.restoreDefault')" @click="resetAll" />
         </div>
       </aside>
     </div>
@@ -134,6 +134,7 @@ import LibraryPanel from "./LibraryPanel.vue"
 import { appearance, desk, favorites, resetAppearance, resetDesk, wallpaper, setWallpaper, addToDesk, countOnDesk, removeFromDesk, dropFavorite } from "@/core/store"
 import { GlassButton, toast } from "./controls"
 import { SOURCE_LABEL, favUrl, wallpaperBg, wallSource } from "@/core/image"
+import { t } from "@/core/i18n"
 import { CARDS } from "@/core/registry"
 import pkg from "../../package.json"
 
@@ -141,10 +142,10 @@ const props = defineProps<{ tab?: string; origin?: DOMRect | null }>()
 const open = defineModel<boolean>("open", { required: true })
 
 const SECTIONS = [
-  { label: "壁纸", value: "wallpaper", component: WallpaperPanel, icon: ImageIcon },
-  { label: "组件设置", value: "cards", component: CardsPanel, icon: SlidersHorizontal },
-  { label: "卡片库", value: "library", component: LibraryPanel, icon: Grid2x2, badge: String(CARDS.length) },
-  { label: "关于", value: "about", icon: Info },
+  { label: t("ui.set.tabWallpaper"), value: "wallpaper", component: WallpaperPanel, icon: ImageIcon },
+  { label: t("ui.set.tabCards"), value: "cards", component: CardsPanel, icon: SlidersHorizontal },
+  { label: t("ui.set.tabLibrary"), value: "library", component: LibraryPanel, icon: Grid2x2, badge: String(CARDS.length) },
+  { label: t("ui.set.tabAbout"), value: "about", icon: Info },
 ]
 
 const current = ref(props.tab || "wallpaper")
@@ -158,7 +159,7 @@ watch(
 const activeComponent = computed(() => SECTIONS.find((s) => s.value === current.value)?.component)
 const sideTitle = computed(
   () =>
-    ({ wallpaper: "预览", cards: "预览", library: "统计", about: "信息" })[current.value] ?? "预览",
+    ({ wallpaper: t("ui.set.sidePreview"), cards: t("ui.set.sidePreview"), library: t("ui.set.sideStats"), about: t("ui.set.sideInfo") })[current.value] ?? t("ui.set.sidePreview"),
 )
 const version = pkg.version
 const frontend = getFrontend()
@@ -168,7 +169,7 @@ const previewBg = computed(() => (isTheme.value ? { background: "var(--b3-theme-
 /** 跟随思源不叠模糊与遮罩：右栏统计里就不该报这两个数 */
 const isTheme = computed(() => wallpaper.type === "theme")
 const tag = computed(
-  () => `圆角 ${appearance.radius} · 模糊 ${appearance.blur} · 玻璃 ${Math.round(appearance.opacity * 100)}%`,
+  () => t("ui.set.previewTag", { radius: appearance.radius, blur: appearance.blur, glass: Math.round(appearance.opacity * 100) }),
 )
 
 /* 壁纸信息：来源名 + 真实像素尺寸（主题/纯色没有像素，就给颜色） */
@@ -178,7 +179,7 @@ watch(
   [() => wallpaper.type, () => wallpaper.resolved || wallpaper.value],
   (_, __, onCleanup) => {
     if (wallpaper.type === "theme") {
-      wallSize.value = "思源背景"
+      wallSize.value = t("ui.set.wallTheme")
       return
     }
     if (wallpaper.type === "solid") {
@@ -186,7 +187,7 @@ watch(
       return
     }
     if (wallpaper.type === "siyuan" && !wallpaper.value) {
-      wallSize.value = "思源资源"
+      wallSize.value = t("ui.set.wallResource")
       return
     }
     const src = wallpaper.resolved || wallpaper.value
@@ -198,7 +199,7 @@ watch(
     wallSize.value = ""
     onCleanup(() => { img.onload = img.onerror = null })
     img.onload = () => (wallSize.value = `${img.naturalWidth}×${img.naturalHeight}`)
-    img.onerror = () => (wallSize.value = "加载失败")
+    img.onerror = () => (wallSize.value = t("ui.set.wallLoadFailed"))
     img.src = src
   },
   { immediate: true },
@@ -206,7 +207,7 @@ watch(
 
 async function dropFav(name: string) {
   try { await dropFavorite(name) }
-  catch (error) { toast(`删除收藏失败：${(error as Error).message}`) }
+  catch (error) { toast(t("ui.set.removeFavFailed", { msg: (error as Error).message })) }
 }
 
 /**

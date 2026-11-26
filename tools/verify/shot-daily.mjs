@@ -7,7 +7,7 @@ import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
 
 const harness = await openBrowser({ storage: {
-  'desk-cards:desk': { cards: [...panels, { uid: 'daily-card', cardId: 'daily', w: 8, h: 6, x: 1, y: 8 }] },
+  'siyuan-sipage-petal:desk': { cards: [...panels, { uid: 'daily-card', cardId: 'daily', w: 8, h: 6, x: 1, y: 8 }] },
 } })
 
 const { page, errors } = harness

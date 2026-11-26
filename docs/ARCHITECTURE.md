@@ -8,8 +8,9 @@
 src/index.ts             插件注册：存储、页签、顶栏、命令
 src/core/
   util.ts                共用底座：post()/sql() 内核出口、pad() 与正文块类型 BODY_TYPES
+  i18n.ts                语言与词条出口：t() 是唯一的文案入口，语言在启动时定一次
   registry.ts            16 种卡片、组件、材质、尺寸约束的唯一装配点
-  store.ts               桌面/壁纸/外观状态、实例状态 stateOf、旧键认领 takeLegacy、思源存储、缓存、网格排版
+  store.ts               状态与存储的唯一入口：桌面/壁纸/外观/领域数据/各卡状态、petal 读写、派生缓存、网格排版
   image.ts               图片清单、跨域代理、壁纸样式、图片收藏文件
   daily.ts               每日内容的共享序列、背景与翻页
   agenda.ts              日程与备忘共用的模型、分组、按日索引、日程点与写日记出口
@@ -27,10 +28,11 @@ src/ui/
   WallpaperPanel.vue     壁纸来源选择
   CardsPanel.vue         外观参数
   LibraryPanel.vue       卡片选择
-  controls.ts            基础控件、显示工具与 iconDeskCards 图形注册定义
+  controls.ts            基础控件、显示工具与 iconSiPage 图形注册定义
   Slider.vue             原生滑轨封装
 src/cards/<id>/          每卡一个 *Card.vue，详情/算法/专属样式留在本目录
 src/embed/cards.ts       文档占位挂载、DOM 观察、插入卡片命令与卸载
+src/i18n/                zh_CN.json / en_US.json：词条本体（同一份文件也给思源当命令 langKey）
 src/styles/index.css     设计令牌、共享控件、设置骨架、整理模式与插件根样式
 ```
 
@@ -46,6 +48,16 @@ src/styles/index.css     设计令牌、共享控件、设置骨架、整理模�
 
 `pnpm check:arch` 校验上述模块边界；`pnpm check:types` 同时禁止无用导入、局部变量与参数。
 
+## 语言与文案
+
+界面文案只有一个出口：`core/i18n` 的 `t(key, vars?)`，词条本体在 `src/i18n/zh_CN.json` 与 `en_US.json`（同一份文件也被思源读取，用于命令的 `langKey`）。
+
+- 语言在启动时定一次（思源切语言会整页重载），所以 `t()` 是纯函数，模板、`const` 数组、`script setup` 里都可以直接调。
+- 键名 = 出处 + 用途：`common.*` 跨处复用、`card.<id>.*` 卡片、`ui.<area>.*` 外壳与设置、`core.*` 领域词、`embed.*` 内嵌。注册表里的卡片名与说明走 `cardName()` / `cardDesc()`。
+- 变量用 `{name}` 占位：`t("ui.desk.cardCount", { n: 12 })`。英文不必逐字对应，但**占位符必须一致**。
+- 数据源带来的文本（tyme4ts 的农历 / 节气 / 宜忌、思源返回的地名与错误、诗词原文）不进词条；确实要保留中文的行尾写 `// i18n-keep`。
+- `pnpm check:i18n` 断言中英键集合一致、源码用到的字面量键都存在，并列出还没迁走的界面中文；加 `--strict` 时提示项升级为失败。
+
 ## 尺寸与排版
 
 桌面实例的 `x/y/w/h` 是唯一几何状态，单位为格。`computeGrid()` 仅依据可用宽度与 `appearance.cell` 计算列数与单格像素，手动移动不会触发避让重排。
@@ -59,17 +71,17 @@ src/styles/index.css     设计令牌、共享控件、设置骨架、整理模�
 
 ## 状态与资源
 
-`store.ts` 的 reactive 是状态来源；思源插件存储通过 `loadData/saveData` 读取与防抖写入。先完成启动读取，再允许写盘。桌面、壁纸、外观、天气地点与倒数日状态保存到思源插件存储；部分卡片偏好通过 `persisted()` 保存到本地存储，派生缓存使用 `desk-cache:` 前缀。
+`store.ts` 的 reactive 是状态来源；思源插件存储通过 `loadData/saveData` 读取与防抖写入。先完成启动读取，再允许写盘。桌面、壁纸、外观、天气地点与倒数日状态保存到思源插件存储；部分卡片偏好通过 `persisted()` 保存到本地存储，派生缓存使用 `siyuan-sipage-cache:` 前缀。
 
 外观参数通过一处监听同步为 CSS 变量，卡片、预览与 Teleport 弹层使用同一配置。壁纸身份与运行时图片只通过 `setWallpaper()` 一起替换，避免切换来源后残留旧 `resolved`；`resolved` 不落盘。快速连续选择只接受最后一次异步结果。
 
-图片收藏的真实文件位于思源 `data/public/siyuan-desk-cards`，内存列表是磁盘镜像；删除成功后再更新列表。本地图片直接读取，外部数据经 `forwardProxy()` 获取。
+图片收藏的真实文件位于思源 `data/public/siyuan-sipage`，内存列表是磁盘镜像；删除成功后再更新列表。本地图片直接读取，外部数据经 `forwardProxy()` 获取。
 
 状态复用 `globalThis` 避免重复 bundle 的多份默认状态。修改兼容或持久化逻辑时，要额外验证思源整页重载与已有数据恢复。
 
-日程与备忘共用 `core/agenda.ts` 的一份状态：卡片、详情、日历只读模型与派生分组，写操作也只有一个入口。老版 `desk:memo` 在首次加载时一次性迁入收件箱并删除旧键；写日记只是可选出口（默认关），失败不影响本地条目。
+日程与备忘共用 `core/agenda.ts` 的一份状态：卡片、详情、日历只读模型与派生分组，写操作也只有一个入口。写日记只是可选出口（默认关），失败不影响本地条目。
 
-同一张卡可以放多张，**配置与视图状态按实例 uid 存**（`store.ts` 的 `cardStates` + `stateOf(uid, defaults)`）：桌面卡片、详情弹窗、文档内嵌三处拿同一个 uid 取同一份；卡片从桌面移除时连带清掉。领域数据（日程、倒数日、天气地点、收藏）仍是全库一份，跨卡共享；老版本按类型共享的 `desk:memo` / `desk:quickpick` / `desk:shortcut` / `desk:block` / `desk:calendar` 由第一张实例认领迁移，键随即删除。
+同一张卡可以放多张，**配置与视图状态按实例 uid 存**（`store.ts` 的 `cardStates` + `stateOf(uid, defaults)`）：桌面上的卡片、详情弹窗、文档内嵌三处拿同一个 uid 取同一份；卡片从桌面移除时连带清掉。领域数据（日程、倒数日、天气地点、收藏）仍是全库一份，跨卡共享。
 
 ## 生命周期
 
@@ -78,10 +90,18 @@ src/styles/index.css     设计令牌、共享控件、设置骨架、整理模�
 - 内嵌实例集中登记；移除占位或外层容器时完整卸载，DOM 搬移保持实例，插件退出释放全部实例。
 - 新增监听、定时器、观察器都必须有对应的释放路径。
 
+## 命名与许可
+
+- **显示名**：`思页 / SiPage`。顶栏、页签、命令都取 `ui.app.title`，集市元信息取 `plugin.json` 的 `displayName`。
+- **包名**：`siyuan-sipage`，与仓库同名（集市硬性要求）。它同时决定安装目录 `data/plugins/siyuan-sipage`、数据目录 `data/storage/petal/siyuan-sipage`、收藏目录 `data/public/siyuan-sipage`。插件从未发布过任何版本，所以不存在旧目录、旧键、旧格式——**没有任何迁移代码**，读到的永远是自己写的最新格式。
+- **存储只有两条路**：用户状态与卡片状态走思源 `loadData/saveData`（`store.ts` 的 `read/save` + `persisted()`，key 即 petal 文件名，不能带冒号）；只有可丢可重建的派生缓存落 `localStorage` 的 `siyuan-sipage-cache:` 命名空间。
+- **许可**：本项目 MIT（`LICENSE.md`）；`index.js` 里打进了 Vue / Lucide / tyme4ts，署名与许可条文写在 `THIRD-PARTY-NOTICES.md`，两份文件都随 `package.zip` 发布。
+- 发版与集市提交的硬性要求见 `docs/RELEASE.md`，其中可自动化的部分由 `pnpm check:dist` 断言。
+
 ## 构建与验证
 
 ```bash
-pnpm check          # 类型/未用符号、分层、断点、构建、产物完整性
+pnpm check          # 类型/未用符号、分层、断点、i18n 键、构建、产物完整性
 pnpm check:browser  # 独立验证页与 6 组浏览器回归
 ```
 

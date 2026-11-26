@@ -1,7 +1,7 @@
 <template>
   <section class="lib set-page">
-    <h2 class="set-h2">卡片库</h2>
-    <p class="set-p">点一行选中，右侧预览并添加。</p>
+    <h2 class="set-h2">{{ t('ui.lib.title') }}</h2>
+    <p class="set-p">{{ t('ui.lib.intro') }}</p>
 
     <ul class="lib-list">
       <li v-for="def in CARDS" :key="def.id">
@@ -32,6 +32,7 @@
  */
 import { CARDS } from "@/core/registry"
 import { countOnDesk } from "@/core/store"
+import { t } from "@/core/i18n"
 
 defineProps<{ selected: string }>()
 const emit = defineEmits<{ select: [string] }>()

@@ -10,7 +10,7 @@ const cards = [
   ['memo', '日程备忘', true], ['docstats', '文档统计', true], ['quickopen', '快捷打开', true],
   ['recent', '最近文档', true], ['shortcut', '快捷方式', true], ['block', '思源块', true],
 ]
-const harness = await openBrowser({ storage: { 'desk-cards:desk': { cards: panels } } })
+const harness = await openBrowser({ storage: { 'siyuan-sipage-petal:desk': { cards: panels } } })
 const { page, errors } = harness
 const checks = []
 const screenshots = process.env.VERIFY_NO_SCREENSHOTS ? [] : ['ui-library.png', 'ui-desktop-dark.png']
@@ -43,9 +43,9 @@ try {
 
   await page.locator('.lib-row').filter({ has: page.locator('b', { hasText: /^日历$/ }) }).click()
   await page.getByRole('button', { name: '添加到桌面', exact: true }).click()
-  assert.equal(await page.evaluate(() => globalThis.__deskDesk.cards.filter(c => c.cardId === 'calendar').length), 1)
+  assert.equal(await page.evaluate(() => globalThis.__sipageDesk.cards.filter(c => c.cardId === 'calendar').length), 1)
   await page.getByRole('button', { name: '移除一张', exact: true }).click()
-  assert.equal(await page.evaluate(() => globalThis.__deskDesk.cards.filter(c => c.cardId === 'calendar').length), 0)
+  assert.equal(await page.evaluate(() => globalThis.__sipageDesk.cards.filter(c => c.cardId === 'calendar').length), 0)
   checks.push('library add/remove changes exactly one card')
 
   for (const name of ['壁纸', '组件设置', '关于', '卡片库']) {
@@ -91,18 +91,18 @@ try {
   await nav.getByRole('button', { name: '壁纸', exact: true }).click()
   const source = name => page.locator('.source').filter({ has: page.locator('strong', { hasText: new RegExp(`^${name}$`) }) })
   const oldImage = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>').toString('base64')
-  const prime = () => page.evaluate(value => { globalThis.__deskWallpaper.resolved = value }, oldImage)
+  const prime = () => page.evaluate(value => { globalThis.__sipageWallpaper.resolved = value }, oldImage)
   const wall = () => page.evaluate(() => {
     const el = document.querySelector('.desk-wallpaper')
     return {
-      ...globalThis.__deskWallpaper,
+      ...globalThis.__sipageWallpaper,
       /* 跟随思源不画底片：这一层根本不存在 */
       background: el ? getComputedStyle(el).background : '',
       image: el ? getComputedStyle(el).backgroundImage : 'none',
     }
   })
   const assertSource = async type => {
-    await page.waitForFunction(type => globalThis.__deskWallpaper.type === type && globalThis.__deskWallpaper.resolved === undefined, type)
+    await page.waitForFunction(type => globalThis.__sipageWallpaper.type === type && globalThis.__sipageWallpaper.resolved === undefined, type)
     const state = await wall()
     assert.ok(!state.image.includes(oldImage), `${type}: previous resolved image is gone`)
     return state
@@ -153,11 +153,11 @@ try {
   }
   await page.route('**/api/network/forwardProxy', proxyHandler)
   await source('Picsum').click()
-  await page.waitForFunction(() => globalThis.__deskWallpaper.source === 'picsum')
+  await page.waitForFunction(() => globalThis.__sipageWallpaper.source === 'picsum')
   await page.getByRole('button', { name: 'Picsum · ridge', exact: true }).click()
   await slowStarted
   await page.getByRole('button', { name: 'Picsum · harbor', exact: true }).click()
-  await page.waitForFunction(() => globalThis.__deskWallpaper.value.includes('/harbor/'))
+  await page.waitForFunction(() => globalThis.__sipageWallpaper.value.includes('/harbor/'))
   const slowResponse = page.waitForResponse(response => response.url().endsWith('/api/network/forwardProxy') && response.request().postDataJSON().url.includes('/ridge/1920/1080'))
   releaseSlow()
   await slowResponse
@@ -168,26 +168,26 @@ try {
   checks.push('delayed Picsum responses cannot overwrite the last image selection')
 
   // 收藏镜像也只存在本测试页；模拟内核拒绝删除，确认项目不会先丢掉收藏状态。
-  await page.evaluate(() => globalThis.__deskFavorites.push('verify-kept.png'))
+  await page.evaluate(() => globalThis.__sipageFavorites.push('verify-kept.png'))
   await page.route('**/api/file/removeFile', route => route.fulfill({ json: { code: -1, msg: 'fixture deletion failed' } }))
   const deleteResponse = page.waitForResponse(response => response.url().endsWith('/api/file/removeFile'))
   await page.locator('.set-fav-item').first().getByRole('button', { name: '删除收藏', exact: true }).click({ force: true })
   await deleteResponse
   await page.waitForFunction(() => [...document.querySelectorAll('body > div')].some(el => el.textContent.includes('删除收藏失败')))
-  assert.ok(await page.evaluate(() => globalThis.__deskFavorites.includes('verify-kept.png')))
+  assert.ok(await page.evaluate(() => globalThis.__sipageFavorites.includes('verify-kept.png')))
   assert.equal(await page.locator('.set-fav-item').count(), 1)
-  await page.evaluate(() => globalThis.__deskFavorites.splice(0))
+  await page.evaluate(() => globalThis.__sipageFavorites.splice(0))
   checks.push('failed favorite deletion preserves both the favorites mirror and visible item')
   await closeSheet()
 
   await page.evaluate(({ cards, panels }) => {
-    globalThis.__deskDesk.cards = [...panels, ...cards.map(([cardId], index) => ({ uid: `verify-${cardId}`, cardId, w: 6, h: 6, x: 1 + index % 6 * 8, y: 8 + Math.floor(index / 6) * 8 }))]
+    globalThis.__sipageDesk.cards = [...panels, ...cards.map(([cardId], index) => ({ uid: `verify-${cardId}`, cardId, w: 6, h: 6, x: 1 + index % 6 * 8, y: 8 + Math.floor(index / 6) * 8 }))]
   }, { cards, panels })
   const frames = page.locator('.desk-root .item:not(.is-panel) > .frame')
   await page.waitForFunction(() => document.querySelectorAll('.desk-root .item:not(.is-panel) > .frame').length === 16)
   for (const [w, h] of [[6, 6], [12, 6], [6, 12]]) {
     await page.evaluate(({ w, h }) => {
-      for (const card of globalThis.__deskDesk.cards) if (!card.cardId.startsWith('@')) { card.w = w; card.h = h }
+      for (const card of globalThis.__sipageDesk.cards) if (!card.cardId.startsWith('@')) { card.w = w; card.h = h }
     }, { w, h })
     await page.waitForTimeout(280)
     const boxes = await frames.evaluateAll(elements => elements.map(frame => {
@@ -200,7 +200,7 @@ try {
   checks.push('all 16 desktop cards render square, wide and tall content boxes without runtime errors')
   // 操作较小的日历，避免测试点击落到视口外。
   await page.evaluate(() => {
-    for (const c of globalThis.__deskDesk.cards) if (!c.cardId.startsWith('@')) { c.w = 6; c.h = 6 }
+    for (const c of globalThis.__sipageDesk.cards) if (!c.cardId.startsWith('@')) { c.w = 6; c.h = 6 }
   })
   await page.waitForTimeout(280)
   const calendar = frames.nth(1)

@@ -7,6 +7,7 @@ import { LunarDay, SolarDay } from "tyme4ts"
  */
 import type { Component } from "vue"
 import { Briefcase, Flag, Gift, Heart, House, LayoutGrid, Target } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import { COVERS } from "@/core/image"
 import { pad } from "@/core/util"
 import type { CountdownCategory, CountdownEvent } from "@/core/store"
@@ -23,13 +24,13 @@ interface CountdownCategoryDef {
 }
 
 export const CATEGORIES: CountdownCategoryDef[] = [
-  { id: "all", name: "全部分类", color: "", icon: LayoutGrid },
-  { id: "anniversary", name: "纪念日", color: "#ef4444", icon: Heart },
-  { id: "holiday", name: "节日", color: "#f59e0b", icon: Gift },
-  { id: "life", name: "生活", color: "#8b5cf6", icon: House },
-  { id: "work", name: "工作", color: "#3b82f6", icon: Briefcase },
-  { id: "goal", name: "目标", color: "#22c55e", icon: Target },
-  { id: "other", name: "其他", color: "#6b7280", icon: Flag },
+  { id: "all", name: t("card.countdown.cat.all"), color: "", icon: LayoutGrid },
+  { id: "anniversary", name: t("card.countdown.cat.anniversary"), color: "#ef4444", icon: Heart },
+  { id: "holiday", name: t("card.countdown.cat.holiday"), color: "#f59e0b", icon: Gift },
+  { id: "life", name: t("card.countdown.cat.life"), color: "#8b5cf6", icon: House },
+  { id: "work", name: t("card.countdown.cat.work"), color: "#3b82f6", icon: Briefcase },
+  { id: "goal", name: t("card.countdown.cat.goal"), color: "#22c55e", icon: Target },
+  { id: "other", name: t("card.countdown.cat.other"), color: "#6b7280", icon: Flag },
 ]
 
 /** 事件分类（不含 all） */
@@ -41,35 +42,46 @@ export const categoryOf = (id: CountdownCategory) => EVENT_CATEGORIES.find((c) =
 export type CountdownUnit = "day" | "week" | "month" | "year"
 
 export const UNITS: { label: string; value: CountdownUnit }[] = [
-  { label: "日", value: "day" },
-  { label: "周", value: "week" },
-  { label: "月", value: "month" },
-  { label: "年", value: "year" },
+  { label: t("card.countdown.unit.day"), value: "day" },
+  { label: t("card.countdown.unit.week"), value: "week" },
+  { label: t("card.countdown.unit.month"), value: "month" },
+  { label: t("card.countdown.unit.year"), value: "year" },
 ]
 
 /** 列表筛选：全部 / 即将到来 / 已过去 */
 export type CountdownFilter = "all" | "upcoming" | "past"
 
 export const FILTERS: { label: string; value: CountdownFilter }[] = [
-  { label: "全部", value: "all" },
-  { label: "即将到来", value: "upcoming" },
-  { label: "已过去", value: "past" },
+  { label: t("card.countdown.filter.all"), value: "all" },
+  { label: t("card.countdown.filter.upcoming"), value: "upcoming" },
+  { label: t("card.countdown.filter.past"), value: "past" },
 ]
 
 export const REPEAT_OPTIONS = [
-  { label: "不重复", value: "none" as const },
-  { label: "每年", value: "year" as const },
+  { label: t("card.countdown.repeat.none"), value: "none" as const },
+  { label: t("card.countdown.repeat.year"), value: "year" as const },
 ]
 
-const REPEAT_LABEL: Record<CountdownEvent["repeat"], string> = { none: "不重复", year: "每年" }
+const REPEAT_LABEL: Record<CountdownEvent["repeat"], string> = {
+  none: t("card.countdown.repeat.none"),
+  year: t("card.countdown.repeat.year"),
+}
 
 /** 重复文案：农历重复要说明，不然「每年」看不出按的是阴历 */
 export function repeatText(event: CountdownEvent) {
   if (event.repeat === "none") return REPEAT_LABEL.none
-  return event.lunar ? "每年（农历）" : REPEAT_LABEL.year
+  return event.lunar ? t("card.countdown.repeat.yearLunar") : REPEAT_LABEL.year
 }
 
-const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+const WEEK = [
+  t("card.countdown.week.7"),
+  t("card.countdown.week.1"),
+  t("card.countdown.week.2"),
+  t("card.countdown.week.3"),
+  t("card.countdown.week.4"),
+  t("card.countdown.week.5"),
+  t("card.countdown.week.6"),
+]
 
 /** 每年重复：按公历或农历取「下一次」；不重复就直接用存的日期 */
 function effectiveDate(event: CountdownEvent, from = todayKey()) {
@@ -123,22 +135,26 @@ export function viewOf(event: CountdownEvent, unit: CountdownUnit = "day"): Coun
   const abs = Math.abs(days)
 
   let value = abs
-  let label = "天"
+  let label = t("card.countdown.valueUnit.day")
   if (unit === "week") {
     value = Math.floor(abs / 7)
-    label = "周"
+    label = t("card.countdown.valueUnit.week")
   } else if (unit === "month") {
     value = monthDiff(targetDate, now)
-    label = "个月"
+    label = t("card.countdown.valueUnit.month")
   } else if (unit === "year") {
     value = yearDiff(targetDate, now)
-    label = "年"
+    label = t("card.countdown.valueUnit.year")
   }
 
   return {
     event,
     days,
-    prefix: days > 0 ? "还剩" : days < 0 ? "已经" : "今天",
+    prefix: days > 0
+      ? t("card.countdown.prefix.left")
+      : days < 0
+        ? t("card.countdown.prefix.passed")
+        : t("card.countdown.prefix.today"),
     value,
     unit: label,
     today: days === 0,

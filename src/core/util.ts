@@ -6,11 +6,13 @@
  * 都是几行的通用件，单独成文件只会让 import 分散，所以并到这里。
  */
 
+import { t } from "@/core/i18n"
+
 /** 思源 HTTP API：POST JSON、校验 code、返回 data。全项目的内核调用都走这里。 */
 export async function post<T = unknown>(url: string, body: unknown = {}): Promise<T> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
   const json = await res.json().catch(() => null)
-  if (json?.code !== 0) throw new Error(json?.msg || "请求失败")
+  if (json?.code !== 0) throw new Error(json?.msg || t("core.error.request"))
   return (json?.data ?? null) as T
 }
 

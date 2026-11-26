@@ -2,8 +2,8 @@
   <div class="rc-panel desk-seq">
     <div class="rc-pane desk-pane is-solo">
       <header class="rc-bar">
-        <span class="rc-title">最近打开 · 16 篇</span>
-        <GlassButton :icon="RotateCcw" label="刷新" @click="load" />
+        <span class="rc-title">{{ t("card.recent.title", { n: 16 }) }}</span>
+        <GlassButton :icon="RotateCcw" :label="t('common.refresh')" @click="load" />
       </header>
 
       <div class="rc-grid">
@@ -13,14 +13,14 @@
           class="rc-cell desk-content-surface"
           :class="{ 'is-empty': !doc }"
           type="button"
-          :title="doc ? `${doc.title} · ${doc.notebook} · ${doc.updated}` : '暂无'"
+          :title="doc ? `${doc.title} · ${doc.notebook} · ${doc.updated}` : t('card.recent.noDoc')"
           @click="doc && openDoc(doc.id)"
         >
           <template v-if="doc">
             <span class="rc-name">{{ doc.title }}</span>
             <span v-if="doc.notebook" class="rc-pill">{{ doc.notebook }}</span>
             <span class="rc-foot">
-              <span class="rc-num">{{ doc.words }} 字</span>
+              <span class="rc-num">{{ t("card.recent.words", { n: doc.words }) }}</span>
               <span class="rc-time">{{ doc.updated }}</span>
             </span>
           </template>
@@ -37,6 +37,7 @@ import { computed, onMounted, ref } from "vue"
 import { RotateCcw } from "lucide-vue-next"
 import { openDoc, recentDocs, type PickDoc } from "@/core/quickdocs"
 import { post, sql } from "@/core/util"
+import { t } from "@/core/i18n"
 
 /** 笔记本名：官方接口，模块级缓存，整页只请求一次 */
 let notebookPromise: Promise<Map<string, string>> | null = null

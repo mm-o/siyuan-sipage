@@ -16,9 +16,9 @@
         <SeriesNav :series="series" />
 
         <div class="desk-fab">
-          <GlassButton :icon="Heart" :label="liked ? '取消喜欢' : '喜欢'" :active="liked" @click="liked = !liked" />
-          <GlassButton :icon="copied ? Check : Copy" label="复制" @click="copy" />
-          <GlassButton :icon="ImageIcon" label="换一张背景" @click="series.shuffleCover" />
+          <GlassButton :icon="Heart" :label="liked ? t('card.yiyan.unlike') : t('card.yiyan.like')" :active="liked" @click="liked = !liked" />
+          <GlassButton :icon="copied ? Check : Copy" :label="t('card.yiyan.copy')" @click="copy" />
+          <GlassButton :icon="ImageIcon" :label="t('card.yiyan.shuffleCover')" @click="series.shuffleCover" />
         </div>
       </div>
     </div>
@@ -48,6 +48,7 @@ import { dailySeries } from "@/core/daily"
 import { API_BASE } from "@/core/api"
 import { photoBg } from "@/ui/controls"
 import { copyText } from "@/ui/controls"
+import { t } from "@/core/i18n"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
 
@@ -59,7 +60,7 @@ interface Quote {
 const API = `${API_BASE}/yiyan/random`
 
 const series = dailySeries<Quote>("yiyan", {
-  initial: { hitokoto: "正在加载…", from: "" },
+  initial: { hitokoto: t("card.yiyan.loading"), from: "" },
   load: async () => {
     try {
       const res = await fetch(API, { headers: { accept: "application/json" } })
@@ -67,7 +68,7 @@ const series = dailySeries<Quote>("yiyan", {
       const d = json?.data
       return d?.hitokoto ? { hitokoto: d.hitokoto, from: d.from || "" } : null
     } catch {
-      return { hitokoto: "加载失败，请检查网络", from: "" }
+      return { hitokoto: t("card.yiyan.loadFailed"), from: "" }
     }
   },
 })

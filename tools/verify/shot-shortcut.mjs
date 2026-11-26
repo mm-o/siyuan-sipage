@@ -4,13 +4,13 @@ import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
 
 const harness = await openBrowser({ storage: {
-  'desk-cards:desk': { cards: [...panels, { uid: 'shortcut', cardId: 'shortcut', w: 8, h: 8, x: 1, y: 8 }] },
-  'desk:shortcut': { enabled: ['search', 'back'] },
+  'siyuan-sipage-petal:desk': { cards: [...panels, { uid: 'shortcut', cardId: 'shortcut', w: 8, h: 8, x: 1, y: 8 }] },
+  'siyuan-sipage-petal:cardState': { data: { shortcut: { enabled: ['search', 'back'] } } },
 } })
 const { page, errors } = harness
 const checks = []
 const dialog = page.locator('.desk-sheet')
-const stored = () => page.evaluate(() => globalThis.__deskCardStates.data.shortcut.enabled)
+const stored = () => page.evaluate(() => globalThis.__sipageCardStates.data.shortcut.enabled)
 try {
   await harness.goto()
   // 卡片内部全是快捷按钮，直接向卡框派发点击打开详情。

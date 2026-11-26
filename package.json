@@ -1,15 +1,15 @@
 {
-  "name": "desk-cards",
-  "version": "0.9.6",
+  "name": "siyuan-sipage",
+  "version": "1.0.1",
   "packageManager": "pnpm@10.33.4",
   "type": "module",
-  "description": "思源桌面卡片：自适应卡片（日历 / 天气 / 时钟 / 一言 …）+ 网格自动补位",
+  "description": "思页（SiPage）——思源插件：把思源的一个页签变成一屏卡片桌面（壁纸 + 16 张活卡片，可拖拽、一键整理、可插进文档）",
   "author": "mm-o",
   "license": "MIT",
-  "homepage": "https://github.com/mm-o/desk-cards",
+  "homepage": "https://github.com/mm-o/siyuan-sipage",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mm-o/desk-cards.git"
+    "url": "git+https://github.com/mm-o/siyuan-sipage.git"
   },
   "scripts": {
     "dev": "vite build --watch",
@@ -26,8 +26,25 @@
     "release:ship": "bash release-ship.sh",
     "check:types": "vue-tsc --noEmit -p tsconfig.json",
     "check:bp": "node tools/verify/check-breakpoints.mjs",
-    "check": "pnpm check:types && pnpm check:arch && pnpm check:bp && pnpm build && pnpm check:dist",
+    "check:i18n": "node tools/verify/check-i18n.mjs",
+    "check": "pnpm check:types && pnpm check:arch && pnpm check:bp && pnpm check:i18n && pnpm build && pnpm check:dist",
     "check:browser": "pnpm dev:card && node tools/verify/shot-deskclock.mjs && node tools/verify/shot-arrange.mjs && node tools/verify/shot-ui.mjs && node tools/verify/shot-theme.mjs && node tools/verify/shot-glass.mjs && node tools/verify/shot-surfaces.mjs && node tools/verify/shot-agenda.mjs && node tools/verify/shot-daily.mjs && node tools/verify/shot-controls.mjs && node tools/verify/shot-shortcut.mjs"
+  },
+  "keywords": [
+    "sipage",
+    "思页",
+    "siyuan",
+    "siyuan-plugin",
+    "page",
+    "tab",
+    "desk",
+    "dashboard",
+    "widget",
+    "card",
+    "calendar"
+  ],
+  "dependencies": {
+    "tyme4ts": "^1.5.6"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.8.1",
@@ -45,10 +62,7 @@
     "vue": "^3.5.45",
     "vue-tsc": "^3.3.14"
   },
-  "dependencies": {
-    "tyme4ts": "^1.5.6"
-  },
   "bugs": {
-    "url": "https://github.com/mm-o/desk-cards/issues"
+    "url": "https://github.com/mm-o/siyuan-sipage/issues"
   }
 }

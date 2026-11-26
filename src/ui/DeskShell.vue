@@ -21,7 +21,7 @@
           :style="itemStyle(inst)"
           :tabindex="arranging ? 0 : undefined"
           :role="arranging ? 'group' : undefined"
-          :aria-label="arranging ? `${itemName(inst)}，${inst.w} 列 ${inst.h} 行。方向键移动，Shift 加方向键调整尺寸` : undefined"
+          :aria-label="arranging ? t('ui.desk.arrangeItemAria', { name: itemName(inst), w: inst.w, h: inst.h }) : undefined"
           @keydown="arrangeKey(i, $event)"
           @pointerdown="grab(i, $event)"
           @pointermove="onMove"
@@ -35,17 +35,17 @@
               <button
                 class="brand gb on-photo"
                 type="button"
-                aria-label="设置"
+                :aria-label="t('common.settings')"
                 @pointerdown.stop
                 @click.stop="openSettings('wallpaper', $event)"
               >
                 <span class="gb-lens" aria-hidden="true" />
-                <svg viewBox="0 0 32 32" width="26" height="26"><use xlink:href="#iconDeskCards" /></svg>
+                <svg viewBox="0 0 32 32" width="26" height="26"><use xlink:href="#iconSiPage" /></svg>
               </button>
               <div class="actions">
-                <GlassButton :icon="Settings" label="设置" tone="photo" @pointerdown.stop @click.stop="openSettings('wallpaper', $event)" />
-                <GlassButton :icon="Plus" label="添加卡片" tone="photo" @pointerdown.stop @click.stop="openSettings('library', $event)" />
-                <GlassButton :icon="arranging ? Check : LayoutGrid" :label="arranging ? '完成整理' : '整理桌面'" tone="photo" @pointerdown.stop @click.stop="toggle()" />
+                <GlassButton :icon="Settings" :label="t('common.settings')" tone="photo" @pointerdown.stop @click.stop="openSettings('wallpaper', $event)" />
+                <GlassButton :icon="Plus" :label="t('ui.desk.addCard')" tone="photo" @pointerdown.stop @click.stop="openSettings('library', $event)" />
+                <GlassButton :icon="arranging ? Check : LayoutGrid" :label="arranging ? t('ui.desk.finishArrange') : t('ui.desk.arrangeDesk')" tone="photo" @pointerdown.stop @click.stop="toggle()" />
               </div>
             </div>
           </template>
@@ -71,7 +71,7 @@
               :key="e.id"
               :icon="e.icon"
               :class="['edge', `is-${e.id}`, { 'is-off': !canResize(inst, e.id) }]"
-              :label="`调整${itemName(inst)}${e.label}边尺寸`"
+              :label="t('ui.desk.resizeEdgeAria', { name: itemName(inst), edge: e.label })"
               @pointerdown.stop="grab(i, $event, e.id)"
               @pointermove.stop="onMove"
               @pointerup.stop="endMove"
@@ -86,23 +86,23 @@
       </div>
 
       <div v-if="!cardCount" class="empty">
-        <p>桌面还是空的</p>
-        <GlassButton text variant="primary" :icon="Plus" label="添加第一张卡片" @click="openSettings('library', $event)" />
+        <p>{{ t('ui.desk.empty') }}</p>
+        <GlassButton text variant="primary" :icon="Plus" :label="t('ui.desk.addFirstCard')" @click="openSettings('library', $event)" />
       </div>
     </div>
 
     <Transition name="arrange-bar">
-      <div v-if="arranging" class="arrange-toolbar" role="toolbar" aria-label="整理桌面" @pointerdown.stop @contextmenu.stop.prevent>
+      <div v-if="arranging" class="arrange-toolbar" role="toolbar" :aria-label="t('ui.desk.arrangeDesk')" @pointerdown.stop @contextmenu.stop.prevent>
         <div class="arrange-toolbar-info">
           <LayoutGrid :size="18" :stroke-width="1.8" aria-hidden="true" />
           <div>
-            <strong>整理桌面<span class="arrange-count">{{ cardCount }} 张卡片</span></strong>
+            <strong>{{ t('ui.desk.arrangeDesk') }}<span class="arrange-count">{{ t('ui.desk.cardCount', { n: cardCount }) }}</span></strong>
             <span class="arrange-hint" role="status" aria-live="polite">{{ arrangeHint }}</span>
           </div>
         </div>
         <div class="arrange-toolbar-actions">
-          <GlassButton class="arrange-action" text :icon="LayoutGrid" label="一键整理" :disabled="!!drag" @click="tidyDesk" />
-          <GlassButton class="arrange-action" text variant="primary" :icon="Check" label="完成" @click="toggle(false)" />
+          <GlassButton class="arrange-action" text :icon="LayoutGrid" :label="t('ui.desk.tidy')" :disabled="!!drag" @click="tidyDesk" />
+          <GlassButton class="arrange-action" text variant="primary" :icon="Check" :label="t('common.done')" @click="toggle(false)" />
         </div>
       </div>
     </Transition>
@@ -111,7 +111,7 @@
     <Teleport v-if="full.open" to="body">
       <div class="desk-full">
         <div class="desk-full-inner"><component :is="cardOf(full.cardId!)" :size="full.size" :uid="full.uid" /></div>
-        <GlassButton class="desk-full-close" :icon="Minimize2" label="退出全屏（Esc）" @click="full.open = false" />
+        <GlassButton class="desk-full-close" :icon="Minimize2" :label="t('common.exitFullscreen')" @click="full.open = false" />
       </div>
     </Teleport>
 
@@ -128,7 +128,7 @@
       :height="sizeOf(s)?.height || 'min(560px, 78vh)'"
     >
       <template #actions>
-        <GlassButton :icon="Maximize2" label="全屏" @click="fullFromDetail(s)" />
+        <GlassButton :icon="Maximize2" :label="t('common.fullscreen')" @click="fullFromDetail(s)" />
       </template>
       <div v-if="s.open" class="desk-expanded desk-enter" :class="{ 'desk-pane is-solo': !defOf(s)?.detail }">
         <component :is="defOf(s)?.detail || defOf(s)?.component" :key="`${s.key}-${s.cardId}`" mode="detail" :uid="s.uid" />
@@ -143,6 +143,7 @@
 import { GlassButton, toast } from "@/ui/controls"
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { appearance, detailRequest, stateOf } from "@/core/store"
+import { t } from "@/core/i18n"
 import { syncDeskStyle } from "@/ui/style"
 import { Check, LayoutGrid, Maximize2, Minimize2, Move, MoveHorizontal, MoveVertical, Plus, Settings } from "lucide-vue-next"
 import { Menu } from "siyuan"
@@ -157,10 +158,10 @@ import SettingsSheet from "./SettingsSheet.vue"
 
 /** 四条边：图标与文案在同一张表里（都是 Move 家族，和中心手柄一致） */
 const EDGES = [
-  { id: "n", icon: MoveVertical, label: "上" },
-  { id: "s", icon: MoveVertical, label: "下" },
-  { id: "e", icon: MoveHorizontal, label: "右" },
-  { id: "w", icon: MoveHorizontal, label: "左" },
+  { id: "n", icon: MoveVertical, label: t("ui.desk.edgeTop") },
+  { id: "s", icon: MoveVertical, label: t("ui.desk.edgeBottom") },
+  { id: "e", icon: MoveHorizontal, label: t("ui.desk.edgeRight") },
+  { id: "w", icon: MoveHorizontal, label: t("ui.desk.edgeLeft") },
 ] as const
 
 /* 壁纸：跟随思源时整层不画（背景交给 CSS 变量），图片/纯色才需要这一层 */
@@ -195,12 +196,12 @@ const canvasStyle = computed(() => ({
 }))
 const panel = (c: { cardId: string }) => c.cardId.startsWith("@")
 const cardCount = computed(() => desk.cards.filter((c) => !panel(c)).length)
-const itemName = (c: { cardId: string }) => c.cardId === PANEL_CLOCK ? "桌面时钟" : panel(c) ? "桌面工具" : getCard(c.cardId)?.name || "卡片"
+const itemName = (c: { cardId: string }) => c.cardId === PANEL_CLOCK ? t("ui.desk.panelClock") : panel(c) ? t("ui.desk.panelTools") : getCard(c.cardId)?.name || t("ui.desk.cardFallback")
 const arrangeFeedback = ref("")
 let feedbackTimer = 0
 const arrangeHint = computed(() => {
   const active = drag.value && desk.cards[drag.value.index]
-  return active ? `${drag.value?.resize ? '调整尺寸' : '移动'} · ${itemName(active)} · ${active.w} × ${active.h}` : arrangeFeedback.value || "拖动卡片移动 · 拖动边缘缩放 · Esc 完成"
+  return active ? `${drag.value?.resize ? t('ui.desk.hintResize') : t('ui.desk.hintMove')} · ${itemName(active)} · ${active.w} × ${active.h}` : arrangeFeedback.value || t("ui.desk.hintIdle")
 })
 const originStyle = computed(() => {
   const d = drag.value
@@ -211,7 +212,7 @@ function tidyDesk() {
   endMove()
   normalizeSizes()
   flowDesk(grid.value.cols)
-  const message = `已整理 ${cardCount.value} 张卡片`
+  const message = t("ui.desk.tidyDone", { n: cardCount.value })
   if (arranging.value) {
     arrangeFeedback.value = message
     window.clearTimeout(feedbackTimer)
@@ -279,23 +280,23 @@ function deskMenu(e: MouseEvent) {
   const menu = new Menu("desk-surface")
   menu.addItem({
     icon: "iconAdd",
-    label: "添加卡片",
+    label: t("ui.desk.addCard"),
     click: () => openSettings("library"),
   })
   menu.addItem({
     icon: "iconSettings",
-    label: "设置",
+    label: t("common.settings"),
     click: () => openSettings("wallpaper"),
   })
   if (wallpaper.type !== "theme" && wallpaper.type !== "solid") {
     menu.addItem({
       icon: "iconImage",
-      label: "收藏当前壁纸",
+      label: t("ui.desk.favoriteWallpaper"),
       click: async () => {
         try {
-          toast((await favoriteWallpaper()) ? "已收藏到思源 public" : "当前壁纸没有图片可收藏")
+          toast((await favoriteWallpaper()) ? t("ui.desk.favoritedOk") : t("ui.desk.favoriteUnavailable"))
         } catch (err) {
-          toast(`收藏失败：${(err as Error)?.message || "未知"}`)
+          toast(t("ui.desk.favoriteFailed", { msg: (err as Error)?.message || t("ui.desk.unknown") }))
         }
       },
     })
@@ -303,12 +304,12 @@ function deskMenu(e: MouseEvent) {
   menu.addSeparator()
   menu.addItem({
     icon: "iconLayoutGrid",
-    label: "一键整理",
+    label: t("ui.desk.tidy"),
     click: tidyDesk,
   })
   menu.addItem({
     icon: "iconLayout",
-    label: arranging.value ? "完成整理" : "整理桌面",
+    label: arranging.value ? t("ui.desk.finishArrange") : t("ui.desk.arrangeDesk"),
     click: () => toggle(),
   })
   menu.open({ x: e.clientX, y: e.clientY })

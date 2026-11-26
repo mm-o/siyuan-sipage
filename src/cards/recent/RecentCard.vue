@@ -11,7 +11,7 @@
         @click="doc && onRow(doc, $event)"
       >
         <component :is="doc ? FileText : Ellipsis" :size="16" :stroke-width="1.8" />
-        <span class="doc-title">{{ doc ? doc.title : "更多" }}</span>
+        <span class="doc-title">{{ doc ? doc.title : t("common.more") }}</span>
       </button>
     </div>
   </div>
@@ -26,6 +26,7 @@ import { computed, onMounted, ref } from "vue"
 import { Ellipsis, FileText } from "lucide-vue-next"
 import { openDoc, recentDocs, type PickDoc } from "@/core/quickdocs"
 import { docColor, docRows } from "@/ui/controls"
+import { t } from "@/core/i18n"
 
 const props = defineProps<{ size?: string; w?: number; h?: number }>()
 

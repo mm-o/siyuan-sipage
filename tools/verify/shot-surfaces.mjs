@@ -4,8 +4,8 @@ import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
 
 const harness = await openBrowser({ storage: {
-  'desk-cards:desk': { cards: panels },
-  'desk:agenda': { group: 'inbox', seeded: true, items: [{ id: 'surfaces-memo', text: '字段初始内容', note: '', date: '', time: '', done: false, doneAt: 0, at: 1795344000000, syncedAt: 0 }] },
+  'siyuan-sipage-petal:desk': { cards: panels },
+  'siyuan-sipage-petal:agenda': { group: 'inbox', seeded: true, items: [{ id: 'surfaces-memo', text: '字段初始内容', note: '', date: '', time: '', done: false, doneAt: 0, at: 1795344000000, syncedAt: 0 }] },
 } })
 const { page, errors } = harness
 const checks = []
@@ -26,7 +26,7 @@ async function close() {
 }
 async function cardDetail(cardId, selector) {
   await page.evaluate(({ cardId, panels }) => {
-    globalThis.__deskDesk.cards = [...panels, { uid: `surfaces-${cardId}`, cardId, x: 1, y: 8, w: 12, h: 8 }]
+    globalThis.__sipageDesk.cards = [...panels, { uid: `surfaces-${cardId}`, cardId, x: 1, y: 8, w: 12, h: 8 }]
   }, { cardId, panels })
   const frame = page.locator('.desk-root .item:not(.is-panel) .frame')
   await frame.waitFor()
@@ -52,28 +52,28 @@ try {
   const toggle = dialog.getByRole('switch', { name: '入场动效', exact: true })
   assert.equal(await toggle.getAttribute('aria-checked'), 'false')
   await toggle.click()
-  await page.waitForFunction(() => globalThis.__deskAppearance.motion === true)
+  await page.waitForFunction(() => globalThis.__sipageAppearance.motion === true)
   assert.equal(await toggle.getAttribute('aria-checked'), 'true')
   await toggle.focus()
   await toggle.press('Space')
-  await page.waitForFunction(() => globalThis.__deskAppearance.motion === false)
+  await page.waitForFunction(() => globalThis.__sipageAppearance.motion === false)
   assert.equal(await toggle.getAttribute('aria-checked'), 'false')
   checks.push('settings switch supports pointer and Space with aria-checked and real appearance state')
 
   const cell = dialog.getByRole('slider', { name: '单格边长', exact: true })
   await cell.focus()
   await cell.press('Home')
-  await page.waitForFunction(() => globalThis.__deskAppearance.cell === 24)
+  await page.waitForFunction(() => globalThis.__sipageAppearance.cell === 24)
   assert.equal(await cell.evaluate(el => el.style.getPropertyValue('--range-progress')), '0%')
   await cell.press('End')
-  await page.waitForFunction(() => globalThis.__deskAppearance.cell === 36)
+  await page.waitForFunction(() => globalThis.__sipageAppearance.cell === 36)
   assert.equal(await cell.evaluate(el => el.style.getPropertyValue('--range-progress')), '100%')
   await cell.press('ArrowLeft')
-  await page.waitForFunction(() => globalThis.__deskAppearance.cell === 35)
+  await page.waitForFunction(() => globalThis.__sipageAppearance.cell === 35)
   const progress = await cell.evaluate(el => parseFloat(el.style.getPropertyValue('--range-progress')))
   assert.ok(Math.abs(progress - 11 / 12 * 100) < .001)
   await cell.dblclick()
-  await page.waitForFunction(() => globalThis.__deskAppearance.cell === 27)
+  await page.waitForFunction(() => globalThis.__sipageAppearance.cell === 27)
   assert.equal(await cell.evaluate(el => el.style.getPropertyValue('--range-progress')), '25%')
   assert.equal(await cell.getAttribute('aria-valuetext'), '27px')
   checks.push('slider Home/End/arrows change model and fill; double-click restores the default')
@@ -94,7 +94,7 @@ try {
   await fields()
   const editor = dialog.getByRole('textbox', { name: '日程标题', exact: true })
   await editor.fill('公共字段输入即时更新模型')
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('desk:agenda') || '{}').items?.some(item => item.id === 'surfaces-memo' && item.text === '公共字段输入即时更新模型'))
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('siyuan-sipage-petal:agenda') || '{}').items?.some(item => item.id === 'surfaces-memo' && item.text === '公共字段输入即时更新模型'))
   assert.equal(await dialog.locator('.desk-block-list .mm-text').first().textContent(), '公共字段输入即时更新模型')
   await screenshot('surfaces-memo-fields.png')
   const frameLight = await surface(memoFrame)
@@ -207,19 +207,19 @@ try {
   assert.equal(await pinned.getAttribute('aria-checked'), 'true')
   await form.getByRole('button', { name: '保存', exact: true }).click()
   await form.waitFor({ state: 'detached' })
-  const saved = await page.evaluate(() => globalThis.__deskCountdown.events.find(item => item.title === '公共开关验证'))
+  const saved = await page.evaluate(() => globalThis.__sipageCountdown.events.find(item => item.title === '公共开关验证'))
   assert.equal(saved.lunar, true)
   assert.equal(saved.pinned, true)
   const detailPin = dialog.getByRole('switch', { name: '置顶倒数日', exact: true })
   await detailPin.click()
-  await page.waitForFunction(() => globalThis.__deskCountdown.events.find(item => item.title === '公共开关验证')?.pinned === false)
+  await page.waitForFunction(() => globalThis.__sipageCountdown.events.find(item => item.title === '公共开关验证')?.pinned === false)
   assert.equal(await detailPin.getAttribute('aria-checked'), 'false')
   checks.push('countdown lunar/draft-pin/detail-pin switches keep native semantics and parent pin-event behavior')
 
   // 钉住：不被别的卡片顶替，可以同时钉多个；Esc 只关最上层。
   await close()
   await page.evaluate(() => {
-    globalThis.__deskDesk.cards = [
+    globalThis.__sipageDesk.cards = [
       { uid: 'multi-a', cardId: 'calendar', w: 12, h: 8, x: 1, y: 8 },
       { uid: 'multi-b', cardId: 'clock', w: 8, h: 6, x: 18, y: 8 },
       { uid: 'multi-c', cardId: 'countdown', w: 12, h: 8, x: 28, y: 8 },

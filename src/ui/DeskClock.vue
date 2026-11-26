@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="desk-clock">
     <time class="time" :datetime="now.toISOString()">{{ timeText }}</time>
     <div class="date">{{ dateText }}</div>
@@ -8,10 +8,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, shallowRef } from "vue"
 import { pad } from "@/core/util"
+import { t } from "@/core/i18n"
 
 const now = shallowRef(new Date())
 const timeText = computed(() => [now.value.getHours(), now.value.getMinutes()].map(pad).join(":"))
-const dateText = computed(() => `${now.value.getMonth() + 1}月${now.value.getDate()}日 星期${"日一二三四五六"[now.value.getDay()]}`)
+const WEEKDAY_KEYS = ["ui.clock.sun", "ui.clock.mon", "ui.clock.tue", "ui.clock.wed", "ui.clock.thu", "ui.clock.fri", "ui.clock.sat"]
+const dateText = computed(() => t("ui.clock.date", { m: now.value.getMonth() + 1, d: now.value.getDate(), weekday: t(WEEKDAY_KEYS[now.value.getDay()]) }))
 let timer = 0
 
 /** 每次按真实时间对齐下一分钟，避免累计误差；卸载即停止。 */

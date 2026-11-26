@@ -2,18 +2,18 @@
 <div class="cd-detail-inner">
   <!-- 编辑表单 -->
   <form v-if="editing" class="cd-form" @submit.prevent="save">
-    <GlassButton class="cd-back" :icon="ChevronLeft" label="返回" text @click="backToList" />
+    <GlassButton class="cd-back" :icon="ChevronLeft" :label="t('card.countdown.back')" text @click="backToList" />
     <div class="cd-form-body cd-scroll">
       <label class="cd-field">
-        <span class="cd-field-label">标题</span>
-        <GlassField v-model="draft.title" label="倒数日标题" placeholder="例如：妈妈的生日" maxlength="24" />
+        <span class="cd-field-label">{{ t("card.countdown.fieldTitle") }}</span>
+        <GlassField v-model="draft.title" :label="t('card.countdown.titleLabel')" :placeholder="t('card.countdown.titlePlaceholder')" maxlength="24" />
       </label>
       <label class="cd-field">
-        <span class="cd-field-label">日期</span>
-        <GlassField v-model="draft.date" label="倒数日日期" type="date" />
+        <span class="cd-field-label">{{ t("card.countdown.fieldDate") }}</span>
+        <GlassField v-model="draft.date" :label="t('card.countdown.dateLabel')" type="date" />
       </label>
       <div class="cd-field">
-        <span class="cd-field-label">分类</span>
+        <span class="cd-field-label">{{ t("card.countdown.fieldCategory") }}</span>
         <div class="cd-chips">
           <button
             v-for="cat in EVENT_CATEGORIES"
@@ -29,27 +29,27 @@
         </div>
       </div>
       <div class="cd-field">
-        <span class="cd-field-label">重复</span>
+        <span class="cd-field-label">{{ t("card.countdown.fieldRepeat") }}</span>
         <Segmented v-model="draft.repeat" :options="REPEAT_OPTIONS" />
       </div>
       <div v-if="draft.repeat === 'year'" class="cd-field-row">
-        <span class="cd-field-label">按农历（春节、中秋这类）</span>
-        <GlassSwitch v-model="draft.lunar" label="按农历重复" />
+        <span class="cd-field-label">{{ t("card.countdown.lunarHint") }}</span>
+        <GlassSwitch v-model="draft.lunar" :label="t('card.countdown.lunarSwitch')" />
       </div>
       <div class="cd-field-row">
-        <span class="cd-field-label">置顶</span>
-        <GlassSwitch v-model="draft.pinned" label="置顶倒数日" />
+        <span class="cd-field-label">{{ t("card.countdown.pinned") }}</span>
+        <GlassSwitch v-model="draft.pinned" :label="t('card.countdown.pinSwitch')" />
       </div>
     </div>
     <div class="cd-foot">
-      <GlassButton class="cd-btn" label="取消" text @click="cancelEdit" />
-      <GlassButton class="cd-btn" label="保存" variant="primary" text type="submit" :disabled="!valid" />
+      <GlassButton class="cd-btn" :label="t('common.cancel')" text @click="cancelEdit" />
+      <GlassButton class="cd-btn" :label="t('common.save')" variant="primary" text type="submit" :disabled="!valid" />
     </div>
   </form>
 
   <!-- 事件详情 -->
   <template v-else-if="current">
-    <GlassButton class="cd-detail-back" :icon="ChevronLeft" label="返回" text @click="backToList" />
+    <GlassButton class="cd-detail-back" :icon="ChevronLeft" :label="t('card.countdown.back')" text @click="backToList" />
     <div class="cd-detail-head" :style="{ backgroundImage: coverStyleOf(current.event, 'head') }" />
     <div class="cd-detail-body cd-scroll">
       <h2 class="cd-detail-title">
@@ -60,28 +60,28 @@
       <Segmented v-model="unit" :options="UNITS" class="cd-unit-tabs" />
       <div class="cd-meta">
         <div class="cd-meta-row">
-          <span class="cd-meta-key">目标日</span>
+          <span class="cd-meta-key">{{ t("card.countdown.targetDate") }}</span>
           <span class="cd-meta-val">{{ current.dateText }}</span>
         </div>
         <div class="cd-meta-row">
-          <span class="cd-meta-key">重复</span>
+          <span class="cd-meta-key">{{ t("card.countdown.fieldRepeat") }}</span>
           <span class="cd-meta-val">{{ repeatText(current.event) }}</span>
         </div>
         <div class="cd-meta-row">
-          <span class="cd-meta-key">置顶</span>
-          <GlassSwitch :model-value="current.event.pinned" label="置顶倒数日" @update:model-value="togglePinned(current.event.id)" />
+          <span class="cd-meta-key">{{ t("card.countdown.pinned") }}</span>
+          <GlassSwitch :model-value="current.event.pinned" :label="t('card.countdown.pinSwitch')" @update:model-value="togglePinned(current.event.id)" />
         </div>
       </div>
     </div>
     <div class="cd-foot">
-      <GlassButton class="cd-btn cd-btn--grow" :icon="Pencil" label="编辑" variant="primary" text @click="startEdit(current.event.id)" />
-      <GlassButton class="cd-btn" :icon="Trash2" label="删除" variant="danger" @click="removeSelected" />
+      <GlassButton class="cd-btn cd-btn--grow" :icon="Pencil" :label="t('card.countdown.edit')" variant="primary" text @click="startEdit(current.event.id)" />
+      <GlassButton class="cd-btn" :icon="Trash2" :label="t('common.delete')" variant="danger" @click="removeSelected" />
     </div>
   </template>
 
   <div v-else class="cd-detail-empty">
     <CalendarDays :size="28" :stroke-width="1.6" />
-    <p>选择事件查看详情</p>
+    <p>{{ t("card.countdown.pickHint") }}</p>
   </div>
 </div>
 </template>
@@ -96,6 +96,7 @@
 import { computed, reactive, watch } from "vue"
 import { CalendarDays, ChevronLeft, Pencil, Trash2 } from "lucide-vue-next"
 import { GlassButton, GlassField, GlassSwitch, Segmented } from "@/ui/controls"
+import { t } from "@/core/i18n"
 import {
   EVENT_CATEGORIES,
   REPEAT_OPTIONS,

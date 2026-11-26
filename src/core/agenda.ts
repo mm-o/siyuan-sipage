@@ -9,10 +9,11 @@
  * 勾掉、备注、时间、跨天移动都落在同一个对象上，日历与卡片读的是同一份索引，
  * 不存在「写进日记就再也看不见」的第二份数据。
  *
- * 存储：`persisted()`（本地存储，随插件页面走），老版备忘录 `desk:memo` 自动迁移。
+ * 存储：`persisted()`（与桌面同一套 petal 存储，跟工作空间一起同步）。
  */
 import { computed, ref } from "vue"
-import { persisted, takeLegacy } from "@/core/store"
+import { t } from "@/core/i18n"
+import { persisted } from "@/core/store"
 import { pad } from "@/core/util"
 
 export interface PlanItem {
@@ -44,7 +45,7 @@ interface AgendaState {
   seeded: boolean
 }
 
-export const agenda: AgendaState = persisted<AgendaState>("desk:agenda", {
+export const agenda: AgendaState = persisted<AgendaState>("agenda", {
   items: [],
   group: "today",
   seeded: false,
@@ -65,21 +66,20 @@ export function dayKey(offset: number, base = todayKey()) {
 const tick = ref(0)
 if (typeof window !== "undefined") window.setInterval(() => { tick.value += 1 }, 60_000)
 
-const WEEK = ["日", "一", "二", "三", "四", "五", "六"]
 const parts = (key: string) => key.split("-").map(Number)
 
 export function weekdayOf(key: string) {
   const [y, m, d] = parts(key)
-  return `周${WEEK[new Date(y, m - 1, d).getDay()]}`
+  return t(`core.weekday.${new Date(y, m - 1, d).getDay()}`)
 }
 
 /** 人类可读的日期：今天 / 明天 / 昨天 / 12月5日 / 2027年1月1日 */
 export function dayLabel(key: string) {
-  if (key === todayKey()) return "今天"
-  if (key === dayKey(1)) return "明天"
-  if (key === dayKey(-1)) return "昨天"
+  if (key === todayKey()) return t("core.date.today")
+  if (key === dayKey(1)) return t("core.date.tomorrow")
+  if (key === dayKey(-1)) return t("core.date.yesterday")
   const [y, m, d] = parts(key)
-  return y === new Date().getFullYear() ? `${m}月${d}日` : `${y}年${m}月${d}日`
+  return y === new Date().getFullYear() ? t("core.date.md", { m, d }) : t("core.date.full", { y, m, d })
 }
 
 /* ── 排序：未完成在前；同状态按时间（全天在前），再按创建顺序 ── */
@@ -232,34 +232,15 @@ export function scheduleItem(id: string, date: string) {
  * 本地仍然是唯一真源，写日记只是把「今天还没做的」抄一份到文档里，
  * 失败时抛错由调用方提示，绝不因为写日记失败丢掉本地条目。
  */
-/* ── 迁移与示例 ───────────────────────────────────────────── */
+/* ── 首次运行的示例 ───────────────────────────────────── */
 
-/** 老版备忘录（desk:memo）：有日期就到日历，没日期就进收件箱 */
-function migrateLegacy() {
-  const box = takeLegacy<{ items?: Array<{ id?: string; text?: string; done?: boolean; at?: number }> }>("desk:memo")
-  for (const old of box?.items || []) {
-    const text = String(old.text || "").trim()
-    if (!text || agenda.items.some((item) => item.text === text)) continue
-    agenda.items.push({
-      id: `ag-${old.id || Date.now().toString(36)}`,
-      text,
-      note: "",
-      date: "",
-      time: "",
-      done: !!old.done,
-      doneAt: old.done ? Date.now() : 0,
-      at: Number(old.at) || Date.now(),
-      })
-  }
-}
 /** 首次运行种两条示例：一条今天的日程，一条收件箱里的备忘 */
 function seed() {
   if (agenda.seeded) return
   agenda.seeded = true
   if (agenda.items.length) return
-  addItem({ text: "点左边的圆点勾掉这一条", date: todayKey() })
-  addItem({ text: "备忘先放收件箱，点「今天」就排进今天" })
+  addItem({ text: t("core.agenda.seedTask"), date: todayKey() })
+  addItem({ text: t("core.agenda.seedMemo") })
 }
 
-migrateLegacy()
 seed()

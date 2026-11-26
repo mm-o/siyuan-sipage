@@ -23,10 +23,10 @@
           <span class="mm-dot" :class="{ 'is-on': row.done }" role="checkbox" :aria-checked="row.done" />
           <span class="mm-text">{{ row.text }}</span>
         </li>
-        <li v-if="!rows.length" class="desk-empty is-tight"><EmptyArt /><span>这天没有待办</span></li>
+        <li v-if="!rows.length" class="desk-empty is-tight"><EmptyArt /><span>{{ t("card.daily.noTodos") }}</span></li>
       </ul>
 
-      <GlassButton v-if="!preview && state.offset === 0" class="dl-open" text variant="primary" :icon="PenLine" label="写今天的日记" @click="create" />
+      <GlassButton v-if="!preview && state.offset === 0" class="dl-open" text variant="primary" :icon="PenLine" :label="t('card.daily.writeToday')" @click="create" />
     </aside>
 
     <!-- 右：只读全文（思源 Protyle 渲染） -->
@@ -34,8 +34,8 @@
       <ProtyleView v-if="preview" ref="view" class="dl-protyle" :id="preview.id" editable full :on-input="refreshStat" />
       <div v-if="!preview" class="dl-empty desk-empty">
         <EmptyArt />
-        <span>{{ state.offset === 0 ? "今天还没写，写一句吧" : "这天还没有日记" }}</span>
-        <GlassButton text variant="primary" :icon="PenLine" label="写这天的日记" @click="create" />
+        <span>{{ state.offset === 0 ? t("card.daily.emptyTodayWrite") : t("card.daily.noDiary") }}</span>
+        <GlassButton text variant="primary" :icon="PenLine" :label="t('card.daily.writeDay')" @click="create" />
       </div>
     </section>
   </div>
@@ -56,6 +56,7 @@ import MiniCalendar from "@/ui/MiniCalendar.vue"
 import ProtyleView from "@/ui/ProtyleView.vue"
 import { dateKey, dayLabel, itemsOf, toggleItem, weekdayOf } from "@/core/agenda"
 import { dailyStat, dailyTodos, dayOf, ensureDaily, loadDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
+import { t } from "@/core/i18n"
 
 const props = defineProps<{ mode?: string; uid?: string }>()
 
@@ -82,9 +83,9 @@ const selectedKey = computed({
 /** 固定一行：没有日记也写 0 块 · 0 字，下面的日历不会因为空而上下跳 */
 const meta = computed(() => {
   const p = preview.value
-  if (!p) return "0 块 · 0 字"
+  if (!p) return t("card.daily.meta", { blocks: 0, words: 0 })
   const open = openTodos.value
-  return `${p.blocks} 块 · ${p.words} 字${open ? ` · ${open} 待办` : ""}`
+  return `${t("card.daily.meta", { blocks: p.blocks, words: p.words })}${open ? ` · ${t("card.daily.openTodos", { n: open })}` : ""}`
 })
 
 const preview = ref<DailyPreview | null>(null)
@@ -123,7 +124,7 @@ async function create() {
   try {
     preview.value = await previewOf(await ensureDaily(date.value))
   } catch (e) {
-    toast(`创建日记失败：${(e as Error).message}`, 3000)
+    toast(t("card.daily.createFailed", { msg: (e as Error).message }), 3000)
   }
 }
 

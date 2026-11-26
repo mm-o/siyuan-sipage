@@ -2,7 +2,7 @@
   <div class="mm-card">
     <div class="mm-body">
       <header class="mm-head">
-        <span class="mm-title">今天</span>
+        <span class="mm-title">{{ t("common.today") }}</span>
         <span class="mm-count">{{ meta }}</span>
       </header>
 
@@ -18,7 +18,7 @@
               type="button"
               role="checkbox"
               :aria-checked="row.item.done"
-              :aria-label="row.item.done ? '标记未完成' : '标记完成'"
+              :aria-label="row.item.done ? t('card.memo.markUndone') : t('card.memo.markDone')"
               @click.stop="toggleItem(row.item.id)"
             />
             <span v-if="row.item.time" class="mm-time">{{ row.item.time }}</span>
@@ -29,7 +29,7 @@
       </ul>
 
       <form v-if="showInput" class="mm-add" @submit.prevent="submit">
-        <GlassField v-model="draft" class="mm-input" label="新建今天的日程" placeholder="回车加到今天" />
+        <GlassField v-model="draft" class="mm-input" :label="t('card.memo.newTodayLabel')" :placeholder="t('card.memo.newTodayPlaceholder')" />
       </form>
     </div>
   </div>
@@ -46,6 +46,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { GlassField } from "@/ui/controls"
 import { addItem, counts, inbox, itemsOf, overdue, todayKey, toggleItem, weekdayOf } from "@/core/agenda"
+import { t } from "@/core/i18n"
 import { requestDetail } from "@/core/store"
 import { EmptyArt } from "@/ui/controls"
 
@@ -79,8 +80,8 @@ const rows = computed(() => {
   const box = inbox.value
   const groups = [
     { key: "today", text: "", items: itemsOf(todayKey()), count: 0, late: false },
-    { key: "late", text: "逾期", items: late, count: late.length, late: true },
-    { key: "inbox", text: "备忘", items: box, count: box.length, late: false },
+    { key: "late", text: t("card.memo.groupLate"), items: late, count: late.length, late: true },
+    { key: "inbox", text: t("card.memo.sectionNotes"), items: box, count: box.length, late: false },
   ]
   const out: Row[] = []
   for (const group of groups) {
@@ -108,12 +109,12 @@ function openGroup(group: string) {
 
 const meta = computed(() => {
   const hit = counts.value
-  const parts = [`${weekdayOf(todayKey())} · ${hit.today} 项`]
-  if (hit.late) parts.push(`逾期 ${hit.late}`)
+  const parts = [t("card.memo.metaCount", { day: weekdayOf(todayKey()), n: hit.today })]
+  if (hit.late) parts.push(t("card.memo.metaLate", { n: hit.late }))
   return parts.join(" · ")
 })
 
-const empty = computed(() => "今天空着，下面加一条")
+const empty = computed(() => t("card.memo.emptyToday"))
 
 const draft = ref("")
 

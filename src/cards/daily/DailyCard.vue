@@ -26,6 +26,7 @@ import { EmptyArt } from "@/ui/controls"
 import ProtyleView from "@/ui/ProtyleView.vue"
 import { dateKey, dayLabel, itemsOf, weekdayOf } from "@/core/agenda"
 import { dayOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
+import { t } from "@/core/i18n"
 
 const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
 
@@ -38,7 +39,7 @@ const label = computed(() => {
 })
 
 const preview = ref<DailyPreview | null>(null)
-const empty = computed(() => (state.offset === 0 ? "今天还没写 · 点开写一句" : "这天没有日记"))
+const empty = computed(() => (state.offset === 0 ? t("card.daily.emptyToday") : t("card.daily.emptyDay")))
 
 const meta = computed(() => {
   const p = preview.value
@@ -46,7 +47,7 @@ const meta = computed(() => {
   const open =
     itemsOf(dateKey(date.value)).filter((item) => !item.done).length +
     (p?.todos.filter((todo) => !todo.done).length ?? 0)
-  return [`${p?.words ?? 0} 字`, open ? `${open} 待办` : ""].filter(Boolean).join(" · ")
+  return [t("card.daily.words", { n: p?.words ?? 0 }), open ? t("card.daily.openTodos", { n: open }) : ""].filter(Boolean).join(" · ")
 })
 
 async function load() {

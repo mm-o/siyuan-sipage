@@ -7,14 +7,14 @@
           <p class="wx-main-place">
             <span v-if="place?.admin" class="wx-main-region">{{ place.admin }} · </span>{{ place?.name }}
             <span class="wx-head-cond">{{ data ? cond.label : "" }}</span>
-            <span class="wx-head-time">{{ data ? `发布于:${data.now.time.replace("T", " ")}` : "" }}</span>
+            <span class="wx-head-time">{{ data ? t("card.weather.published", { time: data.now.time.replace("T", " ") }) : "" }}</span>
           </p>
-          <GlassButton class="wx-manage" :icon="MapPin" :label="showPlaces ? '收起地点' : '管理地点'" :active="showPlaces" text tone="photo" @click="showPlaces = !showPlaces" />
+          <GlassButton class="wx-manage" :icon="MapPin" :label="showPlaces ? t('card.weather.places.collapse') : t('card.weather.places.manage')" :active="showPlaces" text tone="photo" @click="showPlaces = !showPlaces" />
         </header>
 
         <div v-if="!data" class="wx-main-state">
-          <span class="wx-main-state-text">{{ error || "加载中" }}</span>
-          <GlassButton v-if="error" :icon="RotateCcw" label="重试" text tone="photo" @click="reload" />
+          <span class="wx-main-state-text">{{ error || t("common.loading") }}</span>
+          <GlassButton v-if="error" :icon="RotateCcw" :label="t('common.retry')" text tone="photo" @click="reload" />
         </div>
 
         <template v-else>
@@ -26,22 +26,22 @@
                 <span>{{ cond.label }}</span>
                 <span class="wx-now-wind">{{ data.now.wind }} km/h</span>
               </p>
-              <p class="wx-now-feel">体感 {{ data.now.feels }}° · 湿度 {{ data.now.humidity }}%</p>
+              <p class="wx-now-feel">{{ t("card.weather.feels", { n: data.now.feels }) }} · {{ t("card.weather.humidity", { n: data.now.humidity }) }}</p>
             </div>
           </section>
 
           <ul class="wx-meta">
-            <li>温度 {{ today.min }}°~{{ today.max }}°</li>
-            <li>湿度 {{ data.now.humidity }}%</li>
-            <li>风速 {{ data.now.wind }} km/h</li>
-            <li>体感 {{ data.now.feels }}°</li>
-            <li>日出 {{ today.sunrise }}</li>
-            <li>日落 {{ today.sunset }}</li>
+            <li>{{ t("card.weather.meta.temp", { min: today.min, max: today.max }) }}</li>
+            <li>{{ t("card.weather.humidity", { n: data.now.humidity }) }}</li>
+            <li>{{ t("card.weather.wind", { n: data.now.wind }) }}</li>
+            <li>{{ t("card.weather.feels", { n: data.now.feels }) }}</li>
+            <li>{{ t("card.weather.sunrise", { time: today.sunrise }) }}</li>
+            <li>{{ t("card.weather.sunset", { time: today.sunset }) }}</li>
           </ul>
 
           <!-- 天气状况：24 小时（横向可滚） -->
           <section v-if="data.hours.length" class="wx-block">
-            <h3 class="wx-block-title">天气状况</h3>
+            <h3 class="wx-block-title">{{ t("card.weather.hours") }}</h3>
             <ul class="wx-hours desk-seq">
               <li v-for="hour in data.hours" :key="hour.time" class="wx-hour">
                 <span class="wx-hour-time">{{ hour.time.slice(11, 16) }}</span>
@@ -53,7 +53,7 @@
 
           <!-- 7 日天气预报：7 列 + 一条最高温折线 -->
           <section class="wx-block wx-daily">
-            <h3 class="wx-block-title">7日天气预报</h3>
+            <h3 class="wx-block-title">{{ t("card.weather.daily") }}</h3>
             <ul class="wx-daily-list">
               <li v-for="(day, i) in data.days" :key="day.date" class="wx-main-day">
                 <span class="wx-main-day-week">{{ dayLabel(day.date, i) }}</span>
@@ -99,6 +99,7 @@
  */
 import { computed, ref } from "vue"
 import { MapPin, RotateCcw } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import { GlassButton } from "@/ui/controls"
 import { weather } from "@/core/store"
 import PlacesDrawer from "./PlacesDrawer.vue"
@@ -136,10 +137,18 @@ const chart = computed(() => {
 /* ── 窄屏：右栏收成「管理地点」按钮 ───────────────────── */
 const showPlaces = ref(false)
 
-const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+const WEEK = [
+  t("card.weather.week.sun"),
+  t("card.weather.week.mon"),
+  t("card.weather.week.tue"),
+  t("card.weather.week.wed"),
+  t("card.weather.week.thu"),
+  t("card.weather.week.fri"),
+  t("card.weather.week.sat"),
+]
 
 function dayLabel(date: string, index: number) {
-  if (index < 2) return index === 0 ? "今天" : "明天"
+  if (index < 2) return index === 0 ? t("common.today") : t("common.tomorrow")
   const [y, m, d] = date.split("-").map(Number)
   return WEEK[new Date(y, m - 1, d).getDay()]
 }

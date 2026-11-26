@@ -4,7 +4,7 @@
       <div class="hm-main desk-pane is-left">
       <header class="hm-head">
         <p class="hm-range">{{ rangeText }}</p>
-        <p class="hm-hint">按天统计当天新增或修改的块数</p>
+        <p class="hm-hint">{{ t("card.heatmap.hint") }}</p>
       </header>
 
       <template v-if="counts">
@@ -27,7 +27,7 @@
                     class="hg-cell"
                     :class="[`is-${day.level}`, { 'is-hover': hovered === day.date }]"
                     :style="{ '--col': ri * 27 + wi, '--row': di }"
-                    :title="`${day.date} · ${day.count} 块`"
+                    :title="t('card.heatmap.cell', { date: day.date, count: day.count })"
                     @mouseenter="hovered = day.date"
                     @mouseleave="hovered = ''"
                   />
@@ -39,25 +39,25 @@
 
         <footer class="hm-foot">
           <p class="hm-caption">
-            <template v-if="hoveredDay">{{ hoveredDay.date }} · <b>{{ hoveredDay.count }}</b> 块</template>
-            <template v-else-if="!stats.active">最近 53 周没有写作记录</template>
-            <template v-else>单日最多 <b>{{ stats.busiest?.count ?? 0 }}</b> 块（{{ stats.busiest?.date }}）</template>
+            <template v-if="hoveredDay">{{ hoveredDay.date }} · <b>{{ hoveredDay.count }}</b> {{ t("card.heatmap.unit.blocks") }}</template>
+            <template v-else-if="!stats.active">{{ t("card.heatmap.empty") }}</template>
+            <template v-else>{{ t("card.heatmap.caption.maxLead") }} <b>{{ stats.busiest?.count ?? 0 }}</b> {{ t("card.heatmap.caption.maxTail", { date: stats.busiest?.date }) }}</template>
           </p>
           <p class="hm-legend">
-            <span>少</span>
+            <span>{{ t("card.heatmap.legend.less") }}</span>
             <i class="hg-cell is-0" />
             <i class="hg-cell is-1" />
             <i class="hg-cell is-2" />
             <i class="hg-cell is-3" />
             <i class="hg-cell is-4" />
-            <span>多</span>
+            <span>{{ t("card.heatmap.legend.more") }}</span>
           </p>
         </footer>
       </template>
 
       <div v-else class="hm-state">
-        <span class="hm-state-text">{{ error ? "读取写作记录失败" : "读取中" }}</span>
-        <GlassButton v-if="error" text label="重试" @click="reload" />
+        <span class="hm-state-text">{{ error ? t("card.heatmap.error") : t("card.heatmap.loading") }}</span>
+        <GlassButton v-if="error" text :label="t('common.retry')" @click="reload" />
       </div>
     </div>
 
@@ -65,24 +65,24 @@
       <ul class="hm-figures">
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.active }}</span>
-          <span class="hm-figure-label desk-note">天有写</span>
+          <span class="hm-figure-label desk-note">{{ t("card.heatmap.figure.activeDays") }}</span>
         </li>
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.current }}</span>
-          <span class="hm-figure-label desk-note">天连续</span>
+          <span class="hm-figure-label desk-note">{{ t("card.heatmap.figure.streak") }}</span>
         </li>
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.longest }}</span>
-          <span class="hm-figure-label desk-note">最长连续</span>
+          <span class="hm-figure-label desk-note">{{ t("card.heatmap.figure.longest") }}</span>
         </li>
         <li class="hm-figure">
           <span class="hm-figure-num">{{ stats.total }}</span>
-          <span class="hm-figure-label desk-note">块合计</span>
+          <span class="hm-figure-label desk-note">{{ t("card.heatmap.figure.total") }}</span>
         </li>
       </ul>
 
       <section class="hm-recent">
-        <h2 class="hm-recent-title">最近活跃</h2>
+        <h2 class="hm-recent-title">{{ t("card.heatmap.recent") }}</h2>
         <ul v-if="recent.length" class="hm-recent-list">
           <li v-for="item in recent" :key="item.date" class="hm-recent-row">
             <span class="hm-recent-date">{{ item.date.slice(5) }} {{ weekdayOf(item.date) }}</span>
@@ -90,7 +90,7 @@
             <span class="hm-recent-num">{{ item.count }}</span>
           </li>
         </ul>
-        <div v-else class="hm-recent-empty desk-empty is-tight"><EmptyArt /><span>还没有记录</span></div>
+        <div v-else class="hm-recent-empty desk-empty is-tight"><EmptyArt /><span>{{ t("card.heatmap.recentEmpty") }}</span></div>
       </section>
     </aside>
     </div>
@@ -110,6 +110,7 @@
  */
 import { EmptyArt, GlassButton } from "@/ui/controls"
 import { computed, ref } from "vue"
+import { t } from "@/core/i18n"
 import { buildGrid, buildStats, recentActive, splitGrid, useHeatmap, WEEKS_YEAR } from "./heatmap"
 import "./styles.css"
 
@@ -130,7 +131,15 @@ const hoveredDay = computed(() => {
   return { date: hovered.value, count }
 })
 
-const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+const WEEK = [
+  t("card.heatmap.week.sun"),
+  t("card.heatmap.week.mon"),
+  t("card.heatmap.week.tue"),
+  t("card.heatmap.week.wed"),
+  t("card.heatmap.week.thu"),
+  t("card.heatmap.week.fri"),
+  t("card.heatmap.week.sat"),
+]
 const weekdayOf = (date: string) => {
   const [y, m, d] = date.split("-").map(Number)
   return WEEK[new Date(y, m - 1, d).getDay()]
@@ -138,7 +147,7 @@ const weekdayOf = (date: string) => {
 
 /** 窗口范围：从第一周周一到今天（不写到本周还没到的周日） */
 const rangeText = computed(() => {
-  if (!counts.value) return "近 53 周"
+  if (!counts.value) return t("card.heatmap.range")
   const first = grid.value.weeks[0]?.[0]?.date ?? ""
   return `${first} → ${new Date().toLocaleDateString("sv-SE")}`
 })

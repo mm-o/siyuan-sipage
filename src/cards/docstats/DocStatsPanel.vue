@@ -1,8 +1,8 @@
 <template>
   <div class="ds-panel desk-seq desk-panel-row">
     <section class="ds-col desk-pane is-left">
-      <h4 class="ds-sub">五维雷达</h4>
-      <svg class="ds-radar desk-seq" viewBox="0 0 100 100" role="img" aria-label="文档规模雷达">
+      <h4 class="ds-sub">{{ t("card.docstats.radar.title") }}</h4>
+      <svg class="ds-radar desk-seq" viewBox="0 0 100 100" role="img" :aria-label="t('card.docstats.radar.aria')">
         <polygon points="50,8 90,37 75,86 25,86 10,37" class="ds-grid" />
         <polygon points="50,22 80,44 68,79 32,79 20,44" class="ds-grid" />
         <polygon :points="radar.poly" class="ds-area" />
@@ -17,42 +17,42 @@
         >{{ LABELS[i] }}</text>
       </svg>
 
-      <h4 class="ds-sub">笔记本 → 路径（旭日）</h4>
-      <svg class="ds-sun" viewBox="0 0 200 200" role="img" aria-label="字数构成">
+      <h4 class="ds-sub">{{ t("card.docstats.sun.title") }}</h4>
+      <svg class="ds-sun" viewBox="0 0 200 200" role="img" :aria-label="t('card.docstats.sun.aria')">
         <circle cx="100" cy="100" r="34" class="ds-core" />
         <text x="100" y="98" class="ds-core-num">{{ compact(d?.words ?? 0) }}</text>
-        <text x="100" y="111" class="ds-core-cap">总字数</text>
+        <text x="100" y="111" class="ds-core-cap">{{ t("card.docstats.dim.totalWords") }}</text>
         <path v-for="(a, i) in sunArcs" :key="i" :d="a.d" :fill="a.fill" class="ds-arc">
           <title>{{ a.title }}</title>
         </path>
       </svg>
       <ul class="ds-legend desk-ellipsis">
-        <li v-for="(t, i) in d?.tree || []" :key="t.label">
+        <li v-for="(node, i) in d?.tree || []" :key="node.label">
           <i :style="{ background: COLORS[i % COLORS.length] }" />
-          <span>{{ t.label }}</span>
-          <b>{{ compact(t.words) }}</b>
+          <span>{{ node.label }}</span>
+          <b>{{ compact(node.words) }}</b>
         </li>
       </ul>
     </section>
 
     <section class="ds-col desk-pane is-mid">
-      <h4 class="ds-sub">文档关系（立体）</h4>
+      <h4 class="ds-sub">{{ t("card.docstats.graph.title") }}</h4>
       <DocGraph />
     </section>
 
     <section class="ds-col desk-pane is-right">
       <header class="ds-bar">
-        <span class="ds-title">文档统计</span>
-        <GlassButton :icon="RotateCcw" label="刷新" @click="refresh" />
+        <span class="ds-title">{{ t("card.docstats.title") }}</span>
+        <GlassButton :icon="RotateCcw" :label="t('common.refresh')" @click="refresh" />
       </header>
       <ul class="ds-tiles">
-        <li><b>{{ compact(d?.docs ?? 0) }}</b><span>文档</span></li>
-        <li><b>{{ compact(d?.words ?? 0) }}</b><span>总字数</span></li>
-        <li><b>{{ d?.today ?? 0 }}</b><span>今日</span></li>
-        <li><b>{{ d?.week ?? 0 }}</b><span>近 7 天</span></li>
+        <li><b>{{ compact(d?.docs ?? 0) }}</b><span>{{ t("card.docstats.dim.docs") }}</span></li>
+        <li><b>{{ compact(d?.words ?? 0) }}</b><span>{{ t("card.docstats.dim.totalWords") }}</span></li>
+        <li><b>{{ d?.today ?? 0 }}</b><span>{{ t("card.docstats.dim.today") }}</span></li>
+        <li><b>{{ d?.week ?? 0 }}</b><span>{{ t("card.docstats.dim.week") }}</span></li>
       </ul>
 
-      <h4 class="ds-sub">字数 Top 5</h4>
+      <h4 class="ds-sub">{{ t("card.docstats.top") }}</h4>
       <ul class="ds-bars desk-seq">
         <li v-for="b in d?.top || []" :key="b.label">
           <span class="ds-lab" :title="b.label">{{ b.label }}</span>
@@ -60,12 +60,12 @@
         </li>
       </ul>
 
-      <h4 class="ds-sub">笔记本</h4>
+      <h4 class="ds-sub">{{ t("card.docstats.dim.notebooks") }}</h4>
       <ul class="ds-bars">
         <li v-for="b in d?.notebooks || []" :key="b.label">
           <span class="ds-lab" :title="b.label">{{ b.label }}</span>
           <span class="ds-track desk-fill"><i :style="{ width: `${pct(b.value, nbMax)}%` }" /></span>
-          <span class="ds-num">{{ b.value }} 篇</span>
+          <span class="ds-num">{{ t("card.docstats.notebookPosts", { n: b.value }) }}</span>
         </li>
       </ul>
     </section>
@@ -76,6 +76,7 @@
 import { GlassButton } from "@/ui/controls"
 import { computed, onMounted, ref } from "vue"
 import { RotateCcw } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import { RADAR_LABELS, compact, loadDocStats, radarOf, radarValuesOf, stats } from "./docstats"
 import DocGraph from "./DocGraph.vue"
 
@@ -116,21 +117,21 @@ function arcPath(a0: number, a1: number, r0: number, r1: number) {
 /** 旭日：内环笔记本、外环一级路径，权重 = 字数 */
 const sunArcs = computed(() => {
   const tree = d.value?.tree || []
-  const total = tree.reduce((s, t) => s + t.words, 0)
+  const total = tree.reduce((s, node) => s + node.words, 0)
   if (!total) return []
   const arcs: { d: string; fill: string; title: string }[] = []
   let start = -Math.PI / 2
   tree.forEach((node, i) => {
     const span = (node.words / total) * Math.PI * 2
     const fill = COLORS[i % COLORS.length]
-    arcs.push({ d: arcPath(start + 0.006, start + span - 0.006, 36, 62), fill, title: `${node.label} · ${node.words} 字` })
+    arcs.push({ d: arcPath(start + 0.006, start + span - 0.006, 36, 62), fill, title: t("card.docstats.sun.arc", { label: node.label, words: node.words }) })
     let cs = start
     for (const child of node.children) {
       const cspan = (child.words / node.words) * span
       arcs.push({
         d: arcPath(cs + 0.008, cs + cspan - 0.008, 65, 91),
         fill: `color-mix(in srgb, ${fill} 55%, var(--desk-surface))`,
-        title: `${node.label} / ${child.label} · ${child.words} 字`,
+        title: t("card.docstats.sun.arcChild", { parent: node.label, child: child.label, words: child.words }),
       })
       cs += cspan
     }
@@ -144,7 +145,7 @@ async function refresh() {
   try {
     await loadDocStats(true)
   } catch {
-    error.value = "读取失败"
+    error.value = t("card.docstats.errorRead")
   }
 }
 

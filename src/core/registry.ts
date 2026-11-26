@@ -8,6 +8,7 @@
  * 外框、右键菜单、尺寸、弹窗、文档内嵌、持久化 —— 全部由框架统一处理。
  */
 import type { Component } from "vue"
+import { cardDesc, cardName } from "@/core/i18n"
 import { BarChart3, CalendarClock, CalendarDays, Clock, CloudSun, Boxes, FolderOpen, Grid3x3, History, Zap, Languages, ListTodo, NotebookPen, Quote, ScrollText, Timer } from "lucide-vue-next"
 import DailyCard from "@/cards/daily/DailyCard.vue"
 import DailyPanel from "@/cards/daily/DailyPanel.vue"
@@ -80,8 +81,8 @@ interface CardDef {
 export const CARDS: CardDef[] = [
   {
     id: "clock",
-    name: "时钟",
-    desc: "点阵 / 翻页两种形态，拖动自动横竖排",
+    name: cardName("clock"),
+    desc: cardDesc("clock"),
     component: ClockCard,
     detail: ClockPanel,
     icon: Clock,
@@ -90,8 +91,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "calendar",
-    name: "日历",
-    desc: "今日 / 月历 / 农历节气，右栏是当天日程与备忘",
+    name: cardName("calendar"),
+    desc: cardDesc("calendar"),
     component: CalendarCard,
     icon: CalendarDays,
     detail: CalendarPanel,
@@ -103,29 +104,29 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "english",
-    name: "每日英语",
-    desc: "一句英文 + 中文释义，可朗读",
+    name: cardName("english"),
+    desc: cardDesc("english"),
     component: EnglishCard,
     icon: Languages,
   },
   {
     id: "yiyan",
-    name: "每日一言",
-    desc: "每天一句话，附赠一张壁纸",
+    name: cardName("yiyan"),
+    desc: cardDesc("yiyan"),
     component: YiyanCard,
     icon: Quote,
   },
   {
     id: "shici",
-    name: "每日诗词",
-    desc: "一首古诗，含全文、译文、注释",
+    name: cardName("shici"),
+    desc: cardDesc("shici"),
     component: ShiciCard,
     icon: ScrollText,
   },
   {
     id: "weather",
-    name: "天气",
-    desc: "实时天气与 7 日预报，详情里管理地点",
+    name: cardName("weather"),
+    desc: cardDesc("weather"),
     component: WeatherCard,
     icon: CloudSun,
     detail: WeatherPanel,
@@ -133,8 +134,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "countdown",
-    name: "倒数日",
-    desc: "纪念日与目标日，详情里按分类管理",
+    name: cardName("countdown"),
+    desc: cardDesc("countdown"),
     component: CountdownCard,
     icon: CalendarClock,
     detail: CountdownPanel,
@@ -145,8 +146,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "heatmap",
-    name: "写作热力图",
-    desc: "按天看写作量，详情里是一整年",
+    name: cardName("heatmap"),
+    desc: cardDesc("heatmap"),
     component: HeatmapCard,
     icon: Grid3x3,
     detail: HeatmapPanel,
@@ -157,8 +158,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "pomodoro",
-    name: "番茄钟",
-    desc: "25 分钟专注 + 5 分钟休息，eters 逐秒走",
+    name: cardName("pomodoro"),
+    desc: cardDesc("pomodoro"),
     component: PomodoroCard,
     icon: Timer,
     detail: PomodoroPanel,
@@ -167,8 +168,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "daily",
-    name: "日记",
-    desc: "某一天的日记：块 / 字 / 待办与正文前几行，详情里只读全文",
+    name: cardName("daily"),
+    desc: cardDesc("daily"),
     component: DailyCard,
     icon: NotebookPen,
     detail: DailyPanel,
@@ -178,8 +179,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "memo",
-    name: "日程备忘",
-    desc: "今天要做什么 + 随手记，勾掉即完成；日历里同一天可见",
+    name: cardName("memo"),
+    desc: cardDesc("memo"),
     component: MemoCard,
     icon: ListTodo,
     detail: MemoPanel,
@@ -189,8 +190,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "docstats",
-    name: "文档统计",
-    desc: "文档数 / 字数 / 今日新建，按笔记本分组",
+    name: cardName("docstats"),
+    desc: cardDesc("docstats"),
     component: DocStatsCard,
     icon: BarChart3,
     detail: DocStatsPanel,
@@ -200,8 +201,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "quickopen",
-    name: "快捷打开",
-    desc: "一格一个文档，点开就在页签里打开",
+    name: cardName("quickopen"),
+    desc: cardDesc("quickopen"),
     component: QuickPickCard,
     icon: FolderOpen,
     detail: QuickPickPanel,
@@ -210,8 +211,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "recent",
-    name: "最近文档",
-    desc: "最近更新的 1–8 篇，点击直接打开",
+    name: cardName("recent"),
+    desc: cardDesc("recent"),
     component: RecentDocsCard,
     icon: History,
     detail: RecentPanel,
@@ -220,8 +221,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "shortcut",
-    name: "快捷方式",
-    desc: "复用思源工具栏的常用动作，一格一个",
+    name: cardName("shortcut"),
+    desc: cardDesc("shortcut"),
     component: ShortcutCard,
     icon: Zap,
     detail: ShortcutPanel,
@@ -231,8 +232,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "block",
-    name: "思源块",
-    desc: "原样显示任意思源块（文档块 / 自定义块）",
+    name: cardName("block"),
+    desc: cardDesc("block"),
     component: BlockCard,
     icon: Boxes,
     detail: BlockPanel,

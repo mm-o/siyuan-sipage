@@ -3,14 +3,14 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { openBrowser, out, report } from './browser.mjs'
 
-const harness = await openBrowser({ storage: { 'desk-cards:desk': { cards: [
+const harness = await openBrowser({ storage: { 'siyuan-sipage-petal:desk': { cards: [
   { uid: 'panel-clock', cardId: '@clock', w: 12, h: 6, x: 20, y: 0, auto: true },
   { uid: 'panel-tools', cardId: '@tools', w: 2, h: 2, x: 49, y: 0, auto: true },
   { uid: 'shortcut', cardId: 'shortcut', w: 8, h: 8, x: 1, y: 8 },
   { uid: 'calendar', cardId: 'calendar', w: 12, h: 8, x: 11, y: 8 },
 ] },
   /* 右栏文档来自 /api/query/sql，静态预览取不到；这里预置两个相同占位用于「重复占位」。 */
-  'desk:quickpick': { docs: [{ id: 'seed-doc', title: '验证文档' }, { id: 'seed-doc', title: '验证文档' }] },
+  'siyuan-sipage-petal:cardState': { data: { qp: { docs: [{ id: 'seed-doc', title: '验证文档' }, { id: 'seed-doc', title: '验证文档' }] } } },
 } })
 const { page, errors } = harness
 const checks = []
@@ -86,7 +86,7 @@ try {
   await dialog.locator('.desk-sheet-close').click()
   await dialog.waitFor({ state: 'detached' })
   await page.evaluate(() => {
-    globalThis.__deskDesk.cards = [{ uid: 'cd', cardId: 'countdown', w: 12, h: 8, x: 1, y: 20 }]
+    globalThis.__sipageDesk.cards = [{ uid: 'cd', cardId: 'countdown', w: 12, h: 8, x: 1, y: 20 }]
   })
   await page.waitForFunction(() => document.querySelectorAll('.desk-root .frame').length === 1)
   await page.evaluate(() => document.querySelector('.desk-root .frame').dispatchEvent(new MouseEvent('click', { bubbles: true })))
@@ -105,7 +105,7 @@ try {
   // 快捷打开：同一篇文档可以重复占位，按次移除，列表与持久化一致。
   await dialog.locator('.desk-sheet-close').click()
   await dialog.waitFor({ state: 'detached' })
-  await page.evaluate(() => { globalThis.__deskDesk.cards = [{ uid: 'qp', cardId: 'quickopen', w: 12, h: 8, x: 1, y: 1 }] })
+  await page.evaluate(() => { globalThis.__sipageDesk.cards = [{ uid: 'qp', cardId: 'quickopen', w: 12, h: 8, x: 1, y: 1 }] })
   await page.waitForFunction(() => !!document.querySelector('.desk-root .frame'))
   await page.evaluate(() => document.querySelector('.desk-root .frame').dispatchEvent(new MouseEvent('click', { bubbles: true })))
   await dialog.locator('.qp-panel').waitFor()
@@ -116,7 +116,7 @@ try {
   await page.waitForFunction(() => document.querySelectorAll('.qp-col.is-left .qp-item').length === 1)
   await page.waitForTimeout(250)
   /* 实例状态：每张卡一份，存在插件存储的 cardStates 里（验证页用内存镜像） */
-  assert.equal(await page.evaluate(() => globalThis.__deskCardStates.data.qp.docs.length), 1, 'removal drops exactly one occurrence')
+  assert.equal(await page.evaluate(() => globalThis.__sipageCardStates.data.qp.docs.length), 1, 'removal drops exactly one occurrence')
   await screenshot('controls-quickopen.png')
   checks.push('quick open keeps repeated slots, counts them, and removes one occurrence per click')
 

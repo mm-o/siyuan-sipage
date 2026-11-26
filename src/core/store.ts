@@ -1,6 +1,7 @@
 import { reactive, ref, watch } from "vue"
 import { LunarDay } from "tyme4ts"
 import { listFavs, removeFav, saveFav } from "@/core/image"
+import { t } from "@/core/i18n"
 import { pad } from "@/core/util"
 
 /* ════════════════════════════════════════════════════════════
@@ -82,7 +83,7 @@ const DEFAULT_WALLPAPER: WallpaperState = {
   mask: 0.18,
 }
 
-export const wallpaper: WallpaperState = (G.__deskWallpaper ||= reactive<WallpaperState>({ ...DEFAULT_WALLPAPER }))
+export const wallpaper: WallpaperState = (G.__sipageWallpaper ||= reactive<WallpaperState>({ ...DEFAULT_WALLPAPER }))
 
 /** 切换图片或来源时原子替换身份与运行时图像，显示参数保持不变。 */
 export function setWallpaper(type: WallpaperState["type"], value = "", source?: WallpaperState["source"], resolved?: string) {
@@ -94,7 +95,7 @@ export function setWallpaper(type: WallpaperState["type"], value = "", source?: 
  * 一条收藏就是公开文件夹里的一个文件名 —— 地址由 favUrl(name) 推出，
  * 所以这里只存名字，磁盘就是索引本身，没有第二份数据。
  */
-export const favorites: string[] = (G.__deskFavorites ||= reactive<string[]>([]))
+export const favorites: string[] = (G.__sipageFavorites ||= reactive<string[]>([]))
 
 export const isFav = (name: string) => favorites.includes(name)
 
@@ -123,7 +124,7 @@ export async function favoriteWallpaper(): Promise<boolean> {
 }
 
 /* ── 外观 ─────────────────────────────────────────────── */
-/** 材质风格：液态玻璃（默认）/ 思源原生 / 扁平 / 纸感 */
+/** 材质风格：液态玻璃（默认）/ 思源原生 / Material 3 */
 export type DeskStyle = "liquid" | "native" | "md3"
 
 interface Appearance {
@@ -159,7 +160,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
   motionChar: 30,
 }
 
-export const appearance: Appearance = (G.__deskAppearance ||= reactive<Appearance>({ ...DEFAULT_APPEARANCE }))
+export const appearance: Appearance = (G.__sipageAppearance ||= reactive<Appearance>({ ...DEFAULT_APPEARANCE }))
 
 /** 设置是唯一来源；桌面、卡片、预览与 Teleport 弹层消费同一套 CSS 变量。 */
 function applyAppearanceVars() {
@@ -179,7 +180,7 @@ function applyAppearanceVars() {
   /* 风格挂在 body 上：Teleport 出去的弹层也一起换材质；同时给 ui 层一个初值，
      控件据此决定用自己的 DOM 还是思源的 b3-* 组件（ui 不能依赖 core） */
   document.body.dataset.deskStyle = appearance.style
-  ;(G as Record<string, unknown>).__deskStyle = appearance.style
+  ;(G as Record<string, unknown>).__sipageStyle = appearance.style
 }
 
 export function resetAppearance() {
@@ -194,7 +195,7 @@ interface CardStateBox {
   data: Record<string, Record<string, unknown>>
 }
 
-const cardStates: CardStateBox = (G.__deskCardStates ||= reactive<CardStateBox>({ data: {} }))
+const cardStates: CardStateBox = (G.__sipageCardStates ||= reactive<CardStateBox>({ data: {} }))
 
 /** 取某个实例的状态：缺字段补默认值，已有值一概不动 */
 export function stateOf<T extends object>(uid: string, defaults: T): T {
@@ -217,26 +218,6 @@ export function requestDetail(cardId: string, patch?: Record<string, unknown>) {
 /** 卡片从桌面移除时连带清掉它的状态，避免越攒越多 */
 function dropState(uid: string) {
   delete cardStates.data[uid]
-}
-
-/**
- * 旧版「按卡片类型共享」的数据：读一次就删，谁先建实例谁认领。
- * 各个卡的 `xxxOf(uid)` 用它把老键变成自己的初始值，之后各卡各的。
- */
-export function takeLegacy<T>(key: string): T | null {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(key)
-  } catch {
-    return null
-  }
-  if (!raw) return null
-  try {
-    localStorage.removeItem(key)
-    return JSON.parse(raw) as T
-  } catch {
-    return null
-  }
 }
 
 /* ── 桌面 ─────────────────────────────────────────────── */
@@ -264,7 +245,7 @@ const DEFAULT_CELL = 27
 export const PANEL_CLOCK = "@clock"
 export const PANEL_TOOLS = "@tools"
 
-export const desk: DeskState = (G.__deskDesk ||= reactive<DeskState>({ cards: [] }))
+export const desk: DeskState = (G.__sipageDesk ||= reactive<DeskState>({ cards: [] }))
 
 /* 新卡默认尺寸：与桌面现有卡片一致（6×6） */
 const ADD_W = 6
@@ -428,7 +409,7 @@ interface CountdownState {
   seeded: boolean
 }
 
-export const countdown: CountdownState = (G.__deskCountdown ||= reactive<CountdownState>({ events: [], seeded: false }))
+export const countdown: CountdownState = (G.__sipageCountdown ||= reactive<CountdownState>({ events: [], seeded: false }))
 
 /** 新增事件：id 由 store 生成，调用方只给内容 */
 let countdownSeq = 0
@@ -479,10 +460,10 @@ function seedCountdown() {
   }
 
   const samples: Omit<CountdownEvent, "id">[] = [
-    { title: "元旦", date: nextSolar(1, 1), category: "holiday", repeat: "year", lunar: false, pinned: false },
-    { title: "春节", date: nextLunar(1, 1), category: "holiday", repeat: "year", lunar: true, pinned: false },
-    { title: "中秋节", date: nextLunar(8, 15), category: "holiday", repeat: "year", lunar: true, pinned: false },
-    { title: "相识纪念日", date: key(new Date(Date.now() + 100 * 86_400_000)), category: "anniversary", repeat: "none", lunar: false, pinned: false },
+    { title: t("core.countdown.seedNewYear"), date: nextSolar(1, 1), category: "holiday", repeat: "year", lunar: false, pinned: false },
+    { title: t("core.countdown.seedSpringFestival"), date: nextLunar(1, 1), category: "holiday", repeat: "year", lunar: true, pinned: false },
+    { title: t("core.countdown.seedMidAutumn"), date: nextLunar(8, 15), category: "holiday", repeat: "year", lunar: true, pinned: false },
+    { title: t("core.countdown.seedAnniversary"), date: key(new Date(Date.now() + 100 * 86_400_000)), category: "anniversary", repeat: "none", lunar: false, pinned: false },
   ]
   for (const item of samples) addCountdownEvent(item)
 }
@@ -506,7 +487,7 @@ interface WeatherState {
 
 export const placeId = (lat: number, lon: number) => `${lat.toFixed(2)},${lon.toFixed(2)}`
 
-export const weather: WeatherState = (G.__deskWeather ||= reactive<WeatherState>({ locations: [], activeId: "" }))
+export const weather: WeatherState = (G.__sipageWeather ||= reactive<WeatherState>({ locations: [], activeId: "" }))
 
 export function addWeatherPlace(place: WeatherPlace) {
   if (!weather.locations.some((p) => p.id === place.id)) weather.locations.push(place)
@@ -530,13 +511,12 @@ export function selectWeatherPlace(id: string) {
 }
 
 /* ═══ 存储层（唯一入口）════════════════════════════════════
- * 用户状态 → 思源 petal（plugin.loadData/saveData）
- * 派生缓存 → localStorage（desk-cache: 命名空间，可丢可重建）
- * 旧键迁移 → 见下方 mergeLegacy
+ * 用户状态 → 思源 petal（plugin.loadData/saveData），桌面 / 外观 / 壁纸 / 领域数据 / 各卡状态都在这里
+ * 派生缓存 → localStorage（siyuan-sipage-cache: 命名空间，可丢可重建）
  */
 
 /* ── 派生缓存（唯一允许落 localStorage 的地方）── */
-const CACHE_NS = "desk-cache:"
+const CACHE_NS = "siyuan-sipage-cache:"
 
 export function cacheGet<T>(key: string, ttl = 0): T | null {
   try {
@@ -558,47 +538,23 @@ export function cacheSet(key: string, value: unknown) {
   }
 }
 
-/* ── 旧键迁移（老的 localStorage 键 → petal，一次性）── */
-/**
- * 卡片自己的持久化：一个 reactive 对象 + 自动落盘（100ms 合并由 storage 的写入节奏兜住）。
- * 只给「几张卡各自的偏好/清单」用；桌面布局、外观这些仍然在 `core/store.ts` 里。
+/* ── 卡片自己的状态：与桌面 / 外观走同一套 petal 存储 ──
+ * 模块加载时建 reactive 对象并挂上自己的写盘 watcher，bootStore 里一次性灌入已保存的值。
  */
-export function persisted<T extends object>(key: string, defaults: T): T {
-  const read = (): T => {
-    try {
-      const raw = localStorage.getItem(key)
-      if (!raw) return { ...defaults }
-      const data = JSON.parse(raw) as Partial<T>
-      return { ...defaults, ...data }
-    } catch {
-      return { ...defaults }
-    }
-  }
+const boxes = new Map<string, { state: object; defaults: object }>()
 
-  const state = reactive(read()) as T
-  let timer = 0
-  watch(
-    state,
-    () => {
-      if (timer) return
-      timer = window.setTimeout(() => {
-        timer = 0
-        try {
-          localStorage.setItem(key, JSON.stringify(state))
-        } catch {
-          /* 配额满了就算了，卡片还能用 */
-        }
-      }, 150)
-    },
-    { deep: true },
-  )
+export function persisted<T extends object>(key: string, defaults: T): T {
+  const state = reactive({ ...defaults }) as T
+  boxes.set(key, { state, defaults })
+  /* 每个 key 自己盯自己：store 先于各模块加载，集中在这里注册才不会漏掉后建的盒子 */
+  watch(state, () => save(key, state), { deep: true })
   return state
 }
 
 /* ── 启动 ── */
 export async function bootStore() {
-  if (G.__deskBooted) return
-  G.__deskBooted = true
+  if (G.__sipageBooted) return
+  G.__sipageBooted = true
   const [w, d, a, wx, cd, cs] = await Promise.all([
     read(LS.wallpaper, DEFAULT_WALLPAPER),
     read<DeskState>(LS.desk, { cards: [] }),
@@ -612,20 +568,14 @@ export async function bootStore() {
   /* 单格只允许落在细网格区间内，越界值直接归位到默认 */
   appearance.cell = Math.min(CELL_MAX, Math.max(CELL_MIN, appearance.cell || DEFAULT_CELL))
   desk.cards = Array.isArray(d.cards) ? d.cards : []
-  /* 旧粗网格（单格 ≥40）→ 新细网格：坐标与尺寸整体翻倍，视觉位置不变 */
-  if ((a.cell ?? 54) >= 40) {
-    a.cell = DEFAULT_CELL
-    for (const c of desk.cards) {
-      c.x *= 2
-      c.y *= 2
-      c.w *= 2
-      c.h *= 2
-    }
-  }
   weather.locations = Array.isArray(wx.locations) ? wx.locations : []
   weather.activeId = wx.activeId || weather.locations[0]?.id || ""
   countdown.events = Array.isArray(cd.events) ? cd.events : []
   cardStates.data = cs?.data && typeof cs.data === "object" ? cs.data : {}
+  /* 卡片自己的状态（日程、番茄钟、统计缓存）：同一个 driver、同一个前缀，和桌面一起存 */
+  await Promise.all([...boxes].map(async ([key, box]) => {
+    Object.assign(box.state, await read(key, box.defaults as Record<string, unknown>))
+  }))
   /* 收藏没有第二份状态：公开文件夹里有什么，收藏就是什么 */
   favorites.splice(0, favorites.length, ...(await listFavs()))
   seedCountdown()

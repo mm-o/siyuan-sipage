@@ -28,8 +28,8 @@ async function doneContrast(toolbar) {
 }
 try {
   await page.addInitScript(() => {
-    localStorage.setItem('desk-cards:appearance', JSON.stringify({ cell: 27, motion: false }))
-    localStorage.setItem('desk-cards:desk', JSON.stringify({ cards: [
+    localStorage.setItem('siyuan-sipage-petal:appearance', JSON.stringify({ cell: 27, motion: false }))
+    localStorage.setItem('siyuan-sipage-petal:desk', JSON.stringify({ cards: [
       { uid: 'panel-clock', cardId: '@clock', w: 12, h: 6, x: 20, y: 0, auto: true },
       { uid: 'panel-tools', cardId: '@tools', w: 2, h: 2, x: 49, y: 0, auto: true },
       { uid: 'calendar', cardId: 'calendar', w: 10, h: 8, x: 1, y: 8 },
@@ -41,7 +41,7 @@ try {
     ] }))
     const today = new Date()
     const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-    localStorage.setItem('desk:agenda', JSON.stringify({ group: 'today', seeded: true, items: [
+    localStorage.setItem('siyuan-sipage-petal:agenda', JSON.stringify({ group: 'today', seeded: true, items: [
       { id: '1', text: '留一点空白，给新的想法', note: '', date: key, time: '', done: false, doneAt: 0, at: 1, syncedAt: 0 },
       { id: '2', text: '把常用的卡片放在手边', note: '', date: key, time: '', done: false, doneAt: 0, at: 2, syncedAt: 0 },
       { id: '3', text: '今天，慢慢做好一件事', note: '', date: key, time: '', done: true, doneAt: 3, at: 3, syncedAt: 0 },

@@ -1,4 +1,5 @@
 import { computed } from "vue"
+import { isZh, t } from "@/core/i18n"
 import { persisted } from "@/core/store"
 import { BODY_TYPES, pad, sql } from "@/core/util"
 
@@ -26,7 +27,7 @@ interface DocStats {
   updatedAt: number
 }
 
-export const docstats = persisted("desk:docstats.v2", { cache: null as DocStats | null })
+export const docstats = persisted("docstats", { cache: null as DocStats | null })
 export const stats = computed(() => docstats.cache)
 
 const CACHE_MS = 5 * 60_000
@@ -88,7 +89,7 @@ export async function loadDocStats(force = false): Promise<DocStats> {
       node.words += words
       /* hpath 形如 /笔记本/一级/二级：取一级做外环 */
       const seg = String(r.hpath || "/").split("/").filter(Boolean)
-      const child = seg.length > 1 ? seg[1] : seg[0] || "根"
+      const child = seg.length > 1 ? seg[1] : seg[0] || t("card.docstats.root")
       const hit = node.children.find((c) => c.label === child)
       if (hit) hit.words += words
       else node.children.push({ label: child, words })
@@ -118,21 +119,32 @@ export async function loadDocStats(force = false): Promise<DocStats> {
       value: Number(r.docs) || 0,
     })),
     tree,
-    top: topRows.map((r) => ({ label: String(r.title || "未命名"), value: Number(r.words) || 0 })),
+    top: topRows.map((r) => ({ label: String(r.title || t("card.docstats.untitled")), value: Number(r.words) || 0 })),
     updatedAt: Date.now(),
   }
   docstats.cache = data
   return data
 }
 
-/** 万/千分位 */
+/** 万/千分位；英文按 K / M 收（同一套阈值，只是单位换了） */
 export function compact(n: number) {
-  if (n >= 10_000) return `${(n / 10_000).toFixed(n >= 100_000 ? 0 : 1)}万`
+  if (!isZh) {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`
+    if (n >= 10_000) return `${(n / 1_000).toFixed(0)}K`
+    return String(n)
+  }
+  if (n >= 10_000) return `${(n / 10_000).toFixed(n >= 100_000 ? 0 : 1)}万` // i18n-keep
   return String(n)
 }
 
 /** 五维雷达：给定值返回多边形点串与归一化比例（卡片与弹窗共用） */
-export const RADAR_LABELS = ["文档", "字数", "近7天", "近30天", "笔记本"]
+export const RADAR_LABELS = [
+  t("card.docstats.radar.docs"),
+  t("card.docstats.radar.words"),
+  t("card.docstats.radar.week"),
+  t("card.docstats.radar.month"),
+  t("card.docstats.radar.notebooks"),
+]
 
 export function radarOf(values: number[]) {
   const max = Math.max(1, ...values)

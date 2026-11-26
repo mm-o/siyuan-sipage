@@ -5,9 +5,9 @@
       <aside class="cal-side desk-pane is-left">
         <header class="cal-day">
           <b class="cal-day-num">{{ detail.day }}</b>
-          <span class="cal-day-date">{{ detail.date }} 周{{ detail.week }}</span>
+          <span class="cal-day-date">{{ detail.date }} {{ detail.week }}</span>
           <span class="cal-day-lunar">{{ detail.lunar }} · {{ detail.ganzhi }}</span>
-          <span class="desk-note">第{{ detail.weekOfYear }}周 · 第{{ detail.dayOfYear }}天<template v-if="detail.diff"> · {{ detail.diff > 0 ? "还有" : "已过" }} {{ Math.abs(detail.diff) }} 天</template></span>
+          <span class="desk-note">{{ t("card.calendar.weekOfYear", { w: detail.weekOfYear, d: detail.dayOfYear }) }}<template v-if="detail.diff"> · {{ detail.diff > 0 ? t("card.calendar.daysLeft", { n: Math.abs(detail.diff) }) : t("card.calendar.daysAgo", { n: Math.abs(detail.diff) }) }}</template></span>
         </header>
 
         <ul class="cal-facts mm-scroll">
@@ -18,7 +18,7 @@
         </ul>
 
         <div class="cal-week">
-          <span class="desk-note">一周开始</span>
+          <span class="desk-note">{{ t("card.calendar.weekStart") }}</span>
           <Segmented v-model="weekBegin" :options="WEEK_OPTIONS" />
         </div>
       </aside>
@@ -26,16 +26,16 @@
       <!-- 中：月视图 -->
       <section class="cal-main desk-pane is-mid">
         <div class="cal-toolbar">
-          <GlassSelect v-model.number="viewYear" class="cal-select" label="年份" :options="yearChoices" />
-          <GlassButton :icon="ChevronLeft" label="上个月" @click="shift(-1)" />
-          <GlassSelect v-model.number="viewMonth" class="cal-select" label="月份" :options="monthChoices" />
-          <GlassButton :icon="ChevronRight" label="下个月" @click="shift(1)" />
-          <GlassSelect v-model="viewFestival" class="cal-select" label="节假日" :options="festivalChoices" />
-          <GlassButton text label="今天" :disabled="isToday" @click="picked(new Date())" />
+          <GlassSelect v-model.number="viewYear" class="cal-select" :label="t('card.calendar.year')" :options="yearChoices" />
+          <GlassButton :icon="ChevronLeft" :label="t('card.calendar.prevMonth')" @click="shift(-1)" />
+          <GlassSelect v-model.number="viewMonth" class="cal-select" :label="t('card.calendar.month')" :options="monthChoices" />
+          <GlassButton :icon="ChevronRight" :label="t('card.calendar.nextMonth')" @click="shift(1)" />
+          <GlassSelect v-model="viewFestival" class="cal-select" :label="t('card.calendar.festivalFilter')" :options="festivalChoices" />
+          <GlassButton text :label="t('common.today')" :disabled="isToday" @click="picked(new Date())" />
         </div>
 
         <ul class="cal-head">
-          <li v-for="label in headLabels" :key="label" :class="{ 'is-weekend': label === '六' || label === '日' }">
+          <li v-for="label in headLabels" :key="label" :class="{ 'is-weekend': label === t('card.calendar.shortWeek.6') || label === t('card.calendar.shortWeek.7') }">
             {{ label }}
           </li>
         </ul>
@@ -66,7 +66,7 @@
       <aside class="cal-agenda desk-pane is-right">
         <section class="desk-block">
           <header class="desk-block-head">
-            <b>日程</b>
+            <b>{{ t("card.calendar.agenda") }}</b>
             <span class="desk-badge" :class="{ 'is-on': openOnDay > 0 }">{{ openOnDay }}/{{ dayItems.length }}</span>
             <span class="desk-block-grow" />
           </header>
@@ -78,35 +78,35 @@
                 type="button"
                 role="checkbox"
                 :aria-checked="item.done"
-                :aria-label="item.done ? '标记未完成' : '标记完成'"
+                :aria-label="item.done ? t('card.calendar.markUndone') : t('card.calendar.markDone')"
                 @click="toggleItem(item.id)"
               />
               <span v-if="item.time" class="mm-time">{{ item.time }}</span>
               <span class="mm-text">{{ item.text }}</span>
             </li>
-            <li v-if="!dayItems.length" class="desk-empty is-tight"><EmptyArt /><span>这一天还没有安排</span></li>
+            <li v-if="!dayItems.length" class="desk-empty is-tight"><EmptyArt /><span>{{ t("card.calendar.dayEmpty") }}</span></li>
           </ul>
 
           <form class="desk-form-row" @submit.prevent="addToDay">
-            <GlassField v-model="draft" class="cal-new-field" label="新日程" placeholder="回车加到这一天" />
-            <GlassButton :icon="Plus" label="添加" variant="primary" :disabled="!draft.trim()" @click="addToDay" />
+            <GlassField v-model="draft" class="cal-new-field" :label="t('card.calendar.newItem')" :placeholder="t('card.calendar.newItemPlaceholder')" />
+            <GlassButton :icon="Plus" :label="t('common.add')" variant="primary" :disabled="!draft.trim()" @click="addToDay" />
           </form>
         </section>
 
         <section class="desk-block cal-day-diary">
           <header class="desk-block-head">
-            <b>日记</b>
-            <span v-if="diary">· {{ diary.words }} 字</span>
+            <b>{{ t("card.calendar.diary") }}</b>
+            <span v-if="diary">· {{ t("card.calendar.words", { n: diary.words }) }}</span>
             <span class="desk-block-grow" />
-            <GlassButton text :icon="NotebookPen" :label="diary ? '打开' : '写这天的日记'" @click="diary ? openDiary() : createDiary()" />
+            <GlassButton text :icon="NotebookPen" :label="diary ? t('common.open') : t('card.calendar.writeDay')" @click="diary ? openDiary() : createDiary()" />
           </header>
           <div v-if="diary" class="cal-diary-body">
             <ProtyleView :id="diary.id" />
           </div>
           <div v-else class="desk-empty is-tight">
             <EmptyArt />
-            <span>{{ onToday ? "今天还没写" : "这天还没有日记" }}</span>
-            <GlassButton text :icon="NotebookPen" label="写这天的日记" @click="createDiary" />
+            <span>{{ onToday ? t("card.calendar.todayNotWritten") : t("card.calendar.dayNoDiary") }}</span>
+            <GlassButton text :icon="NotebookPen" :label="t('card.calendar.writeDay')" @click="createDiary" />
           </div>
         </section>
       </aside>
@@ -129,14 +129,23 @@ import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
 import { addItem, dateKey, dayDots, itemsOf, todayKey, toggleItem } from "@/core/agenda"
 import { ensureDaily, loadDaily, openDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
+import { t } from "@/core/i18n"
 import { calendarOf } from "./calendar"
 import "./styles.css"
 
-const WEEK_NAMES = ["日", "一", "二", "三", "四", "五", "六"] as const
+const WEEK_NAMES = [
+  t("card.calendar.shortWeek.7"),
+  t("card.calendar.shortWeek.1"),
+  t("card.calendar.shortWeek.2"),
+  t("card.calendar.shortWeek.3"),
+  t("card.calendar.shortWeek.4"),
+  t("card.calendar.shortWeek.5"),
+  t("card.calendar.shortWeek.6"),
+]
 const MONDAY_FIRST = [...WEEK_NAMES.slice(1), WEEK_NAMES[0]]
 const WEEK_OPTIONS = [
-  { label: "一", value: "mon" },
-  { label: "日", value: "sun" },
+  { label: t("card.calendar.shortWeek.1"), value: "mon" },
+  { label: t("card.calendar.shortWeek.7"), value: "sun" },
 ]
 
 /** 每张日历卡一份：一周开端、写日记开关、固定月份都按实例 uid 存 */
@@ -196,13 +205,13 @@ const yearOptions = computed(() => {
   const base = currentYear.value
   return Array.from({ length: 21 }, (_, index) => base - 10 + index)
 })
-const yearChoices = computed(() => yearOptions.value.map((year) => ({ label: `${year}年`, value: year })))
-const monthChoices = Array.from({ length: 12 }, (_, index) => ({ label: `${index + 1}月`, value: index }))
+const yearChoices = computed(() => yearOptions.value.map((year) => ({ label: t("card.calendar.yearLabel", { y: year }), value: year })))
+const monthChoices = Array.from({ length: 12 }, (_, index) => ({ label: t("card.calendar.monthLabel", { m: index + 1 }), value: index }))
 
 /* ── 节日导航（扫库的节日表，按年缓存；只有这个面板用）── */
 
 /** 与 参考实现 一致的 7 个导航节日（顺序即下拉顺序） */
-const NAV_FESTIVALS = ["元旦", "春节", "清明节", "劳动节", "端午节", "中秋节", "国庆节"] as const
+const NAV_FESTIVALS = ["元旦", "春节", "清明节", "劳动节", "端午节", "中秋节", "国庆节"] as const // i18n-keep
 const festivalCache = new Map<number, Array<{ name: string; key: number }>>()
 
 function festivalList(year: number) {
@@ -223,7 +232,7 @@ function festivalList(year: number) {
 
 const festivals = computed(() => festivalList(currentYear.value))
 const festivalChoices = computed(() => [
-  { label: "节假日", value: "" },
+  { label: t("card.calendar.festivalFilter"), value: "" },
   ...festivals.value.map((item) => ({ label: item.name, value: item.name })),
 ])
 const festivalIndex = computed(() => new Map(festivals.value.map((item) => [item.key, item.name])))
@@ -268,7 +277,7 @@ function lunarLabel(date: Date): { text: string; isFestival: boolean } {
   if (festival) return { text: festival, isFestival: true }
 
   const lunar = solarOf(date).getLunarDay()
-  return { text: lunar.getName() === "初一" ? lunar.getLunarMonth().getName() : lunar.getName(), isFestival: false }
+  return { text: lunar.getName() === "初一" ? lunar.getLunarMonth().getName() : lunar.getName(), isFestival: false } // i18n-keep
 }
 
 /* ── 日程：同一天最多三个点，没做完的排在前面 ────────────── */
@@ -324,11 +333,11 @@ const detail = computed(() => {
   const key = keyOf(date)
 
   return {
-    date: solar.toString().replace("年", "-").replace("月", "-").replace("日", ""),
-    week: solar.getWeek().getName(),
+    date: solar.toString().replace("年", "-").replace("月", "-").replace("日", ""), // i18n-keep
+    week: t(`card.calendar.week.${((date.getDay() + 6) % 7) + 1}`),
     day: date.getDate(),
     lunar: `${lunar.getLunarMonth().getName()}${lunar.getName()}`,
-    ganzhi: `${yearCycle.getName()}年 ${lunar.getSixtyCycle().getName()}日`,
+    ganzhi: `${yearCycle.getName()}年 ${lunar.getSixtyCycle().getName()}日`, // i18n-keep
     zodiac: branch >= 0 ? Zodiac.fromIndex(branch).getName() : "",
     constellation: solar.getConstellation().getName(),
     moon: lunar.getPhase().getName(),
@@ -344,7 +353,7 @@ const detail = computed(() => {
     diff: Math.round(solar.getJulianDay().getDay() - solarOf(today).getJulianDay().getDay()),
     festival: festivalIndex.value.get(key) || solar.getFestival()?.getName() || lunar.getFestival()?.getName() || "",
     term: term.name,
-    termDay: term.day ? `第 ${term.day} 天` : "",
+    termDay: term.day ? t("card.calendar.termDay", { n: term.day }) : "",
   }
 })
 
@@ -352,15 +361,15 @@ const detail = computed(() => {
 const facts = computed(() => {
   const d = detail.value
   return [
-    { label: "节日", text: d.festival, strong: true },
-    { label: "节气", text: d.term ? `${d.term}${d.termDay ? ` · ${d.termDay}` : ""}` : "", strong: false },
-    { label: "生肖", text: d.zodiac, strong: true },
-    { label: "星座", text: d.constellation ? `${d.constellation}座` : "", strong: true },
-    { label: "月相", text: d.moon, strong: false },
-    { label: "建除", text: d.duty ? `${d.duty}日 · ${d.twelveStar} · ${d.nineStar}` : "", strong: false },
-    { label: "星宿", text: d.star28 ? `${d.star28}宿 · 纳音 ${d.sound}` : "", strong: false },
-    { label: "宜", text: d.recommends.join(" "), strong: true },
-    { label: "忌", text: d.avoids.join(" "), strong: true },
+    { label: t("card.calendar.fact.festival"), text: d.festival, strong: true },
+    { label: t("card.calendar.fact.term"), text: d.term ? `${d.term}${d.termDay ? ` · ${d.termDay}` : ""}` : "", strong: false },
+    { label: t("card.calendar.fact.zodiac"), text: d.zodiac, strong: true },
+    { label: t("card.calendar.fact.constellation"), text: d.constellation ? `${d.constellation}座` : "", strong: true }, // i18n-keep
+    { label: t("card.calendar.fact.moon"), text: d.moon, strong: false },
+    { label: t("card.calendar.fact.duty"), text: d.duty ? `${d.duty}日 · ${d.twelveStar} · ${d.nineStar}` : "", strong: false }, // i18n-keep
+    { label: t("card.calendar.fact.star"), text: d.star28 ? `${d.star28}宿 · 纳音 ${d.sound}` : "", strong: false }, // i18n-keep
+    { label: t("card.calendar.fact.good"), text: d.recommends.join(" "), strong: true },
+    { label: t("card.calendar.fact.bad"), text: d.avoids.join(" "), strong: true },
   ].filter((fact) => fact.text)
 })
 
@@ -392,7 +401,7 @@ async function createDiary() {
     /* 用返回的文档直接生成摘要：属性索引有延迟，不能立刻靠日期反查 */
     diary.value = await previewOf(await ensureDaily(selected.value))
   } catch (e) {
-    toast(`创建日记失败：${(e as Error).message}`, 3000)
+    toast(t("card.calendar.createFailed", { msg: (e as Error).message }), 3000)
   }
 }
 
@@ -400,12 +409,12 @@ async function openDiary() {
   try {
     const note = await ensureDaily(selected.value)
     if (!note) {
-      toast("这天没有日记", 2000)
+      toast(t("card.calendar.noDiary"), 2000)
       return
     }
     await openDaily(note.id)
   } catch (e) {
-    toast(`打开日记失败：${(e as Error).message}`, 3000)
+    toast(t("card.calendar.openFailed", { msg: (e as Error).message }), 3000)
   }
 }
 

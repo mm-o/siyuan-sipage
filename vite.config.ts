@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
       viteStaticCopy({ targets: [
-        ...[plugin.icon, plugin.preview, "README*.md", "plugin.json"].map(src => ({ src, dest: "." })),
+        ...[plugin.icon, plugin.preview, "README*.md", "LICENSE.md", "THIRD_PARTY_NOTICES.md", "plugin.json"].map(src => ({ src, dest: "." })),
         { src: "src/i18n/**", dest: "i18n" },
       ] }),
     ],

@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { isNative } from "@/ui/style"
+import { t } from "@/core/i18n"
 
 const props = withDefaults(defineProps<{
   modelValue: number
@@ -39,7 +40,7 @@ const format = (value: number) => `${Math.round(value * props.scale)}${props.suf
 const display = computed(() => format(props.modelValue))
 const changed = computed(() => props.defaultValue !== undefined && Math.abs(props.modelValue - props.defaultValue) > 1e-6)
 const progress = computed(() => Math.max(0, Math.min(100, (props.modelValue - props.min) / Math.max(1e-9, props.max - props.min) * 100)))
-const hint = computed(() => props.defaultValue === undefined ? props.label : `${props.label}，双击回到默认值 ${format(props.defaultValue)}`)
+const hint = computed(() => props.defaultValue === undefined ? props.label : t("ui.slider.hint", { label: props.label, value: format(props.defaultValue) }))
 const onInput = (event: Event) => !props.disabled && emit("update:modelValue", Number((event.target as HTMLInputElement).value))
 const reset = () => !props.disabled && props.defaultValue !== undefined && emit("update:modelValue", props.defaultValue)
 </script>

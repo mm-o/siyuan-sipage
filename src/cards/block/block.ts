@@ -1,4 +1,4 @@
-import { stateOf, takeLegacy } from "@/core/store"
+import { stateOf } from "@/core/store"
 import { sql } from "@/core/util"
 
 export { mountProtyle } from "@/ui/protyle"
@@ -9,10 +9,9 @@ interface BlockState {
   title: string
 }
 
-/** 每张卡一份：第一次取时认领旧版那一个块，之后各显示各的 */
+/** 每张卡一份：各显示各的块 */
 export function blockOf(uid: string): BlockState {
-  const legacy = takeLegacy<Partial<BlockState>>("desk:block")
-  return stateOf<BlockState>(uid, { id: String(legacy?.id || ""), title: String(legacy?.title || "") })
+  return stateOf<BlockState>(uid, { id: "", title: "" })
 }
 export function setId(state: BlockState, id: string, title = "") {
   state.id = id.trim()

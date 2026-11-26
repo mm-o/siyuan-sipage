@@ -18,7 +18,7 @@
       </button>
 
       <!-- 紧跟最后一个图标：打开卡片 -->
-      <button class="slot ariaLabel" type="button" data-position="north" data-tooltip-encoding="none" aria-label="打开卡片">
+      <button class="slot ariaLabel" type="button" data-position="north" data-tooltip-encoding="none" :aria-label="t('card.shortcut.openCard')">
         <span class="slot-ic is-open"><Ellipsis :size="18" :stroke-width="1.9" /></span>
       </button>
 
@@ -38,6 +38,7 @@
 import { computed, onMounted, ref } from "vue"
 import { Ellipsis } from "lucide-vue-next"
 import { randomCoverUrl } from "@/core/image"
+import { t } from "@/core/i18n"
 import { getCard } from "@/core/registry"
 import { enabledShortcuts, runShortcut, shortcutOf, useSprite, type Shortcut } from "./shortcut"
 

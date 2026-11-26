@@ -31,8 +31,8 @@
       </template>
 
       <div v-else class="cd-empty">
-        <p>还没有倒数日</p>
-        <p class="cd-empty-hint">点开卡片新建一个</p>
+        <p>{{ t("card.countdown.empty") }}</p>
+        <p class="cd-empty-hint">{{ t("card.countdown.emptyHint") }}</p>
       </div>
     </div>
   </div>
@@ -53,6 +53,7 @@
  *   2x4  主事件 + 5 行
  */
 import { computed } from "vue"
+import { t } from "@/core/i18n"
 import { countdown } from "@/core/store"
 import { categoryOf, coverStyleOf, sortViews, softOf } from "./countdown"
 

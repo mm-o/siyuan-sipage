@@ -6,7 +6,7 @@
     <!-- 详情：玻璃面板 + 文字列 + 动作条（三张内容卡同一结构） -->
     <div v-if="isDetail" class="desk-detail-panel">
       <header class="head">
-        <p class="desk-detail-quote title">{{ poem.title || "加载中…" }}</p>
+        <p class="desk-detail-quote title">{{ poem.title || t("common.loading") }}</p>
         <p class="desk-detail-meta">{{ byline }}</p>
       </header>
 
@@ -18,11 +18,11 @@
           <p v-for="(line, i) in contentLines" :key="i" class="verse">{{ line }}</p>
         </div>
         </template>
-        <p v-else-if="tab === 'translate'" class="desk-detail-text">{{ poem.translate || "暂无译文" }}</p>
+        <p v-else-if="tab === 'translate'" class="desk-detail-text">{{ poem.translate || t("card.shici.noTranslate") }}</p>
         <template v-else>
-          <p class="desk-detail-text">{{ poem.annotation || poem.note || "暂无注释" }}</p>
+          <p class="desk-detail-text">{{ poem.annotation || poem.note || t("card.shici.noAnnotation") }}</p>
           <div v-if="poem.tags?.length" class="tags">
-            <span v-for="t in poem.tags" :key="t" class="tag">{{ t }}</span>
+            <span v-for="tag in poem.tags" :key="tag" class="tag">{{ tag }}</span>
           </div>
         </template>
       </div>
@@ -30,8 +30,8 @@
       <div class="desk-detail-foot">
         <SeriesNav :series="series" />
         <div class="desk-fab">
-          <GlassButton :icon="copied ? Check : Copy" label="复制全文" @click="copyPoem" />
-          <GlassButton :icon="ImageIcon" label="换一张背景" @click="series.shuffleCover" />
+          <GlassButton :icon="copied ? Check : Copy" :label="t('card.shici.copyAll')" @click="copyPoem" />
+          <GlassButton :icon="ImageIcon" :label="t('card.shici.shuffleCover')" @click="series.shuffleCover" />
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@
     <!-- 卡片：标题 + 作者 + 前几行，垂直居中 -->
     <div v-else class="desk-photo-body">
       <header class="head">
-        <p class="desk-photo-title title">{{ poem.title || "加载中…" }}</p>
+        <p class="desk-photo-title title">{{ poem.title || t("common.loading") }}</p>
         <p v-if="byline" class="desk-photo-meta meta">{{ byline }}</p>
       </header>
       <p class="desk-photo-text lines desk-chars is-fast"><span v-for="(ch, i) in [...previewText]" :key="i" :style="{ '--i': i }">{{ ch }}</span></p>
@@ -61,6 +61,7 @@ import { Check, Copy, Image as ImageIcon } from "lucide-vue-next"
 import { dailySeries } from "@/core/daily"
 import { API_BASE } from "@/core/api"
 import { pad } from "@/core/util"
+import { t } from "@/core/i18n"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), { size: "2x2", mode: "card" })
 
@@ -77,9 +78,9 @@ interface Poem {
 
 const API = `${API_BASE}/todayShici`
 const TABS = [
-  { label: "全文", value: "content" },
-  { label: "译文", value: "translate" },
-  { label: "注释", value: "annotation" },
+  { label: t("card.shici.tabContent"), value: "content" },
+  { label: t("card.shici.tabTranslate"), value: "translate" },
+  { label: t("card.shici.tabNote"), value: "annotation" },
 ]
 
 const series = dailySeries<Poem>("shici", {

@@ -10,6 +10,7 @@
 import type { Component } from "vue"
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue"
 import { API_BASE } from "@/core/api"
+import { t } from "@/core/i18n"
 import { Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudMoon, CloudRain, CloudSnow, CloudSun, Cloudy, Moon, Sun } from "lucide-vue-next"
 import { cacheGet, cacheSet, placeId, weather, type WeatherPlace } from "@/core/store"
 import { COVERS, forwardProxy } from "@/core/image"
@@ -54,34 +55,34 @@ export interface WeatherData {
 
 /* ══ 2. 天气码 → 描述 / 图标 / 天空渐变 ═════════════════════ */
 const WMO: Record<number, { label: string; icon: Component; night?: Component }> = {
-  0: { label: "晴", icon: Sun, night: Moon },
-  1: { label: "晴间多云", icon: CloudSun, night: CloudMoon },
-  2: { label: "多云", icon: CloudSun, night: CloudMoon },
-  3: { label: "阴", icon: Cloudy },
-  45: { label: "雾", icon: CloudFog },
-  48: { label: "冻雾", icon: CloudFog },
-  51: { label: "小毛毛雨", icon: CloudDrizzle },
-  53: { label: "毛毛雨", icon: CloudDrizzle },
-  55: { label: "大毛毛雨", icon: CloudDrizzle },
-  56: { label: "冻毛毛雨", icon: CloudDrizzle },
-  57: { label: "强冻毛毛雨", icon: CloudDrizzle },
-  61: { label: "小雨", icon: CloudRain },
-  63: { label: "中雨", icon: CloudRain },
-  65: { label: "大雨", icon: CloudRain },
-  66: { label: "冻雨", icon: CloudRain },
-  67: { label: "强冻雨", icon: CloudRain },
-  71: { label: "小雪", icon: CloudSnow },
-  73: { label: "中雪", icon: CloudSnow },
-  75: { label: "大雪", icon: CloudSnow },
-  77: { label: "米雪", icon: CloudSnow },
-  80: { label: "小阵雨", icon: CloudRain },
-  81: { label: "阵雨", icon: CloudRain },
-  82: { label: "强阵雨", icon: CloudRain },
-  85: { label: "小阵雪", icon: CloudSnow },
-  86: { label: "大阵雪", icon: CloudSnow },
-  95: { label: "雷暴", icon: CloudLightning },
-  96: { label: "雷暴伴冰雹", icon: CloudLightning },
-  99: { label: "强雷暴伴冰雹", icon: CloudLightning },
+  0: { label: t("card.weather.cond.clear"), icon: Sun, night: Moon },
+  1: { label: t("card.weather.cond.partly"), icon: CloudSun, night: CloudMoon },
+  2: { label: t("card.weather.cond.cloudy"), icon: CloudSun, night: CloudMoon },
+  3: { label: t("card.weather.cond.overcast"), icon: Cloudy },
+  45: { label: t("card.weather.cond.fog"), icon: CloudFog },
+  48: { label: t("card.weather.cond.freezingFog"), icon: CloudFog },
+  51: { label: t("card.weather.cond.drizzleLight"), icon: CloudDrizzle },
+  53: { label: t("card.weather.cond.drizzle"), icon: CloudDrizzle },
+  55: { label: t("card.weather.cond.drizzleHeavy"), icon: CloudDrizzle },
+  56: { label: t("card.weather.cond.freezingDrizzle"), icon: CloudDrizzle },
+  57: { label: t("card.weather.cond.freezingDrizzleHeavy"), icon: CloudDrizzle },
+  61: { label: t("card.weather.cond.rainLight"), icon: CloudRain },
+  63: { label: t("card.weather.cond.rainModerate"), icon: CloudRain },
+  65: { label: t("card.weather.cond.rainHeavy"), icon: CloudRain },
+  66: { label: t("card.weather.cond.freezingRain"), icon: CloudRain },
+  67: { label: t("card.weather.cond.freezingRainHeavy"), icon: CloudRain },
+  71: { label: t("card.weather.cond.snowLight"), icon: CloudSnow },
+  73: { label: t("card.weather.cond.snowModerate"), icon: CloudSnow },
+  75: { label: t("card.weather.cond.snowHeavy"), icon: CloudSnow },
+  77: { label: t("card.weather.cond.snowGrains"), icon: CloudSnow },
+  80: { label: t("card.weather.cond.showersLight"), icon: CloudRain },
+  81: { label: t("card.weather.cond.showers"), icon: CloudRain },
+  82: { label: t("card.weather.cond.showersHeavy"), icon: CloudRain },
+  85: { label: t("card.weather.cond.snowShowersLight"), icon: CloudSnow },
+  86: { label: t("card.weather.cond.snowShowersHeavy"), icon: CloudSnow },
+  95: { label: t("card.weather.cond.thunder"), icon: CloudLightning },
+  96: { label: t("card.weather.cond.thunderHail"), icon: CloudLightning },
+  99: { label: t("card.weather.cond.thunderHailHeavy"), icon: CloudLightning },
 }
 
 /** 未知天气码：描述给「—」，图标给中性云 */
@@ -167,15 +168,15 @@ export function skyBackdrop(code: number, isDay: boolean) {
 
 /** 中文天气描述 → WMO 码（判断顺序：雪 → 雨 → 其它） */
 function cnCode(text: string): number {
-  const t = String(text || "")
-  if (/雷/.test(t)) return 95
-  if (/雪/.test(t)) return /大/.test(t) ? 75 : /中/.test(t) ? 73 : 71
-  if (/暴雨|大雨/.test(t)) return 65
-  if (/中雨/.test(t)) return 63
-  if (/雨/.test(t)) return 61
-  if (/雾|霾|沙|尘/.test(t)) return 45
-  if (/阴/.test(t)) return 3
-  if (/云/.test(t)) return 2
+  const s = String(text || "")
+  if (/雷/.test(s)) return 95
+  if (/雪/.test(s)) return /大/.test(s) ? 75 : /中/.test(s) ? 73 : 71
+  if (/暴雨|大雨/.test(s)) return 65
+  if (/中雨/.test(s)) return 63
+  if (/雨/.test(s)) return 61
+  if (/雾|霾|沙|尘/.test(s)) return 45
+  if (/阴/.test(s)) return 3
+  if (/云/.test(s)) return 2
   return 0
 }
 
@@ -200,16 +201,16 @@ const hhmm = (iso: unknown) => String(iso || "").slice(11, 16)
 /** 内核代理把整串 Go 错误丢回来（含 URL），卡片上只放得下一句人话 */
 function shortError(e: unknown) {
   const raw = String((e as Error)?.message || "")
-  if (/handshake timeout|timeout|deadline|no such host/i.test(raw)) return "网络超时，稍后重试"
-  if (/code":\s*[45]\d\d/.test(raw)) return "天气服务暂不可用"
-  return "天气加载失败"
+  if (/handshake timeout|timeout|deadline|no such host/i.test(raw)) return t("card.weather.error.timeout")
+  if (/code":\s*[45]\d\d/.test(raw)) return t("card.weather.error.service")
+  return t("card.weather.error.load")
 }
 
 function parse(body: string): WeatherData {
   const json = JSON.parse(body)
   const cur = json?.current
   const daily = json?.daily
-  if (!cur || !daily?.time?.length) throw new Error("天气数据为空")
+  if (!cur || !daily?.time?.length) throw new Error("天气数据为空") // i18n-keep
 
   const days: WeatherDay[] = daily.time.map((date: string, i: number) => ({
     date: String(date),
@@ -223,7 +224,7 @@ function parse(body: string): WeatherData {
   // 小时预报：从「当前时刻」往后的 24 条（接口按整点给，当前这小时也算在内）
   const hourly = json?.hourly
   const times: string[] = hourly?.time || []
-  const start = Math.max(0, times.findIndex((t) => t >= String(cur.time)))
+  const start = Math.max(0, times.findIndex((x) => x >= String(cur.time)))
   const hours: WeatherHour[] = times.slice(start, start + 24).map((time, k) => ({
     time,
     code: Number(hourly.weather_code[start + k]),
@@ -267,7 +268,7 @@ async function loadCn(code: string): Promise<WeatherData> {
 
   const now = JSON.parse(nowRaw)?.data
   const hourly = (JSON.parse(hourRaw)?.data?.hourly ?? []) as Record<string, unknown>[]
-  if (now?.status !== "ok" || !now?.now) throw new Error("国内源数据为空")
+  if (now?.status !== "ok" || !now?.now) throw new Error("国内源数据为空") // i18n-keep
 
   const n = now.now
   const list = (now.daily_forecast ?? []) as Record<string, unknown>[]
@@ -343,7 +344,7 @@ async function loadWeather(place: WeatherPlace): Promise<WeatherData> {
       cache.set(key, stale)
       return stale.data
     }
-    throw new Error("天气加载失败")
+    throw new Error("天气加载失败") // i18n-keep
   })()
 
   inflight.set(key, task)
@@ -472,7 +473,7 @@ export async function preciseLocate(): Promise<WeatherPlace> {
   ])
   const json = JSON.parse(raw)
   const d = json?.data
-  if (json?.code !== 200 || !d?.name) throw new Error("定位服务不可用")
+  if (json?.code !== 200 || !d?.name) throw new Error("定位服务不可用") // i18n-keep
   return {
     id: placeId(Number(d.lat), Number(d.lon)),
     name: String(d.name),

@@ -9,7 +9,8 @@ function getApp(): any {
   return appRef || (window as any).siyuan?.ws?.app || null
 }
 
-import { stateOf, takeLegacy } from "@/core/store"
+import { stateOf } from "@/core/store"
+import { t } from "@/core/i18n"
 import { post, sql } from "@/core/util"
 
 export interface PickDoc {
@@ -24,11 +25,9 @@ interface QuickState {
 /** 快捷打开最多 8 格；与卡片库一致，同一篇文档可以重复占位。 */
 export const QUICK_SLOTS = 8
 
-/** 每张卡一份配置：第一次取时认领旧版共享列表，之后各卡各的 */
+/** 每张卡一份配置：各卡各的文档格子 */
 export function quickOf(uid: string): QuickState {
-  const legacy = takeLegacy<{ docs?: PickDoc[] }>("desk:quickpick")
-  const docs = Array.isArray(legacy?.docs) ? legacy.docs.slice(0, QUICK_SLOTS) : []
-  return stateOf<QuickState>(uid, { docs })
+  return stateOf<QuickState>(uid, { docs: [] })
 }
 export function addDoc(state: QuickState, doc: PickDoc) {
   if (state.docs.length >= QUICK_SLOTS) return
@@ -46,12 +45,12 @@ export async function searchDocs(keyword: string, limit = 8): Promise<PickDoc[]>
   const rows = await sql(
     `select id, content as title from blocks where type = 'd' and content like '%${k}%' order by updated desc limit ${limit}`,
   )
-  return rows.map((r) => ({ id: String(r.id), title: String(r.title || "未命名文档") }))
+  return rows.map((r) => ({ id: String(r.id), title: String(r.title || t("core.doc.untitled")) }))
 }
 
 export async function recentDocs(limit = 8): Promise<PickDoc[]> {
   const rows = await sql(`select id, content as title from blocks where type = 'd' order by updated desc limit ${limit}`)
-  return rows.map((r) => ({ id: String(r.id), title: String(r.title || "未命名文档") }))
+  return rows.map((r) => ({ id: String(r.id), title: String(r.title || t("core.doc.untitled")) }))
 }
 
 /**
@@ -76,7 +75,7 @@ export async function openDoc(id: string) {
       }
     }
   } catch (e) {
-    console.warn("[desk-cards] plugins.openTab 不可用", e)
+    console.warn("[siyuan-sipage] plugins.openTab 不可用", e) // i18n-keep
   }
 
   try {

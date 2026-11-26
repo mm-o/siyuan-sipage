@@ -1,4 +1,5 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue"
+import { t } from "@/core/i18n"
 import { persisted } from "@/core/store"
 import { pad } from "@/core/util"
 
@@ -10,9 +11,9 @@ interface PomodoroRecord {
 }
 
 export const NOISES = [
-  { id: "rain", label: "雨声", url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_2b1a1c0dc4.mp3" },
-  { id: "forest", label: "森林", url: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_c8c8a73467.mp3" },
-  { id: "cafe", label: "咖啡馆", url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_1f9d6c0e0a.mp3" },
+  { id: "rain", label: t("card.pomodoro.noise.rain"), url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_2b1a1c0dc4.mp3" },
+  { id: "forest", label: t("card.pomodoro.noise.forest"), url: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_c8c8a73467.mp3" },
+  { id: "cafe", label: t("card.pomodoro.noise.cafe"), url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_1f9d6c0e0a.mp3" },
 ] as const
 
 const DEFAULT_POMODORO = {
@@ -30,7 +31,7 @@ const DEFAULT_POMODORO = {
   records: [] as PomodoroRecord[],
 }
 
-export const pomodoro = persisted("desk:pomodoro", { ...DEFAULT_POMODORO })
+export const pomodoro = persisted("pomodoro", { ...DEFAULT_POMODORO })
 
 export const records = computed(() => pomodoro.records.slice(0, 12))
 

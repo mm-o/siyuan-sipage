@@ -6,7 +6,8 @@
 | --- | --- |
 | `check-arch.mjs` | 分层依赖、跨卡引用、每卡一个主组件 |
 | `check-breakpoints.mjs` | 容器断点限定为 120 / 200 / 260 / 460 / 720 |
-| `check-dist.mjs` | 发布目录文件白名单与唯一外部依赖 `siyuan` |
+| `check-i18n.mjs` | 中英词条键集合一致、`t()` 用到的键都存在，并列出还没迁走的界面中文（`--strict` 升级为失败） |
+| `check-dist.mjs` | 发布目录文件白名单、唯一外部依赖 `siyuan`、三处版本一致，以及集市规范（`name` = 仓库名、元信息 `default` 字段、icon/preview 尺寸与体积、README/i18n/许可文件齐全） |
 | `browser.mjs` | 七个浏览器脚本共用的静态服务器、Edge、网络隔离和报告输出，不单独运行 |
 | `shot-arrange.mjs` | 拖动吸附、四边缩放、上限回缩、键盘、一键整理、完成、390px 工具栏、对比度与减少透明度/动效 |
 | `shot-deskclock.mjs` | 整分钟刷新、跨日日期、时间属性、Vue 卸载时清理定时器 |
@@ -14,12 +15,13 @@
 | `shot-surfaces.mjs` | 弹层与内内容面的日夜材质、开关的指针/空格与 aria 状态、滑轨键盘/填充/双击复位、字段的输入同步与下拉数字模型、弹窗顶栏拖动与四角缩放 |
 | `shot-controls.mjs` | 快捷方式图标保持描边、弹层无描边、下拉自绘玻璃箭头、卡片库已添加徽章与增删状态 |
 | `shot-shortcut.mjs` | 快捷方式面板：分类图标描边、同一动作可重复添加与计数徽章、右栏按次移除 |
-| `shot-ui.mjs` | 四个设置分区、15 张卡片预览及材质切换、添加/移除、外观变量、方/宽/高卡片渲染、详情/全屏/菜单点击边界、嵌套文档卡片卸载 |
+| `shot-ui.mjs` | 四个设置分区、16 张卡片预览及材质切换、添加/移除、外观变量、方/宽/高卡片渲染、详情/全屏/菜单点击边界、嵌套文档卡片卸载 |
 
 ```powershell
 pnpm check:types
 pnpm check:arch
 pnpm check:bp
+pnpm check:i18n
 pnpm dev:card
 node tools/verify/shot-arrange.mjs
 node tools/verify/shot-deskclock.mjs

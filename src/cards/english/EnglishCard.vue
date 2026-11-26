@@ -16,17 +16,17 @@
         <SeriesNav :series="series" />
 
         <div class="desk-fab">
-          <GlassButton :icon="playing ? Pause : Play" :label="playing ? '暂停朗读' : '朗读'" @click="togglePlay" />
-          <GlassButton :icon="copied ? Check : Copy" label="复制" @click="copyAll" />
-          <GlassButton :icon="BookOpen" label="在词典中查看" @click="openDict" />
-          <GlassButton :icon="ImageIcon" label="换一张背景" @click="series.shuffleCover" />
+          <GlassButton :icon="playing ? Pause : Play" :label="playing ? t('card.english.pauseRead') : t('card.english.read')" @click="togglePlay" />
+          <GlassButton :icon="copied ? Check : Copy" :label="t('card.english.copy')" @click="copyAll" />
+          <GlassButton :icon="BookOpen" :label="t('card.english.dict')" @click="openDict" />
+          <GlassButton :icon="ImageIcon" :label="t('card.english.shuffleCover')" @click="series.shuffleCover" />
         </div>
       </div>
     </div>
 
     <!-- 卡片：与详情同一份文字，垂直居中；朗读键悬浮在右下角 -->
     <div v-else class="desk-photo-body">
-      <p class="desk-photo-text line">{{ data.content || "Loading…" }}</p>
+      <p class="desk-photo-text line">{{ data.content || t("common.loading") }}</p>
       <p v-if="data.note" class="desk-photo-sub note">{{ data.note }}</p>
     </div>
 
@@ -35,7 +35,7 @@
       class="play"
       mini
       :icon="playing ? Pause : Play"
-      :label="playing ? '暂停朗读' : '朗读'"
+      :label="playing ? t('card.english.pauseRead') : t('card.english.read')"
       @click="togglePlay"
     />
   </div>
@@ -57,6 +57,7 @@ import { dailySeries } from "@/core/daily"
 import { API_EN } from "@/core/api"
 import { photoBg } from "@/ui/controls"
 import { copyText } from "@/ui/controls"
+import { t } from "@/core/i18n"
 
 const props = withDefaults(defineProps<{ size?: string; w?: number; h?: number; mode?: "card" | "detail" }>(), {
   size: "2x2",
@@ -72,6 +73,7 @@ interface English {
 const API = API_EN
 
 /** 本地句库：接口一天只给一句，翻页靠它循环（与今天的接口内容互不重复地混在一起） */
+// i18n-keep-begin（内容型数据：中英成对的句库，翻译会破坏配对）
 const POOL: Array<[content: string, note: string]> = [
   ["The only way to do great work is to love what you do.", "做出伟大工作的唯一方法，是热爱你所做的事。"],
   ["Simplicity is the ultimate sophistication.", "简约是终极的精致。"],
@@ -98,6 +100,8 @@ const POOL: Array<[content: string, note: string]> = [
   ["The journey is the reward.", "旅程本身就是回报。"],
   ["To be or not to be, that is the question.", "生存还是毁灭，这是一个问题。"],
 ]
+// i18n-keep-end
+// i18n-keep-end
 
 const series = dailySeries<English>("english", {
   initial: { content: "", note: "", tts: "" },

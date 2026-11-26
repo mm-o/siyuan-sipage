@@ -5,7 +5,7 @@ import { openBrowser, panels, report } from './browser.mjs'
 const harness = await openBrowser({
   viewport: { width: 1200, height: 800 },
   clock: new Date(2026, 10, 22, 23, 59, 30),
-  storage: { 'desk-cards:desk': { cards: panels } },
+  storage: { 'siyuan-sipage-petal:desk': { cards: panels } },
 })
 const { page, errors } = harness
 try {
@@ -34,7 +34,7 @@ try {
     let count = 0
     window.clearTimeout = id => { count++; clear.call(window, id) }
     try {
-      globalThis.__deskDesk.cards = globalThis.__deskDesk.cards.filter(card => card.cardId !== '@clock')
+      globalThis.__sipageDesk.cards = globalThis.__sipageDesk.cards.filter(card => card.cardId !== '@clock')
       await Promise.resolve()
       return count
     } finally { window.clearTimeout = clear }

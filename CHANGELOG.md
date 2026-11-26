@@ -1,8 +1,55 @@
 # Changelog
 
-## Unreleased — 日程 / 日历 / 日记三位一体`n`n### 卡片`n`n- 删掉卡片上的悬浮「全屏 / 更多」按钮与注册表里的 `controls` 开关：点卡片就是详情，全屏在详情标题栏，刷新与移除走右键菜单。`n
+## v1.0.1 — 首个正式版：思页（日程 / 日历 / 日记三位一体 + 三套材质）
 
-### 材质风格`n`n- 基础元素令牌化：开关、滑轨、输入、胶囊的几何全部收进 `--sw-* / --sl-* / --field-h / --chip-*`，控件规则只写一次、三套风格只覆盖令牌；MD3 的对应规则只剩配色，删掉重复的高度/内边距/圆角声明。`n`n- 样式收敛：新增控件尺寸令牌 `--ctl-h / --ctl-pad / --ctl-radius`，按钮与胶囊不再各写尺寸；两套设置页规则合并成一条（`body:is(native, md3)` + 风格令牌），删掉 MD3 重复的设置块、重复的同名规则与废弃的 `desk-native-select` 样式。`n`n- 原生弹层右上角的图标按钮对齐思源工具栏规格：32×32 命中区、16px 图标、满不透明、透明底、6px 圆角、hover 才出 `--b3-list-icon-hover` 底色。（分段仍是按钮组，不改下拉。）`n`n- 右上角那组图标按钮三套风格各自统一：液态是 28px 玻璃圆钮，原生是 b3 的透明图标钮（补全 28 命中区、`border:0`、hover 底色，修掉浏览器默认边框），MD3 是 40px tonal 圆形按钮。`n`n- 胶囊 / 分段在三套风格下各有明确定义：native 的 `.b3-chip` 补齐规格（28 高、b3 圆角与 hover 底、选中主题色），md3 是 32 高 / 8px 圆角 / tonal 选中，照片上三套都换成白字 + 白/深对比；诗词「全文 / 译文 / 注释」与备忘「今天 / 明天 / 收件箱」现在同一套。`n`n- 风格定为三套：**液态玻璃 / 思源原生 / Material 3**（去掉扁平与纸感）。原生补齐圆角映射（`--desk-r-*` 全取 `--b3-border-radius`）、图标按钮可见性（思源 `.block__icon` 默认 `opacity:0`，单独用要显式点亮）与照片卡上的胶囊对比、诗词三标签统一；MD3 是全新一套几何：药丸按钮、52×32 开关、4px 滑轨、`filled` 输入、8px 胶囊、12px 卡片。`n`n- 原生风格的**设置页**也照思源 config 面板重排：分区变成白卡 + 1px 边 + 8px 圆角，行之间用细线，标签 14px、控件右对齐、滑块固定 160px，左侧导航去掉边框与强调色（选中就是一层浅灰）。`n`n`n- 设置 → 组件设置新增「风格」：液态玻璃（默认）/ 思源原生 / 扁平 / 纸感。四套只覆盖材质令牌（面、模糊、阴影、圆角、描边），布局、字号、间距、动效不动；非玻璃风格彻底摘掉 `backdrop-filter`。**原生模式直接输出思源组件**（`block__icon` / `b3-button--outline` / `b3-switch` / `b3-slider` / `b3-text-field` / `b3-chip`，分段用描边按钮排一行），样式全部来自思源 `base.css`，悬停/聚焦/按下/禁用与主题同步：`.gb` 的镜片 + 高光 + 内发光三层关掉，分段 / 胶囊 / 输入 / 开关 / 下拉 / 设置导航统一成实心描边；原生那套把 `--dg-*` 映射到思源的 `--b3-theme-*` / `--b3-border-color` / `--b3-list-hover`，圆角放开到 `--desk-r-sm/md`。`n`n### 日记
+> 1.0.1 是第一个对外发布的版本（此前的 0.x 只在本地迭代，没有上架）。
+>
+> 发布时仓库侧设置一并到位：仓库 mm-o/siyuan-sipage（与包名一致）、默认分支 main、可见性 public。
+>
+> 版本号按「1.0.1」定，1.0.0 未单独发布。
+
+### 命名
+
+- 正式命名为 **思页 / SiPage**：寓意「**听风吹哪页，读哪页**」——它就是把思源的一个页签当成浏览器的标签页，翻到哪一页就在哪一页读、写、干活（v3.x 时期曾用过「思桌」，这次统一收在「思页 / SiPage」）。英文名与「思源 / SiYuan」同构（`Si` + `Page`），一眼能看出是思源里的一个页面。
+- **包名与仓库按集市惯例统一成 `siyuan-sipage`**（思源插件普遍带 `siyuan-` 前缀，和作者的 `siyuan-sireader` 一致）：`plugin.json` 的 `name`、`package.json` 的 `name`、仓库地址、页签类型、图标 symbol id（`iconSiPage`）、缓存命名空间（`siyuan-sipage-cache:`）、收藏目录（`data/public/siyuan-sipage`）、开发期与验证脚本的存储键一并改名。插件从未发布过任何版本，没有历史用户，所以不需要「保留旧 id」这种妥协。
+- 改名覆盖 `plugin.json` 的 `displayName` / `description` / `keywords`、顶栏与页签标题、命令「打开思页」、中英 README 标题与安装步骤、`package.json` 的 `description` / `keywords`、许可与第三方声明里的产品名。`displayName.default` 为英文 `SiPage`，`zh-CN` 为「思页」。
+
+### 许可
+
+- `LICENSE` → `LICENSE.md`（Markdown 扩展名才能进 `package.zip` 的白名单），版权行补上「思页 / SiPage，包名 siyuan-sipage」。
+- 新增 `THIRD_PARTY_NOTICES.md`：`index.js` 里打进的三份开源代码（Vue 3 MIT、Lucide ISC、tyme4ts MIT）逐条列出署名与许可全文，并注明只做开发期依赖、不进产物的那一批。
+- 两份文件都进 `package.zip`（`vite.config.ts` 的静态拷贝列表），`check:dist` 断言它们存在。
+
+### 精简（没有历史包袱就不要背负它）
+
+- 删掉整套兼容层：`store.ts` 的 `takeLegacy()`、日程的 `desk:memo` 一次性迁移、`block` / `calendar` / `shortcut` / `quick-open` 四张卡的「认领旧键」分支、启动时的旧粗网格坐标翻倍换算。`stateOf(uid, defaults)` 现在只做一件事：没有就用默认值。
+- 存储收成一条路：`persisted()` 从「各自落 localStorage」改成与桌面 / 外观同一套 petal 存储（`bootStore` 一次性灌入、`persistAll` 防抖写盘），key 即 petal 文件名（`agenda` / `docstats` / `pomodoro`，都不带冒号）；`localStorage` 只剩 `siyuan-sipage-cache:` 这个可丢可重建的派生缓存。日程、番茄钟因此跟着工作空间同步，不再随浏览器缓存一起消失。
+- 验证页与插件走完全相同的读写路径：`dev/main.ts` 只装一个 localStorage 版 petal driver，删掉原本 30 行「bootStore 之后手工覆盖 reactive」的特例播种代码；截图脚本的种子键统一成 `siyuan-sipage-petal:*`。
+- 安装 / 数据 / 收藏目录、缓存命名空间（`siyuan-sipage-cache:`）、验证脚本的种子键（`siyuan-sipage-petal:*`）随包名一起改；第三方声明改成 `THIRD_PARTY_NOTICES.md`，与另一插件保持一致。
+- 相应删掉一条已经失效的回归断言（旧 `desk:memo` 迁移），并把快捷方式 / 快捷打开的种子改为直接写 `cardState`。
+
+### 发版与集市规范
+
+- `release-ship.sh` 修正三处：改跑完整的 `pnpm check`（含新增的中英词条检查）、推送**当前分支**而不是写死的 `master`、`gh release create` 时**附上 `package.zip`**——集市只认 Release 里的这个附件，漏传等于没发版。标签已存在时直接报错退出，避免覆盖历史。
+- `check:dist` 从「产物白名单」扩成「产物 + 集市规范」双守卫：`name` 必须是合法小写标识且等于仓库名、`version` 符合 semver、`author`/`url`/`minAppVersion` 不得缺、`displayName`/`description`/`readme` 的 `default` 必须是英文且语言键符合 BCP 47、`keywords` 不得为空、`package.zip` 必须含两种 README + `LICENSE.md` + `THIRD_PARTY_NOTICES.md` + `i18n/{zh_CN,en_US}.json`、icon 必须 160×160 且 ≤64KiB、preview 必须 1024×768 且 ≤512KiB。
+- 新增 `docs/RELEASE.md`：元信息字段表、产物清单、发版流程、首次收录进集市的步骤，以及两件只能在 GitHub 上做的人工项（仓库需公开、默认分支需从 `master` 改成 `main`）。
+
+### 卡片
+
+- 删掉卡片上的悬浮「全屏 / 更多」按钮与注册表里的 `controls` 开关：点卡片就是详情，全屏在详情标题栏，刷新与移除走右键菜单。
+
+### 材质风格
+
+- 风格定为三套：**液态玻璃（默认）/ 思源原生 / Material 3**（扁平与纸感两套已去掉）。三套只覆盖材质令牌（面、模糊、阴影、圆角、描边）与控件几何，布局、字号、间距、动效一律不动；非玻璃风格用一条 `backdrop-filter: none` 彻底摘掉滤镜，而不是留 `blur(0px)`。原生补齐圆角映射（`--desk-r-*` 全取 `--b3-border-radius`）、图标按钮可见性（思源 `.block__icon` 默认 `opacity:0`，单独用要显式点亮）与照片卡上的胶囊对比、诗词三标签统一；MD3 是全新一套几何：药丸按钮、52×32 开关、4px 滑轨、`filled` 输入、8px 胶囊、12px 卡片。
+- **原生模式直接输出思源组件**（`block__icon` / `b3-button--outline` / `b3-switch` / `b3-slider` / `b3-text-field` / `b3-chip`，分段用描边按钮排一行），样式全部来自思源 `base.css`，悬停 / 聚焦 / 按下 / 禁用与主题同步：`.gb` 的镜片 + 高光 + 内发光三层关掉，分段 / 胶囊 / 输入 / 开关 / 下拉 / 设置导航统一成实心描边；原生那套把 `--dg-*` 映射到思源的 `--b3-theme-*` / `--b3-border-color` / `--b3-list-hover`，圆角放开到 `--desk-r-sm/md`。
+- 基础元素令牌化：开关、滑轨、输入、胶囊的几何全部收进 `--sw-* / --sl-* / --field-h / --chip-*`，控件规则只写一次、三套风格只覆盖令牌；MD3 的对应规则只剩配色，删掉重复的高度 / 内边距 / 圆角声明。
+- 样式收敛：新增控件尺寸令牌 `--ctl-h / --ctl-pad / --ctl-radius`，按钮与胶囊不再各写尺寸；两套设置页规则合并成一条（`body:is(native, md3)` + 风格令牌），删掉 MD3 重复的设置块、重复的同名规则与废弃的 `desk-native-select` 样式。
+- 胶囊 / 分段在三套风格下各有明确定义：native 的 `.b3-chip` 补齐规格（28 高、b3 圆角与 hover 底、选中主题色），md3 是 32 高 / 8px 圆角 / tonal 选中，照片上三套都换成白字 + 白/深对比；诗词「全文 / 译文 / 注释」与备忘「今天 / 明天 / 收件箱」现在同一套。
+- 原生弹层右上角的图标按钮对齐思源工具栏规格：32×32 命中区、16px 图标、满不透明、透明底、6px 圆角、hover 才出 `--b3-list-icon-hover` 底色。（分段仍是按钮组，不改下拉。）
+- 右上角那组图标按钮三套风格各自统一：液态是 28px 玻璃圆钮，原生是 b3 的透明图标钮（补全 28 命中区、`border:0`、hover 底色，修掉浏览器默认边框），MD3 是 40px tonal 圆形按钮。
+- 原生风格的**设置页**也照思源 config 面板重排：分区变成白卡 + 1px 边 + 8px 圆角，行之间用细线，标签 14px、控件右对齐、滑块固定 160px，左侧导航去掉边框与强调色（选中就是一层浅灰）。
+
+### 日记
 
 - 新卡「日记」：按 `custom-dailynote-YYYYMMDD` 找当天文档；卡片与详情都用思源渲染（`ui/ProtyleView`），详情就地编辑（标题、面包屑、块图标、工具栏齐全）。
 - 任意日期都能建日记：`ensureDaily(date)` —— 今天走内核 `createDailyNote`，其它日期在最近一篇日记的同一目录建文档并补 `custom-dailynote-YYYYMMDD`，建完直接用返回的 id 取摘要，不等属性索引。
@@ -27,6 +74,15 @@
 - 热力图：日记正文按日记日期归属，日记文档从 created/updated 口径里排除，补写昨天就落在昨天。
 - 打包回单文件（思源加载器只解析 `siyuan`，相对 `require` 会直接崩），`check:dist` 增加「入口不得含相对依赖」的守卫。
 - 层级收成 `--desk-z-*`：弹层打开时把思源 `#dialog`、菜单、`.protyle-util` 抬到插件之上，平时不动。
+
+### 语言（中 / 英）
+
+- 界面文案统一走 `core/i18n` 的 `t()`，词条在 `src/i18n/zh_CN.json` / `en_US.json`（同一份文件也给思源当命令 `langKey`）：共 642 条，中英键集合完全一致。语言跟随思源（`window.siyuan.config.lang`，回落到 `<html lang>`），启动时定一次，所以 `t()` 保持纯函数，模板、`const` 数组、脚本里都能直接调。
+- 覆盖范围：16 张卡的卡片、详情与菜单，桌面壳、设置四区、公共控件（按钮 / 字段 / 开关 / 滑轨 / 下拉 / 胶囊 / 空态）、整理模式提示、壁纸九个来源与 18 个题头图分类、日程分组、倒数日分类与重复规则、天气描述与 7 日预报、文档统计维度、番茄钟状态、内嵌卡片的 toast。卡片名与说明在注册表里改走 `cardName()` / `cardDesc()`。
+- 数据当数据：tyme4ts 的农历 / 节气 / 干支 / 宜忌、思源返回的地名与错误、诗词原文、英文句库、用户文档标题都不进词条；与库中文字符串耦合的解析（`=== "初一"`、`solat.toString().replace("年", "-")`）与内部枚举值（快捷方式分组、`GROUP_KEY`）同理，源码里用 `// i18n-keep` / `i18n-keep-begin…end` 显式豁免。
+- 新增 `pnpm check:i18n`（已进 `pnpm check`）：断言中英键一致、`t()` 用到的字面量键都存在，并列出还没迁走的界面中文（`--strict` 升级为失败）。
+- 数字单位本地化：文档统计的「万」在英文下收成 K / M（`compact()` 按 `isZh` 分档）。
+- 词条打进单文件入口，`index.js` +62KB（gzip 188→201KB）。
 
 ### 梳理
 

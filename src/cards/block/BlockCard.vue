@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { t } from "@/core/i18n"
 import { blockOf } from "./block"
 import { mountProtyle } from "./block"
 
@@ -50,7 +51,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="bk-card">
     <div ref="host" class="bk-body db-block desk-seq" />
-    <p v-if="!blockState.id" class="bk-empty">点开选择要显示的块</p>
+    <p v-if="!blockState.id" class="bk-empty">{{ t("card.block.empty") }}</p>
   </div>
 </template>
 

@@ -2,7 +2,7 @@
   <div class="qp-panel desk-seq desk-panel-row">
     <!-- 左：已添加（拖动排序 + 垃圾桶） -->
     <section class="qp-col desk-pane is-left">
-      <h4 class="qp-sub desk-note">已添加 {{ docs.length }}/{{ QUICK_SLOTS }} · 拖动排序</h4>
+      <h4 class="qp-sub desk-note">{{ t("card.quickopen.addedSlots", { n: docs.length, total: QUICK_SLOTS }) }}</h4>
       <ul class="qp-list">
         <li
           v-for="(d, i) in docs"
@@ -20,17 +20,17 @@
             <FileText :size="13" :stroke-width="2" />
           </span>
           <span class="qp-name desk-ellipsis">{{ d.title }}</span>
-          <GlassButton :icon="Trash2" label="移除" variant="danger" @click="removeDocAt(state, i)" />
+          <GlassButton :icon="Trash2" :label="t('common.remove')" variant="danger" @click="removeDocAt(state, i)" />
         </li>
-        <li v-if="!docs.length" class="qp-empty desk-note">右栏点一下文档加入</li>
+        <li v-if="!docs.length" class="qp-empty desk-note">{{ t("card.quickopen.emptyAdded") }}</li>
       </ul>
     </section>
 
     <!-- 右：搜索 + 最近，点一下加入 -->
     <section class="qp-col desk-pane is-right">
       <form class="qp-search" @submit.prevent="run">
-        <GlassField v-model="keyword" class="qp-input" label="查找文档" placeholder="搜文档标题，回车" />
-        <GlassButton :icon="Search" label="查找" @click="run" />
+        <GlassField v-model="keyword" class="qp-input" :label="t('card.quickopen.findLabel')" :placeholder="t('card.quickopen.findPlaceholder')" />
+        <GlassButton :icon="Search" :label="t('card.quickopen.find')" @click="run" />
       </form>
 
       <ul class="qp-list">
@@ -40,9 +40,9 @@
           </span>
           <span class="qp-name desk-ellipsis">{{ d.title }}</span>
           <span v-if="used(d.id)" class="desk-badge is-on">{{ used(d.id) }}</span>
-          <GlassButton :icon="Plus" label="加入" :disabled="full" @click.stop="pick(d)" />
+          <GlassButton :icon="Plus" :label="t('card.quickopen.add')" :disabled="full" @click.stop="pick(d)" />
         </li>
-        <li v-if="!hits.length && !recent.length" class="qp-empty desk-empty is-tight"><EmptyArt /><span>没有可添加的文档</span></li>
+        <li v-if="!hits.length && !recent.length" class="qp-empty desk-empty is-tight"><EmptyArt /><span>{{ t("card.quickopen.empty") }}</span></li>
       </ul>
     </section>
   </div>
@@ -53,6 +53,7 @@ import { EmptyArt, GlassButton, GlassField } from "@/ui/controls"
 import { computed, ref } from "vue"
 import { FileText, GripVertical, Plus, Search, Trash2 } from "lucide-vue-next"
 import { QUICK_SLOTS, addDoc, quickOf, recentDocs, removeDocAt, reorderQuick, searchDocs, tint, type PickDoc } from "@/core/quickdocs"
+import { t } from "@/core/i18n"
 
 const props = defineProps<{ mode?: string; uid?: string }>()
 

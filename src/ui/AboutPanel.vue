@@ -1,7 +1,7 @@
 <template>
   <section class="about set-page">
     <header class="about-head">
-      <h2 class="set-h2">关于</h2>
+      <h2 class="set-h2">{{ t('ui.about.title') }}</h2>
       <GlassButton text :icon="ExternalLink" :label="LOG_LABEL" @click="openLog" />
     </header>
     <article class="about-body" v-html="html" />
@@ -17,24 +17,25 @@
 import { GlassButton } from "@/ui/controls"
 import { computed, onMounted, ref } from "vue"
 import { ExternalLink } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import info from "../../plugin.json"
 
-const LOG = "https://github.com/mm-o/desk-cards/blob/main/CHANGELOG.md"
+const LOG = "https://github.com/mm-o/siyuan-sipage/blob/main/CHANGELOG.md"
 
 /** 思源语言：zh_CN / en_US …（拿不到就按中文） */
 const lang = String((window as any).siyuan?.config?.lang || document.documentElement.lang || "zh_CN").toLowerCase()
 const zh = lang.startsWith("zh")
 const FILE = zh ? "README.zh-CN.md" : "README.md"
-const LOG_LABEL = zh ? "更新日志" : "Changelog"
+const LOG_LABEL = t("ui.about.changelog")
 
 const text = ref("")
 
 onMounted(async () => {
   try {
     const res = await fetch(`/plugins/${info.name}/${FILE}`, { cache: "no-cache" })
-    text.value = res.ok ? await res.text() : `读取失败，请直接看插件目录里的 ${FILE}。`
+    text.value = res.ok ? await res.text() : t("ui.about.readFailed", { file: FILE })
   } catch {
-    text.value = `读取失败，请直接看插件目录里的 ${FILE}。`
+    text.value = t("ui.about.readFailed", { file: FILE })
   }
 })
 

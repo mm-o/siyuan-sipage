@@ -1,14 +1,14 @@
 <template>
   <div class="mc">
     <header v-if="nav" class="mc-head">
-      <GlassButton :icon="ChevronLeft" label="上个月" @click="shift(-1)" />
+      <GlassButton :icon="ChevronLeft" :label="t('ui.mini.prevMonth')" @click="shift(-1)" />
       <span class="mc-title">{{ title }}</span>
-      <GlassButton :icon="ChevronRight" label="下个月" @click="shift(1)" />
-      <GlassButton v-if="today" text label="今天" @click="goToday" />
+      <GlassButton :icon="ChevronRight" :label="t('ui.mini.nextMonth')" @click="shift(1)" />
+      <GlassButton v-if="today" text :label="t('common.today')" @click="goToday" />
     </header>
 
     <ul class="mc-week">
-      <li v-for="w in head" :key="w" :class="{ 'is-end': w === '六' || w === '日' }">{{ w }}</li>
+      <li v-for="w in head" :key="w" :class="{ 'is-end': w === t('ui.mini.wdSat') || w === t('ui.mini.wdSun') }">{{ w }}</li>
     </ul>
 
     <ul class="mc-grid">
@@ -41,6 +41,7 @@
 import { computed, ref, watch } from "vue"
 import { ChevronLeft, ChevronRight } from "lucide-vue-next"
 import { GlassButton } from "@/ui/controls"
+import { t } from "@/core/i18n"
 import { dateKey, dayDots, todayKey } from "@/core/agenda"
 
 const props = withDefaults(defineProps<{
@@ -59,8 +60,8 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ "update:modelValue": [string] }>()
 
-const WEEK = ["一", "二", "三", "四", "五", "六", "日"]
-const head = computed(() => (props.weekBegin === "mon" ? WEEK : ["日", ...WEEK.slice(0, 6)]))
+const WEEK = [t("ui.mini.wdMon"), t("ui.mini.wdTue"), t("ui.mini.wdWed"), t("ui.mini.wdThu"), t("ui.mini.wdFri"), t("ui.mini.wdSat"), t("ui.mini.wdSun")]
+const head = computed(() => (props.weekBegin === "mon" ? WEEK : [t("ui.mini.wdSun"), ...WEEK.slice(0, 6)]))
 
 const parse = (key: string) => {
   const [y, m, d] = key.split("-").map(Number)
@@ -76,7 +77,7 @@ watch(() => [props.month, props.modelValue], ([pin, key]) => {
 
 const title = computed(() => {
   const d = parse(month.value)
-  return `${d.getFullYear()}年${d.getMonth() + 1}月`
+  return t("ui.mini.monthTitle", { year: d.getFullYear(), month: d.getMonth() + 1 })
 })
 
 const cells = computed(() => {

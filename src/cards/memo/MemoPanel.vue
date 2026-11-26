@@ -16,7 +16,7 @@
           <span class="desk-badge" :class="{ 'is-on': counts[group.id] > 0 }">{{ counts[group.id] }}</span>
         </button>
       </nav>
-      <p class="mm-tip desk-note">带日期的就是日程，没日期的进收件箱；随手点「今天」就排进今天。</p>
+      <p class="mm-tip desk-note">{{ t("card.memo.tip") }}</p>
     </aside>
 
     <!-- 中：列表 -->
@@ -27,7 +27,7 @@
         <b>{{ current.name }}</b>
         <span>{{ current.hint }}</span>
         <span class="desk-block-grow" />
-        <GlassButton v-if="state.group === 'done'" :icon="Trash2" label="清空已完成" variant="danger" @click="clearDone" />
+        <GlassButton v-if="state.group === 'done'" :icon="Trash2" :label="t('card.memo.clearDone')" variant="danger" @click="clearDone" />
       </header>
 
       <ul class="desk-block-list mm-scroll">
@@ -44,21 +44,21 @@
               type="button"
               role="checkbox"
               :aria-checked="row.item.done"
-              :aria-label="row.item.done ? '标记未完成' : '标记完成'"
+              :aria-label="row.item.done ? t('card.memo.markUndone') : t('card.memo.markDone')"
               @click.stop="toggleItem(row.item.id)"
             />
             <span class="mm-text">{{ row.item.text }}</span>
             <span v-if="row.item.time" class="mm-time">{{ row.item.time }}</span>
             <span v-if="row.badge" class="desk-badge">{{ row.badge }}</span>
-            <GlassButton :icon="X" label="删除" variant="danger" @click.stop="drop(row.item.id)" />
+            <GlassButton :icon="X" :label="t('common.delete')" variant="danger" @click.stop="drop(row.item.id)" />
           </li>
         </template>
         <li v-if="!listRows.length" class="desk-empty is-tight"><EmptyArt /><span>{{ current.empty }}</span></li>
       </ul>
 
       <form v-if="state.group !== 'done'" class="desk-form-row" @submit.prevent="create">
-        <GlassField v-model="fresh" class="mm-input" :label="current.add" :placeholder="`${current.add}，回车`" />
-        <GlassButton :icon="Plus" label="添加" variant="primary" text :disabled="!fresh.trim()" @click="create" />
+        <GlassField v-model="fresh" class="mm-input" :label="current.add" :placeholder="t('card.memo.inputPlaceholder', { label: current.add })" />
+        <GlassButton :icon="Plus" :label="t('common.add')" variant="primary" text :disabled="!fresh.trim()" @click="create" />
       </form>
     </section>
 
@@ -67,48 +67,47 @@
       <template v-if="active">
         <div class="mm-detail-body mm-scroll">
           <label class="mm-field">
-            <span class="mm-field-label">标题</span>
-            <GlassField :model-value="active.text" label="日程标题" placeholder="要做什么" @update:model-value="setText" />
+            <span class="mm-field-label">{{ t("card.memo.fieldTitle") }}</span>
+            <GlassField :model-value="active.text" :label="t('card.memo.titleLabel')" :placeholder="t('card.memo.titlePlaceholder')" @update:model-value="setText" />
           </label>
 
           <div class="mm-field-row">
             <label class="mm-field">
-              <span class="mm-field-label">日期</span>
-              <GlassField :model-value="active.date" label="日程日期" type="date" @update:model-value="setDate" />
+              <span class="mm-field-label">{{ t("card.memo.fieldDate") }}</span>
+              <GlassField :model-value="active.date" :label="t('card.memo.dateLabel')" type="date" @update:model-value="setDate" />
             </label>
             <label class="mm-field mm-field--time">
-              <span class="mm-field-label">时间</span>
-              <GlassField :model-value="active.time" label="日程时间" type="time" @update:model-value="setTime" />
+              <span class="mm-field-label">{{ t("card.memo.fieldTime") }}</span>
+              <GlassField :model-value="active.time" :label="t('card.memo.timeLabel')" type="time" @update:model-value="setTime" />
             </label>
           </div>
 
           <div class="mm-field">
-            <span class="mm-field-label">放到</span>
+            <span class="mm-field-label">{{ t("card.memo.fieldMove") }}</span>
             <Chips v-model="quick" :options="QUICK" />
           </div>
 
           <label class="mm-field mm-field--grow">
-            <span class="mm-field-label">备注</span>
-            <GlassField :model-value="active.note" as="textarea" class="mm-note" label="备注" placeholder="详情、地点、链接…" @update:model-value="setNote" />
+            <span class="mm-field-label">{{ t("card.memo.fieldNote") }}</span>
+            <GlassField :model-value="active.note" as="textarea" class="mm-note" :label="t('card.memo.fieldNote')" :placeholder="t('card.memo.notePlaceholder')" @update:model-value="setNote" />
           </label>
 
           <p class="desk-note">
-            {{ active.date ? `${dayLabel(active.date)} · ${weekdayOf(active.date)}` : "收件箱（不占日历）" }} · 建于
-            {{ stamp(active.at) }}
+            {{ active.date ? `${dayLabel(active.date)} · ${weekdayOf(active.date)}` : t("card.memo.inboxNoCalendar") }} · {{ t("card.memo.createdAt", { at: stamp(active.at) }) }}
           </p>
         </div>
 
         <footer class="mm-foot">
-          <GlassSwitch :model-value="active.done" label="标记完成" @update:model-value="toggleItem(active.id)" />
-          <span class="desk-note">{{ active.done ? "已完成" : "未完成" }}</span>
+          <GlassSwitch :model-value="active.done" :label="t('card.memo.markDone')" @update:model-value="toggleItem(active.id)" />
+          <span class="desk-note">{{ active.done ? t("card.memo.statusDone") : t("card.memo.statusOpen") }}</span>
           <span class="desk-block-grow" />
-          <GlassButton :icon="Trash2" label="删除" variant="danger" @click="drop(active.id)" />
+          <GlassButton :icon="Trash2" :label="t('common.delete')" variant="danger" @click="drop(active.id)" />
         </footer>
       </template>
 
       <div v-else class="mm-detail-empty">
         <StickyNote :size="26" :stroke-width="1.6" />
-        <p class="desk-note">左边选一条，或在下面新建</p>
+        <p class="desk-note">{{ t("card.memo.detailEmpty") }}</p>
       </div>
     </aside>
   </div>
@@ -125,6 +124,7 @@
 import { Chips, EmptyArt, GlassButton, GlassField, GlassSwitch } from "@/ui/controls"
 import { computed, ref, watch } from "vue"
 import { AlarmClock, CalendarDays, CircleCheck, Inbox, Plus, StickyNote, Trash2, X } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import { stateOf } from "@/core/store"
 import {
   addItem,
@@ -154,17 +154,17 @@ const props = defineProps<{ mode?: string; uid?: string }>()
 const state = stateOf<{ group: PlanGroup }>(props.uid || "memo", { group: agenda.group })
 
 const GROUPS = [
-  { id: "today", name: "今天", icon: CalendarDays, hint: "做完就勾掉", empty: "今天空着，下面加一条", add: "加到今天" },
-  { id: "late", name: "逾期", icon: AlarmClock, hint: "过了日子还没勾掉", empty: "没有逾期，很好", add: "加到今天" },
-  { id: "upcoming", name: "即将", icon: Inbox, hint: "明天以后", empty: "后面几天还是空的", add: "加到明天" },
-  { id: "inbox", name: "收件箱", icon: StickyNote, hint: "只作备忘，不占日历", empty: "随手记的都在这儿", add: "记一条备忘" },
-  { id: "done", name: "已完成", icon: CircleCheck, hint: "最近勾掉的在前", empty: "还没有勾掉过", add: "加到今天" },
+  { id: "today", name: t("common.today"), icon: CalendarDays, hint: t("card.memo.todayHint"), empty: t("card.memo.emptyToday"), add: t("card.memo.addToday") },
+  { id: "late", name: t("card.memo.groupLate"), icon: AlarmClock, hint: t("card.memo.lateHint"), empty: t("card.memo.emptyLate"), add: t("card.memo.addToday") },
+  { id: "upcoming", name: t("card.memo.groupUpcoming"), icon: Inbox, hint: t("card.memo.upcomingHint"), empty: t("card.memo.emptyUpcoming"), add: t("card.memo.addTomorrow") },
+  { id: "inbox", name: t("card.memo.groupInbox"), icon: StickyNote, hint: t("card.memo.inboxHint"), empty: t("card.memo.emptyInbox"), add: t("card.memo.addInbox") },
+  { id: "done", name: t("card.memo.groupDone"), icon: CircleCheck, hint: t("card.memo.doneHint"), empty: t("card.memo.emptyDone"), add: t("card.memo.addToday") },
 ] as const
 
 const QUICK = [
-  { label: "今天", value: "today" },
-  { label: "明天", value: "tomorrow" },
-  { label: "收件箱", value: "inbox" },
+  { label: t("common.today"), value: "today" },
+  { label: t("common.tomorrow"), value: "tomorrow" },
+  { label: t("card.memo.groupInbox"), value: "inbox" },
 ]
 
 
@@ -213,7 +213,7 @@ const listRows = computed<Row[]>(() => {
         : state.group === "done"
           ? item.date
             ? dayLabel(item.date)
-            : "备忘"
+            : t("card.memo.sectionNotes")
           : ""
     out.push({ kind: "item", key: item.id, item, badge })
   }

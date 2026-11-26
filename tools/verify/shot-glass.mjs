@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
 
-const harness = await openBrowser({ storage: { 'desk-cards:desk': { cards: panels } } })
+const harness = await openBrowser({ storage: { 'siyuan-sipage-petal:desk': { cards: panels } } })
 const { page, errors } = harness
 const checks = []
 const screenshots = []
@@ -58,7 +58,7 @@ try {
 
   // 使用真实倒数日卡片打开详情，再通过真实表单验证禁用与原生提交行为。
   await page.evaluate(panels => {
-    globalThis.__deskDesk.cards = [...panels, { uid: 'glass-countdown', cardId: 'countdown', x: 1, y: 8, w: 12, h: 8 }]
+    globalThis.__sipageDesk.cards = [...panels, { uid: 'glass-countdown', cardId: 'countdown', x: 1, y: 8, w: 12, h: 8 }]
   }, panels)
   const card = page.locator('.desk-root .item:not(.is-panel) .frame')
   await card.locator('.body').click({ position: { x: 40, y: 40 } })
@@ -71,13 +71,13 @@ try {
   assert.equal(await save.getAttribute('type'), 'submit')
   assert.equal(await cancel.getAttribute('type'), 'button')
   assert.equal(await save.isDisabled(), true)
-  const before = await page.evaluate(() => globalThis.__deskCountdown.events.length)
+  const before = await page.evaluate(() => globalThis.__sipageCountdown.events.length)
   await form.getByPlaceholder('例如：妈妈的生日').fill('玻璃按钮验证')
   await form.locator('input[type="date"]').fill('2027-01-01')
   await page.waitForFunction(() => !document.querySelector('.cd-form button[type="submit"]').disabled)
   await save.click()
   await form.waitFor({ state: 'detached' })
-  assert.equal(await page.evaluate(() => globalThis.__deskCountdown.events.length), before + 1, 'Native submit creates exactly one event')
+  assert.equal(await page.evaluate(() => globalThis.__sipageCountdown.events.length), before + 1, 'Native submit creates exactly one event')
   const danger = dialog.getByRole('button', { name: '删除', exact: true })
   assert.match(await danger.getAttribute('class'), /is-danger/)
   assert.equal(await danger.locator(':scope > svg').count(), 1)
@@ -114,9 +114,9 @@ try {
 
   // 天气错误分支生成真实 photo tone 重试按钮，避开外部天气服务。
   await page.evaluate(panels => {
-    globalThis.__deskWeather.locations = []
-    globalThis.__deskWeather.activeId = ''
-    globalThis.__deskDesk.cards = [...panels, { uid: 'glass-weather', cardId: 'weather', x: 1, y: 8, w: 12, h: 8 }]
+    globalThis.__sipageWeather.locations = []
+    globalThis.__sipageWeather.activeId = ''
+    globalThis.__sipageDesk.cards = [...panels, { uid: 'glass-weather', cardId: 'weather', x: 1, y: 8, w: 12, h: 8 }]
   }, panels)
   await page.locator('.desk-root .frame .body').click({ position: { x: 90, y: 90 } })
   await dialog.locator('.wx-panel').waitFor()

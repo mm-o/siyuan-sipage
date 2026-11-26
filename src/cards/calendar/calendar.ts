@@ -6,18 +6,14 @@
  *
  * 同一张卡可以放多张、各看各的月份，所以这些都按实例 uid 存。
  */
-import { stateOf, takeLegacy } from "@/core/store"
+import { stateOf } from "@/core/store"
 
 interface CalendarState {
   weekBegin: "mon" | "sun"
   month: string
 }
 
-/** 每张卡一份：第一次取时认领旧版偏好，之后各卡各的 */
+/** 每张卡一份：各卡各的周首与月份 */
 export function calendarOf(uid: string): CalendarState {
-  const legacy = takeLegacy<Partial<CalendarState>>("desk:calendar")
-  return stateOf<CalendarState>(uid, {
-    weekBegin: legacy?.weekBegin === "sun" ? "sun" : "mon",
-    month: "",
-  })
+  return stateOf<CalendarState>(uid, { weekBegin: "mon", month: "" })
 }

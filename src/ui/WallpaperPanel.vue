@@ -1,7 +1,7 @@
 <template>
   <div class="desk-panel set-page">
-    <h2 class="set-h2">壁纸</h2>
-    <p class="set-p">换一张底片；模糊与遮罩在「组件设置 → 壁纸」里调。</p>
+    <h2 class="set-h2">{{ t("ui.wall.title") }}</h2>
+    <p class="set-p">{{ t("ui.wall.desc") }}</p>
 
     <!-- 来源统一选择：图标与来源一一对应，同一尺寸同一线宽 -->
     <div class="sources">
@@ -25,9 +25,9 @@
       <!-- 思源资源：笔记本里的图片，内核直给；三行一屏 + 加载更多 -->
       <div v-if="tab === 'siyuan'" class="picsum">
         <div class="picker-search">
-          <GlassField v-model="assetQ" type="search" label="搜索图片文件名" placeholder="搜索文件名…" />
+          <GlassField v-model="assetQ" type="search" :label="t('ui.wall.searchLabel')" :placeholder="t('ui.wall.searchPlaceholder')" />
         </div>
-        <span class="desk-hint">{{ assetShown.length }} / {{ assetFiltered.length }} 张 · 取自笔记本 assets</span>
+        <span class="desk-hint">{{ t("ui.wall.assetCount", { shown: assetShown.length, total: assetFiltered.length }) }}</span>
         <div class="desk-tiles">
           <div
             v-for="a in assetShown"
@@ -40,14 +40,14 @@
             <FavDot :value="a.url" :pending="favState(a.url)" />
           </div>
         </div>
-        <p v-if="!assets.length" class="desk-hint">笔记本里还没有图片资源。</p>
-        <p v-else-if="!assetShown.length" class="desk-hint">没有匹配的图片，换个关键词。</p>
-        <GlassButton class="act" text label="换一张" @click="pick('siyuan')" />
+        <p v-if="!assets.length" class="desk-hint">{{ t("ui.wall.assetsEmpty") }}</p>
+        <p v-else-if="!assetShown.length" class="desk-hint">{{ t("ui.wall.assetsNoMatch") }}</p>
+        <GlassButton class="act" text :label="t('ui.wall.anotherImage')" @click="pick('siyuan')" />
         <GlassButton
           v-if="assetMore || assetLimit > PAGE"
           class="act"
           text
-          :label="assetMore ? `加载更多 ${Math.min(assetMore, PAGE)} 张` : '收起'"
+          :label="assetMore ? t('ui.wall.loadMore', { n: Math.min(assetMore, PAGE) }) : t('ui.wall.collapse')"
           @click="assetToggle"
         />
       </div>
@@ -71,7 +71,7 @@
           v-if="coverMore || coverLimit > PAGE"
           class="act"
           text
-          :label="coverMore ? `加载更多 ${Math.min(coverMore, PAGE)} 张` : '收起'"
+          :label="coverMore ? t('ui.wall.loadMore', { n: Math.min(coverMore, PAGE) }) : t('ui.wall.collapse')"
           @click="coverToggle"
         />
       </template>
@@ -90,8 +90,8 @@
             <FavDot :value="b.url" :pending="favState(b.url)" />
           </div>
         </div>
-        <p v-if="loading.bing" class="desk-hint">取图中…</p>
-        <p v-else-if="!bing.length" class="desk-hint">必应壁纸加载失败，请检查网络。</p>
+        <p v-if="loading.bing" class="desk-hint">{{ t("ui.wall.fetching") }}</p>
+        <p v-else-if="!bing.length" class="desk-hint">{{ t("ui.wall.bingFail") }}</p>
       </div>
 
       <!-- 国内图源：alcy.cc 一次直出，国内可访问 -->
@@ -104,12 +104,12 @@
             :class="{ 'is-active': wallpaper.value === a.url }"
             :style="{ backgroundImage: `url(${a.thumb})` }"
           >
-            <button class="wallpaper-pick" type="button" :aria-label="`国内图源 · ${a.seed}`" @click="pickImage(a, 'gitee')" />
+            <button class="wallpaper-pick" type="button" :aria-label="t('ui.wall.alcyAlt', { seed: a.seed })" @click="pickImage(a, 'gitee')" />
             <FavDot :value="a.url" :pending="favState(a.url)" />
           </div>
         </div>
-        <GlassButton class="act" text :disabled="busy.gitee || loading.gitee" @click="reshuffle('gitee')" :label="busy.gitee || loading.gitee ? '取图中…' : alcy.length ? `换一批 ${alcy.length}` : '换一批'" />
-        <p v-if="!alcy.length && !loading.gitee" class="desk-hint">取图失败，检查网络后再点「换一批」。</p>
+        <GlassButton class="act" text :disabled="busy.gitee || loading.gitee" @click="reshuffle('gitee')" :label="busy.gitee || loading.gitee ? t('ui.wall.fetching') : alcy.length ? t('ui.wall.batch', { n: alcy.length }) : t('ui.wall.batchAlone')" />
+        <p v-if="!alcy.length && !loading.gitee" class="desk-hint">{{ t("ui.wall.fetchFail") }}</p>
       </div>
 
       <!-- Picsum：缩略图先铺，点哪张用哪张，原图后到 -->
@@ -126,14 +126,14 @@
             <FavDot :value="p.url" :pending="favState(p.url)" />
           </div>
         </div>
-        <GlassButton class="act" text :disabled="busy.picsum || loading.picsum" @click="reshuffle('picsum')" :label="busy.picsum || loading.picsum ? '取图中…' : picsum.length ? `换一批 ${picsum.length}` : '换一批'" />
-        <p v-if="!picsum.length && !loading.picsum" class="desk-hint">取图失败，检查网络后再点「换一批」。</p>
+        <GlassButton class="act" text :disabled="busy.picsum || loading.picsum" @click="reshuffle('picsum')" :label="busy.picsum || loading.picsum ? t('ui.wall.fetching') : picsum.length ? t('ui.wall.batch', { n: picsum.length }) : t('ui.wall.batchAlone')" />
+        <p v-if="!picsum.length && !loading.picsum" class="desk-hint">{{ t("ui.wall.fetchFail") }}</p>
       </div>
 
       <!-- 本地随机 / 跟随思源：同一块预览 -->
       <div v-else-if="tab === 'random'" class="random">
         <div class="random-preview" :style="{ backgroundImage: `url(${wallpaper.value})` }" />
-        <GlassButton class="act" text label="换一张" @click="shuffle" />
+        <GlassButton class="act" text :label="t('ui.wall.anotherImage')" @click="shuffle" />
       </div>
 
       <div v-else-if="tab === 'theme'" class="random">
@@ -141,7 +141,7 @@
           <i class="theme-preview-card" />
           <i class="theme-preview-card is-wide" />
         </div>
-        <p class="desk-hint">直接用思源当前的背景（主题色或主题自带的背景图），桌面不自造底色；换主题、换背景都跟着变，也不叠模糊与遮罩。</p>
+        <p class="desk-hint">{{ t("ui.wall.themeHint") }}</p>
       </div>
 
       <!-- 纯色 -->
@@ -159,8 +159,8 @@
 
       <!-- 链接 -->
       <div v-else class="url-row">
-        <GlassField v-model="url" type="url" label="壁纸图片链接" placeholder="https://example.com/wallpaper.jpg" @keydown.enter="applyUrl" />
-        <GlassButton text label="使用" @click="applyUrl" />
+        <GlassField v-model="url" type="url" :label="t('ui.wall.urlLabel')" placeholder="https://example.com/wallpaper.jpg" @keydown.enter="applyUrl" />
+        <GlassButton text :label="t('ui.wall.use')" @click="applyUrl" />
       </div>
     </div>
   </div>
@@ -182,6 +182,7 @@ import { Chips, GlassButton, GlassField, toast } from "@/ui/controls"
 import { computed, defineComponent, h, reactive, ref, watch } from "vue"
 import type { Component } from "vue"
 import { CalendarDays, Camera, Droplet, FolderOpen, Globe, Heart, Images, Link, Palette, Shuffle } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import { addFavorite, dropFavorite, isFav, wallpaper, setWallpaper } from "@/core/store"
 import {
   alcyBatch,
@@ -225,7 +226,7 @@ const FavDot = defineComponent({
       active: on.value,
       tone: "photo",
       variant: on.value ? "danger" : "default",
-      label: on.value ? "取消收藏" : "收藏",
+      label: on.value ? t("ui.wall.unfav") : t("ui.wall.fav"),
       onClick: (e: MouseEvent) => { e.stopPropagation(); void toggleFav(props.value) },
     })
   },
@@ -245,7 +246,7 @@ async function toggleFav(value: string) {
     if (want) await addFavorite(value)
     else await dropFavorite(name)
   } catch (e) {
-    toast((e as Error)?.message || "收藏失败")
+    toast((e as Error)?.message || t("ui.wall.favFail"))
   } finally {
     const rest = { ...favPending.value }
     delete rest[name]
@@ -255,15 +256,15 @@ async function toggleFav(value: string) {
 
 /** 壁纸来源与显示标签 */
 const SOURCES: { value: WallSource; label: string; desc: string; icon: Component }[] = [
-  { value: "theme", label: "跟随思源", desc: "透出思源背景", icon: Palette },
-  { value: "siyuan", label: "思源资源", desc: "笔记本图片", icon: FolderOpen },
-  { value: "cover", label: "思源头图", desc: "本地 18 分类", icon: Images },
-  { value: "bing", label: "必应每日", desc: "最近 8 天", icon: CalendarDays },
-  { value: "gitee", label: "国内图源", desc: "alcy 直出", icon: Globe },
-  { value: "picsum", label: "Picsum", desc: "需科学上网", icon: Camera },
-  { value: "random", label: "本地随机", desc: "题头图里随机", icon: Shuffle },
-  { value: "solid", label: "纯色", desc: "24 色板", icon: Droplet },
-  { value: "url", label: "图片链接", desc: "自定义图片", icon: Link },
+  { value: "theme", label: t("ui.wall.srcThemeLabel"), desc: t("ui.wall.srcThemeDesc"), icon: Palette },
+  { value: "siyuan", label: t("ui.wall.srcAssetsLabel"), desc: t("ui.wall.srcAssetsDesc"), icon: FolderOpen },
+  { value: "cover", label: t("ui.wall.srcCoverLabel"), desc: t("ui.wall.srcCoverDesc"), icon: Images },
+  { value: "bing", label: t("ui.wall.srcBingLabel"), desc: t("ui.wall.srcBingDesc"), icon: CalendarDays },
+  { value: "gitee", label: t("ui.wall.srcAlcyLabel"), desc: t("ui.wall.srcAlcyDesc"), icon: Globe },
+  { value: "picsum", label: t("ui.wall.srcPicsumLabel"), desc: t("ui.wall.srcPicsumDesc"), icon: Camera },
+  { value: "random", label: t("ui.wall.srcRandomLabel"), desc: t("ui.wall.srcRandomDesc"), icon: Shuffle },
+  { value: "solid", label: t("ui.wall.srcSolidLabel"), desc: t("ui.wall.srcSolidDesc"), icon: Droplet },
+  { value: "url", label: t("ui.wall.srcUrlLabel"), desc: t("ui.wall.srcUrlDesc"), icon: Link },
 ]
 
 const groups = ref<CoverGroup[]>([])
@@ -302,7 +303,7 @@ const total = computed(() => groups.value.reduce((n, g) => n + g.items.length, 0
 
 /** 分类标签（分类 + 数量），与其它面板共用 Chips；标签全部换行列出来 */
 const catOptions = computed(() => [
-  { label: `全部 ${total.value}`, value: "" },
+  { label: t("ui.wall.catAll", { n: total.value }), value: "" },
   ...groups.value.map((g) => ({ label: `${g.label} ${g.items.length}`, value: g.key })),
 ])
 
@@ -407,7 +408,7 @@ async function reshuffle(s: "picsum" | "gitee") {
   try {
     const images = await (s === "picsum" ? picsumShuffle() : alcyBatch())
     ;(s === "picsum" ? picsum : alcy).value = images
-  } catch (error) { toast(`取图失败：${(error as Error).message}`) }
+  } catch (error) { toast(t("ui.wall.fetchFailDetail", { msg: (error as Error).message })) }
   finally { busy[s] = false }
 }
 

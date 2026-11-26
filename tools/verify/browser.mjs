@@ -67,7 +67,7 @@ export async function openBrowser({ viewport = { width: 1440, height: 960 }, sto
     const url = `http://127.0.0.1:${server.address().port}`
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
-    page.on('console', message => { if (message.type() === 'error' && message.text().includes('[desk-cards]')) errors.push(message.text()) })
+    page.on('console', message => { if (message.type() === 'error' && message.text().includes('[siyuan-sipage]')) errors.push(message.text()) })
     if (clock) await page.clock.install({ time: clock })
     await page.route('**/*', route => {
       const request = route.request()
@@ -86,7 +86,7 @@ export async function openBrowser({ viewport = { width: 1440, height: 960 }, sto
     })
     await page.addInitScript(seed => {
       for (const [key, value] of Object.entries(seed)) localStorage.setItem(key, JSON.stringify(value))
-    }, { 'desk-cards:appearance': { cell: 27, motion: false }, ...storage })
+    }, { 'siyuan-sipage-petal:appearance': { cell: 27, motion: false }, ...storage })
     return {
       page, errors, url,
       async goto(query = '') {

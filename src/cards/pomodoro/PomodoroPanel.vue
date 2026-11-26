@@ -7,21 +7,21 @@
     >
       <div class="pm-ring" :style="{ '--pm-p': percent }">
         <b>{{ clockText(left) }}</b>
-        <span>{{ pomodoro.phase === "focus" ? "专注" : "休息" }} · 第 {{ pomodoro.round + 1 }} 个</span>
+        <span>{{ t(pomodoro.phase === "focus" ? "card.pomodoro.phase.focus" : "card.pomodoro.phase.rest") }} · {{ t("card.pomodoro.round", { n: pomodoro.round + 1 }) }}</span>
       </div>
       <div class="pm-actions">
-        <GlassButton :icon="running ? Pause : Play" :label="running ? '暂停' : '开始'" @click="running ? pause() : start()" />
-        <GlassButton :icon="RotateCcw" label="重置" @click="reset" />
-        <GlassButton :icon="SkipForward" label="跳过本阶段" @click="skip" />
+        <GlassButton :icon="running ? Pause : Play" :label="running ? t('card.pomodoro.pause') : t('card.pomodoro.start')" @click="running ? pause() : start()" />
+        <GlassButton :icon="RotateCcw" :label="t('common.reset')" @click="reset" />
+        <GlassButton :icon="SkipForward" :label="t('card.pomodoro.skip')" @click="skip" />
       </div>
     </div>
 
     <div class="pm-pane desk-pane is-right">
-      <h4 class="pm-title">时长</h4>
-      <Slider v-model="pomodoro.focus" label="专注" :min="5" :max="60" :step="5" suffix="分" :default-value="25" />
-      <Slider v-model="pomodoro.rest" label="休息" :min="1" :max="20" :step="1" suffix="分" :default-value="5" />
+      <h4 class="pm-title">{{ t("card.pomodoro.duration") }}</h4>
+      <Slider v-model="pomodoro.focus" :label="t('card.pomodoro.phase.focus')" :min="5" :max="60" :step="5" :suffix="t('card.pomodoro.unit.minute')" :default-value="25" />
+      <Slider v-model="pomodoro.rest" :label="t('card.pomodoro.phase.rest')" :min="1" :max="20" :step="1" :suffix="t('card.pomodoro.unit.minute')" :default-value="5" />
 
-      <h4 class="pm-title">背景与白噪音</h4>
+      <h4 class="pm-title">{{ t("card.pomodoro.background") }}</h4>
       <div class="pm-covers">
         <button
           v-for="c in COVERS.slice(0, 8)"
@@ -44,13 +44,13 @@
         />
       </div>
 
-      <h4 class="pm-title">记录 · 最近 {{ records.length }} 个</h4>
+      <h4 class="pm-title">{{ t("card.pomodoro.log", { n: records.length }) }}</h4>
       <ul class="pm-log">
         <li v-for="r in records" :key="r.at">
           <span>{{ new Date(r.at).toLocaleString("zh-CN", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) }}</span>
-          <b>{{ r.minutes }} 分钟</b>
+          <b>{{ t("card.pomodoro.log.minutes", { n: r.minutes }) }}</b>
         </li>
-        <li v-if="!records.length" class="pm-empty desk-empty is-tight"><EmptyArt /><span>完成一个番茄就会出现在这里</span></li>
+        <li v-if="!records.length" class="pm-empty desk-empty is-tight"><EmptyArt /><span>{{ t("card.pomodoro.log.empty") }}</span></li>
       </ul>
     </div>
   </div>
@@ -60,6 +60,7 @@
 import { EmptyArt, GlassButton } from "@/ui/controls"
 import { Pause, Play, RotateCcw, SkipForward } from "lucide-vue-next"
 import Slider from "@/ui/Slider.vue"
+import { t } from "@/core/i18n"
 import { COVERS } from "@/core/image"
 import { NOISES, clockText, pause, pomodoro, records, reset, skip, start, toggleNoise, usePomodoro } from "./pomodoro"
 

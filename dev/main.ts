@@ -1,45 +1,24 @@
-/** 框架验证页：桌面壳 + 文档内嵌卡片 */
+/** 框架验证页：桌面壳 + 文档内嵌卡片（存储走 localStorage 版 petal，与插件同一套读写路径） */
 import "@/styles/index.css"
 import { createApp } from "vue"
-import { appearance, bootStore, countdown, desk, wallpaper } from "@/core/store"
+import { bootStore, useStorage } from "@/core/store"
 import DeskShell from "@/ui/DeskShell.vue"
 import { hydrateCards, startCardObserver } from "@/embed/cards"
-import { DESK_ICON } from "@/ui/controls"
+import { SIPAGE_ICON } from "@/ui/controls"
 
 // 与真实插件使用同一份 symbol。
-document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${DESK_ICON}</svg>`)
+document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${SIPAGE_ICON}</svg>`)
 
-// 验证页专用：插件本体只读思源的插件存储，这里用 localStorage 预置一份桌面给截图脚本
+/* 验证页专用 driver：把 petal 落在 localStorage 的一个前缀下。
+   插件本体用思源的 loadData/saveData，这里换成 localStorage，读写路径与键名完全一致，
+   截图脚本因此可以直接预置 `siyuan-sipage-petal:desk` 这类键。 */
+const PETAL = "siyuan-sipage-petal:"
+useStorage({
+  load: async (key) => JSON.parse(localStorage.getItem(PETAL + key) || "null"),
+  save: async (key, value) => localStorage.setItem(PETAL + key, JSON.stringify(value)),
+})
+
 await bootStore()
-const seed = localStorage.getItem("desk-cards:desk")
-if (seed) {
-  try {
-    const parsed = JSON.parse(seed) as { cards?: typeof desk.cards }
-    if (Array.isArray(parsed.cards)) desk.cards = parsed.cards
-  } catch {}
-}
-// 外观同理（排版相关的 宽度 / 单格 / 间距 要能被脚本改）
-const seedAppearance = localStorage.getItem("desk-cards:appearance")
-if (seedAppearance) {
-  try {
-    Object.assign(appearance, JSON.parse(seedAppearance))
-  } catch {}
-}
-// 壁纸同理（截图脚本要能预置「跟随思源」这类底片）
-const seedWallpaper = localStorage.getItem("desk-cards:wallpaper")
-if (seedWallpaper) {
-  try {
-    Object.assign(wallpaper, JSON.parse(seedWallpaper))
-  } catch {}
-}
-// 倒数日事件同理（验证脚本要能预置几条，才能截到有内容的卡片）
-const seedCountdown = localStorage.getItem("desk-cards:countdown")
-if (seedCountdown) {
-  try {
-    const parsed = JSON.parse(seedCountdown) as { events?: typeof countdown.events }
-    if (Array.isArray(parsed.events)) countdown.events = parsed.events
-  } catch {}
-}
 
 createApp(DeskShell).mount("#app")
 

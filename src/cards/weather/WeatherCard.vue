@@ -9,7 +9,7 @@
         </div>
         <div class="right">
           <span class="desc">{{ cond.label }}<component :is="cond.icon" class="icon" :stroke-width="1.6" /></span>
-          <span class="range">最低 {{ today.min }}° 最高 {{ today.max }}°</span>
+          <span class="range">{{ t("card.weather.low", { n: today.min }) }} {{ t("card.weather.high", { n: today.max }) }}</span>
         </div>
       </div>
 
@@ -33,8 +33,8 @@
     </template>
 
     <div v-else class="state">
-      <span>{{ error || "加载中…" }}</span>
-      <GlassButton v-if="error" :icon="RotateCcw" label="重试" text tone="photo" @click.stop="reload" />
+      <span>{{ error || t("common.loading") }}</span>
+      <GlassButton v-if="error" :icon="RotateCcw" :label="t('common.retry')" text tone="photo" @click.stop="reload" />
     </div>
   </div>
 </template>
@@ -46,6 +46,7 @@
  */
 import { computed } from "vue"
 import { MapPin, RotateCcw } from "lucide-vue-next"
+import { t } from "@/core/i18n"
 import { GlassButton } from "@/ui/controls"
 import { describe, skyBackdrop, useWeather } from "./weather"
 
@@ -60,11 +61,19 @@ const hours = computed(() => (data.value?.hours ?? []).slice(1, 5))
 
 const forecast = computed(() => (data.value?.days ?? []).slice(1, 7))
 
-const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+const WEEK = [
+  t("card.weather.week.sun"),
+  t("card.weather.week.mon"),
+  t("card.weather.week.tue"),
+  t("card.weather.week.wed"),
+  t("card.weather.week.thu"),
+  t("card.weather.week.fri"),
+  t("card.weather.week.sat"),
+]
 function weekOf(date: string, i: number) {
-  if (i === 0) return "明天"
+  if (i === 0) return t("common.tomorrow")
   const d = new Date(date)
-  return Number.isNaN(d.getTime()) ? `第${i + 1}天` : WEEK[d.getDay()]
+  return Number.isNaN(d.getTime()) ? t("card.weather.dayIndex", { n: i + 1 }) : WEEK[d.getDay()]
 }
 </script>
 
