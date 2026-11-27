@@ -9,9 +9,11 @@
  */
 import type { Component } from "vue"
 import { cardDesc, cardName } from "@/core/i18n"
-import { BarChart3, CalendarClock, CalendarDays, Clock, CloudSun, Boxes, FolderOpen, Grid3x3, History, Zap, Languages, ListTodo, NotebookPen, Quote, ScrollText, Timer } from "lucide-vue-next"
+import { BarChart3, CalendarClock, CalendarDays, Clock, CloudSun, Boxes, FolderOpen, Grid3x3, History, Zap, Languages, ListTodo, NotebookPen, Quote, ScrollText, SquarePen, Timer } from "lucide-vue-next"
 import DailyCard from "@/cards/daily/DailyCard.vue"
 import DailyPanel from "@/cards/daily/DailyPanel.vue"
+import QuickNoteCard from "@/cards/quicknote/QuickNoteCard.vue"
+import QuickNotePanel from "@/cards/quicknote/QuickNotePanel.vue"
 import CalendarCard from "@/cards/calendar/CalendarCard.vue"
 import CalendarPanel from "@/cards/calendar/CalendarPanel.vue"
 import ClockCard from "@/cards/clock/ClockCard.vue"
@@ -46,12 +48,26 @@ export type CardSize = `${number}x${number}`
 /** 尺寸约束（注册表里每张卡可选声明一次；拖动、整理、补位都过同一套实现） */
 export type CardConstrain = { step?: number; min?: number; max?: number }
 
+/**
+ * 卡片分类：卡片库按它分组，顺序即分组顺序。
+ *   note 笔记 / task 任务 / time 时间 / data 数据 / life 生活 / system 系统
+ */
+export type CardCategory = "note" | "task" | "time" | "data" | "life" | "system"
+export const CARD_CATEGORIES: CardCategory[] = ["note", "task", "time", "data", "life", "system"]
+
 interface CardDef {
 /** 唯一 id，同时用于文档内嵌属性 data-sipage-card */
   id: string
   name: string
   /** 一句话说明，卡片库里显示 */
   desc?: string
+  /** 所属分类：卡片库按它分组 */
+  category: CardCategory
+  /**
+   * 能在卡片里"动手"：直接写思源数据（追加文档 / 勾选）或执行动作。
+   * 只做展示的卡不声明；卡片库里会给它一个「可写」标记。
+   */
+  writable?: boolean
   /** 卡片组件：只负责内容渲染，props 会收到 { size } */
   component: Component
   /** 卡片的线性图标（对话框标题栏与卡片库共用） */
@@ -81,6 +97,7 @@ interface CardDef {
 export const CARDS: CardDef[] = [
   {
     id: "clock",
+    category: "time",
     name: cardName("clock"),
     desc: cardDesc("clock"),
     component: ClockCard,
@@ -91,6 +108,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "calendar",
+    category: "time",
     name: cardName("calendar"),
     desc: cardDesc("calendar"),
     component: CalendarCard,
@@ -104,6 +122,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "english",
+    category: "life",
     name: cardName("english"),
     desc: cardDesc("english"),
     component: EnglishCard,
@@ -111,6 +130,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "yiyan",
+    category: "life",
     name: cardName("yiyan"),
     desc: cardDesc("yiyan"),
     component: YiyanCard,
@@ -118,6 +138,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "shici",
+    category: "life",
     name: cardName("shici"),
     desc: cardDesc("shici"),
     component: ShiciCard,
@@ -125,6 +146,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "weather",
+    category: "life",
     name: cardName("weather"),
     desc: cardDesc("weather"),
     component: WeatherCard,
@@ -134,6 +156,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "countdown",
+    category: "life",
     name: cardName("countdown"),
     desc: cardDesc("countdown"),
     component: CountdownCard,
@@ -146,6 +169,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "heatmap",
+    category: "data",
     name: cardName("heatmap"),
     desc: cardDesc("heatmap"),
     component: HeatmapCard,
@@ -158,6 +182,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "pomodoro",
+    category: "task",
     name: cardName("pomodoro"),
     desc: cardDesc("pomodoro"),
     component: PomodoroCard,
@@ -168,6 +193,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "daily",
+    category: "note",
     name: cardName("daily"),
     desc: cardDesc("daily"),
     component: DailyCard,
@@ -178,7 +204,22 @@ export const CARDS: CardDef[] = [
     surface: "solid",
   },
   {
+    id: "quicknote",
+    category: "note",
+    name: cardName("quicknote"),
+    desc: cardDesc("quicknote"),
+    component: QuickNoteCard,
+    icon: SquarePen,
+    detail: QuickNotePanel,
+    writable: true,
+    /* 详情是两栏（目标文档 / 格式与历史），不需要三栏那么宽 */
+    detailSize: { width: "min(880px, 92vw)", height: "min(560px, 84vh)" },
+    surface: "solid",
+  },
+  {
     id: "memo",
+    category: "task",
+    writable: true,
     name: cardName("memo"),
     desc: cardDesc("memo"),
     component: MemoCard,
@@ -190,6 +231,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "docstats",
+    category: "data",
     name: cardName("docstats"),
     desc: cardDesc("docstats"),
     component: DocStatsCard,
@@ -201,6 +243,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "quickopen",
+    category: "note",
     name: cardName("quickopen"),
     desc: cardDesc("quickopen"),
     component: QuickPickCard,
@@ -211,6 +254,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "recent",
+    category: "note",
     name: cardName("recent"),
     desc: cardDesc("recent"),
     component: RecentDocsCard,
@@ -221,6 +265,8 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "shortcut",
+    category: "system",
+    writable: true,
     name: cardName("shortcut"),
     desc: cardDesc("shortcut"),
     component: ShortcutCard,
@@ -232,6 +278,7 @@ export const CARDS: CardDef[] = [
   },
   {
     id: "block",
+    category: "note",
     name: cardName("block"),
     desc: cardDesc("block"),
     component: BlockCard,

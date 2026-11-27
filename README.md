@@ -68,6 +68,7 @@ The desk has its own clock panel on the left (same grid layer as the tool group)
 | Writing heatmap | Writing volume by day; a whole year in details |
 | Pomodoro | 25 minutes focus + 5 minutes break |
 | Daily note | One day’s diary: blocks / words / open tasks and the first lines; edited in place with SiYuan’s own editor in details |
+| Quick note | Type one line, press Enter — it is appended to today’s diary (or to any document you pin in details); format can be plain text, a todo or a timestamp |
 | Agenda memo | Today / overdue / memo sections, check the dot to finish; a date makes it a schedule, no date keeps it in the inbox |
 | Doc stats | Documents / words / created today, grouped by notebook |
 | Daily quote | One sentence a day with a wallpaper |
@@ -145,7 +146,7 @@ You can also write the block by hand:
 <div data-sipage-card="yiyan" data-size="2x2" style="height:320px"></div>
 ```
 
-- `data-sipage-card`: card id — `clock`, `calendar`, `weather`, `yiyan`, `shici`, `english`, `countdown`, `heatmap`, `pomodoro`, `memo`, `daily`, `docstats`, `quickopen`, `recent`, `shortcut`, `block`.
+- `data-sipage-card`: card id — `clock`, `calendar`, `weather`, `yiyan`, `shici`, `english`, `countdown`, `heatmap`, `pomodoro`, `memo`, `quicknote`, `daily`, `docstats`, `quickopen`, `recent`, `shortcut`, `block`.
 - `data-size`: `1x1`, `1x2`, `2x1`, `2x2`, `2x4`, `4x2`; defaults to `2x2`.
 
 ## Troubleshooting

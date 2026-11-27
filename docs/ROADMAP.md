@@ -126,20 +126,28 @@
 
 每阶段独立可发布；每阶段结束都必须 `pnpm check` 全绿 + 真机点一遍。
 
-### 阶段 1 — 快速记录卡（含 `CardDef` 最小扩展）
+### 阶段 1 — 快速记录卡（含 `CardDef` 最小扩展）✅ 已完成
 
 **目标**：在桌面上就能往"今天的日记 / 指定文档"追加一行，不再打开文档找位置。
 
 动作：
 
-- [ ] `CardDef` 增加两个字段：`category`（`time` / `note` / `task` / `data` / `life`）、`writable?: boolean`
-- [ ] `LibraryPanel`（卡片库）按 `category` 分组显示，标题走词条
-- [ ] 新卡 `src/cards/quicknote/`：`QuickNoteCard.vue`（一行输入 + 提交）、`quicknote.ts`（目标文档状态）
-- [ ] 写入走 `/api/block/appendBlock`（`dataType: markdown`），目标默认「今天的日记」，可在详情里改成任意文档
-- [ ] 词条：卡片名 / 说明 / 占位文案 / 成功与失败提示（中英）
-- [ ] README 卡片表 + 内嵌 id 列表 + `data-sipage-card` 示例
+- [x] `CardDef` 增加两个字段：`category`（`note` / `task` / `time` / `data` / `life` / `system`）、`writable?: boolean`
+- [x] `LibraryPanel`（卡片库）按 `category` 分组显示（分组顺序固定在 `CARD_CATEGORIES`，空组不显示），「可写」标记来自 `writable`
+- [x] 新卡 `src/cards/quicknote/`：`QuickNoteCard.vue`（一行输入 + 提交）、`QuickNotePanel.vue`（目标 / 格式 / 历史）、`quicknote.ts`（模型）、`styles.css`（样式外置）
+- [x] 写入走 `/api/block/appendBlock`（`dataType: markdown`），目标默认「今天的日记」，可在详情里改成任意文档
+- [x] 词条：卡片名 / 说明 / 占位文案 / 成功与失败提示 / 分组名（中英，+31 条）
+- [x] README 卡片表 + 内嵌 id 列表（`quicknote`）
+- [x] 浏览器回归 `tools/verify/shot-quicknote.mjs`（已进 `check:browser`）
 
-验收：真机输入一段文字 → 当天日记末尾出现该段；切换目标文档后写入位置随之改变；`pnpm check` 全绿。
+验收记录（2026-11-27，headless Edge）：
+
+- 渲染卡片时 `createDailyNote` 调用 **0** 次（卡片不查文档、不凭空建日记）
+- 回车提交 → `/api/block/appendBlock`，`dataType=markdown`，toast 回目标标题，历史 +1、计数 +1
+- 详情三格式可切换；切「待办」后写入体为 `- [ ] 待办格式的一条`
+- `pnpm check` 全绿；`shot-quicknote.mjs` 七条断言全过、无浏览器报错
+
+待人工验证：真机上往今天的日记写一行（当天文档末尾应出现），再在详情里钉一篇别的文档写第二行。
 
 工作量：S–M（1 张卡 + 一次 `CardDef` 扩展）。
 

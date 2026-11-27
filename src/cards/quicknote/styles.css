@@ -1,0 +1,216 @@
+.qn-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-1h);
+  height: 100%;
+  padding: var(--desk-sp-2h);
+  min-height: 0;
+}
+
+.qn-head {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1h);
+  min-width: 0;
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-3);
+}
+
+.qn-target {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--desk-text-2);
+}
+
+.qn-count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.qn-form {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1);
+  min-width: 0;
+  cursor: text;
+}
+
+.qn-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.qn-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+.qn-row {
+  min-width: 0;
+}
+
+.qn-row-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1h);
+  width: 100%;
+  height: 24px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: var(--desk-r-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--desk-fs-caption);
+  text-align: left;
+  cursor: pointer;
+}
+
+.qn-row-btn:hover {
+  background: var(--dg-hover, color-mix(in srgb, var(--desk-text) 7%, transparent));
+}
+
+.qn-time {
+  flex: none;
+  color: var(--desk-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.qn-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--desk-text-2);
+}
+
+.qn-hint {
+  margin: 0;
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-3);
+}
+
+/* ── 详情：左「写到哪」/ 右「怎么写 + 最近记录」 ── */
+.qnp {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.qnp-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-1h);
+  padding: var(--desk-sp-3);
+  min-height: 0;
+  overflow: auto;
+}
+
+.qnp-col.is-left {
+  flex: 0 0 264px;
+}
+
+.qnp-col.is-right {
+  flex: 1 1 auto;
+}
+
+.qnp-sub {
+  margin: 0;
+}
+
+.qnp-target {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1);
+  min-width: 0;
+}
+
+.qnp-target-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--desk-fs-body);
+}
+
+.qnp-tag {
+  flex: none;
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-3);
+}
+
+.qnp-search {
+  display: flex;
+  gap: var(--desk-sp-1h);
+}
+
+.qnp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.qnp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: auto;
+}
+
+.qnp-item {
+  display: flex;
+  align-items: center;
+  gap: var(--desk-sp-1h);
+  height: 32px;
+  padding: 0 6px;
+  border-radius: var(--desk-r-sm);
+  font-size: var(--desk-fs-sm);
+  cursor: pointer;
+}
+
+.qnp-item:hover {
+  background: color-mix(in srgb, var(--desk-text) 7%, transparent);
+}
+
+.qnp-item.is-on {
+  color: var(--desk-accent);
+}
+
+.qnp-ic {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: var(--desk-r-sm);
+  background: color-mix(in srgb, var(--desk-text) 7%, transparent);
+  color: var(--desk-text-2);
+}
+
+.qnp-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.qnp-time {
+  flex: none;
+  color: var(--desk-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.qnp-doc {
+  flex: 0 1 40%;
+  min-width: 0;
+  font-size: var(--desk-fs-caption);
+  color: var(--desk-text-3);
+  text-align: right;
+}
+
+.qnp-foot {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -68,6 +68,7 @@
 | 写作热力图 | 按天看写作量，详情里是一整年 |
 | 番茄钟 | 25 分钟专注 + 5 分钟休息 |
 | 日记 | 某一天的日记：块 / 字 / 待办与正文前几行，详情里就地编辑（思源原生编辑体验） |
+| 快速记录 | 敲一行、回车，直接追加到今天的日记（也可在详情里钉到任意文档）；格式可选纯文本 / 待办 / 时间戳 |
 | 日程备忘 | 今天 / 逾期 / 备忘三段，勾掉即完成；有日期就是日程，没日期进收件箱 |
 | 文档统计 | 文档数 / 字数 / 今日新建，按笔记本分组 |
 | 每日一言 | 每天一句话，附赠一张壁纸 |
@@ -145,7 +146,7 @@
 <div data-sipage-card="yiyan" data-size="2x2" style="height:320px"></div>
 ```
 
-- `data-sipage-card`：卡片 id，可选 `clock` / `calendar` / `weather` / `yiyan` / `shici` / `english` / `countdown` / `heatmap` / `pomodoro` / `memo` / `daily` / `docstats` / `quickopen` / `recent` / `shortcut` / `block`。
+- `data-sipage-card`：卡片 id，可选 `clock` / `calendar` / `weather` / `yiyan` / `shici` / `english` / `countdown` / `heatmap` / `pomodoro` / `memo` / `quicknote` / `daily` / `docstats` / `quickopen` / `recent` / `shortcut` / `block`。
 - `data-size`：`1x1` / `1x2` / `2x1` / `2x2` / `2x4` / `4x2`，默认 `2x2`。
 
 ## 常见问题
