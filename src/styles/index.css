@@ -538,7 +538,7 @@ html.dark,
   color: var(--desk-text-2);
 }
 
-.desk-set .set-h2 { margin: 0; font-size: var(--desk-fs-title); font-weight: var(--desk-fw-semibold); }
+.desk-set .desk-set-h2 { margin: 0; font-size: var(--desk-fs-title); font-weight: var(--desk-fw-semibold); }
 .desk-set .desk-set-p { margin: 0; font-size: var(--desk-fs-body); line-height: 1.6; color: var(--desk-text-2); }
 
 .desk-hint {

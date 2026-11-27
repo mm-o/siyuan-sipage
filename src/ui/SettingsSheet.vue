@@ -242,7 +242,7 @@ function resetAll() {
 </script>
 
 <style scoped>
-.set {
+.desk-set {
   display: flex;
   width: 100%;
   height: 100%;

@@ -28,7 +28,7 @@
     "check:bp": "node tools/verify/check-breakpoints.mjs",
     "check:i18n": "node tools/verify/check-i18n.mjs",
     "check": "pnpm check:types && pnpm check:arch && pnpm check:bp && pnpm check:i18n && pnpm check:css && pnpm build && pnpm check:dist",
-    "check:browser": "pnpm dev:card && node tools/verify/shot-deskclock.mjs && node tools/verify/shot-arrange.mjs && node tools/verify/shot-ui.mjs && node tools/verify/shot-theme.mjs && node tools/verify/shot-glass.mjs && node tools/verify/shot-surfaces.mjs && node tools/verify/shot-agenda.mjs && node tools/verify/shot-daily.mjs && node tools/verify/shot-controls.mjs && node tools/verify/shot-shortcut.mjs && node tools/verify/shot-quicknote.mjs",
+    "check:browser": "pnpm dev:card && node tools/verify/shot-deskclock.mjs && node tools/verify/shot-arrange.mjs && node tools/verify/shot-ui.mjs && node tools/verify/shot-theme.mjs && node tools/verify/shot-glass.mjs && node tools/verify/shot-surfaces.mjs && node tools/verify/shot-agenda.mjs && node tools/verify/shot-daily.mjs && node tools/verify/shot-controls.mjs && node tools/verify/shot-shortcut.mjs && node tools/verify/shot-quicknote.mjs && node tools/verify/shot-settings-layout.mjs",
     "check:css": "node tools/verify/check-css.mjs"
   },
   "keywords": [

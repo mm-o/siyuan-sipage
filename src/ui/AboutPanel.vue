@@ -1,7 +1,7 @@
 <template>
   <section class="about desk-set-page">
     <header class="about-head">
-      <h2 class="set-h2">{{ t('ui.about.title') }}</h2>
+      <h2 class="desk-set-h2">{{ t('ui.about.title') }}</h2>
       <GlassButton text :icon="ExternalLink" :label="LOG_LABEL" @click="openLog" />
     </header>
     <article class="about-body" v-html="html" />

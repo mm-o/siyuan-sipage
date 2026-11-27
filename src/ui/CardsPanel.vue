@@ -1,6 +1,6 @@
 <template>
   <div class="desk-set-page">
-    <h2 class="set-h2">{{ t('ui.cards.title') }}</h2>
+    <h2 class="desk-set-h2">{{ t('ui.cards.title') }}</h2>
     <p class="desk-set-p">{{ t('ui.cards.intro') }}</p>
 
     <div class="desk-set-group">
