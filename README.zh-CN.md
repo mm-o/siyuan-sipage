@@ -181,6 +181,8 @@ pnpm check:browser   # 构建独立验证页并跑五组隔离浏览器回归
 
 集市的硬性要求与首次收录步骤见 **[docs/RELEASE.md](docs/RELEASE.md)**：仓库公开、默认分支 `main`、Release 必须带 `package.zip`、`plugin.json` 的 `name` 必须等于仓库名、图标 160×160 ≤64KiB、预览 1024×768 ≤512KiB。
 
+接下来做什么、为什么这么做，见 **[docs/ROADMAP.md](docs/ROADMAP.md)**：与其它主页类插件的逐组件对照、我们接受与拒绝的原则、以及分阶段的改造计划与验收标准。
+
 ## 许可
 
 MIT，见 [LICENSE](LICENSE)（`LICENSE.md` 是同一份文字，随 `package.zip` 分发）。随包分发的第三方代码（Vue、Lucide、tyme4ts、SiYuan Petal 类型声明）及其许可写在 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，两份文件都会打进 `package.zip`。

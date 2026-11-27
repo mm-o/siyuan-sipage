@@ -181,6 +181,8 @@ Layout: `src/core` (state / images / registry), `src/cards` (16 cards), `src/ui`
 
 The bazaar requirements and the first-listing steps live in **[docs/RELEASE.md](docs/RELEASE.md)**: public repository, `main` as the default branch, `package.zip` attached to the release, `plugin.json` `name` equal to the repository name, icon 160×160 ≤64KiB, preview 1024×768 ≤512KiB.
 
+What gets built next, and why, is in **[docs/ROADMAP.md](docs/ROADMAP.md)** (a component-by-component comparison with other homepage-style plugins, the principles we accept and reject, and the phased plan with acceptance criteria).
+
 ## License
 
 MIT — see [LICENSE](LICENSE); `LICENSE.md` is the same text packed into `package.zip`. Third-party code shipped in the bundle (Vue, Lucide, tyme4ts, SiYuan Petal type declarations) and its licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); both files are packed into `package.zip`.
