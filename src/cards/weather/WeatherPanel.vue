@@ -1,7 +1,7 @@
 <template>
   <div class="wx-panel desk-seq">
     <div class="wx-panel-inner desk-seq">
-      <!-- 左：天气（结构对齐 参考实现 的 Content.vue：头 → 大温度 → 指标 → 天气状况 → 7日） -->
+      <!-- 左：天气（结构对齐 iTab 的 Content.vue：头 → 大温度 → 指标 → 天气状况 → 7日） -->
       <section class="wx-main desk-pane is-left" :style="{ backgroundImage: sky }">
         <header class="wx-head">
           <p class="wx-main-place">
@@ -73,7 +73,7 @@
         </template>
       </section>
 
-      <!-- 右：天气列表（对齐 参考实现 的 weather-list.vue：240px 竖栏，当前项高亮，hover 出删除） -->
+      <!-- 右：天气列表（对齐 iTab 的 weather-list.vue：240px 竖栏，当前项高亮，hover 出删除） -->
               <PlacesDrawer
           :open="showPlaces"
           :places="locations"
@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 /**
- * 天气详情（两段式，结构与配色对齐 参考实现 的天气详情）
+ * 天气详情（两段式，结构与配色对齐 iTab 的天气详情）
  *
  * 左「天气」：地点/省份 + 描述 + 发布时间 → 80px 温度 + 描述/风/体感 → 指标行 →
  *            天气状况（24 小时）→ 7日天气预报（7 列 + 最高/最低温折线）。
@@ -99,7 +99,7 @@
  */
 import { computed, ref } from "vue"
 import { MapPin, RotateCcw } from "lucide-vue-next"
-import { t } from "@/core/i18n"
+import { t, weekdayFull } from "@/core/i18n"
 import { GlassButton } from "@/ui/controls"
 import { weather } from "@/core/store"
 import PlacesDrawer from "./PlacesDrawer.vue"
@@ -137,15 +137,7 @@ const chart = computed(() => {
 /* ── 窄屏：右栏收成「管理地点」按钮 ───────────────────── */
 const showPlaces = ref(false)
 
-const WEEK = [
-  t("card.weather.week.sun"),
-  t("card.weather.week.mon"),
-  t("card.weather.week.tue"),
-  t("card.weather.week.wed"),
-  t("card.weather.week.thu"),
-  t("card.weather.week.fri"),
-  t("card.weather.week.sat"),
-]
+const WEEK = [0, 1, 2, 3, 4, 5, 6].map(weekdayFull)
 
 function dayLabel(date: string, index: number) {
   if (index < 2) return index === 0 ? t("common.today") : t("common.tomorrow")
@@ -156,7 +148,7 @@ function dayLabel(date: string, index: number) {
 
 <style scoped>
 /**
- * 配色对齐 参考实现：天空渐变底 + 白字，内容区留白 pt-30 / pr-12 / pb-20 / pl-24，
+ * 配色对齐 iTab：天空渐变底 + 白字，内容区留白 pt-30 / pr-12 / pb-20 / pl-24，
  * 区块用 `rgb(255 255 255 / 8%)` 圆角块，右栏 `rgb(255 255 255 / 7%)` + 毛玻璃。
  * 这里不用 `--desk-*` 文字令牌：这张面板自己画背景（和照片卡同类），白字才可读。
  */
@@ -308,7 +300,7 @@ function dayLabel(date: string, index: number) {
   color: rgb(255 255 255 / 72%);
 }
 
-/* 大温度区：80px 数字 + 右侧描述/风/体感（对齐 参考实现 的 section.wx-main-temp {
+/* 大温度区：80px 数字 + 右侧描述/风/体感（对齐 iTab 的 section.wx-main-temp {
   font-size: 80px;
   font-weight: 400;
   line-height: 1;
@@ -340,7 +332,7 @@ function dayLabel(date: string, index: number) {
   color: rgb(255 255 255 / 72%);
 }
 
-/* 指标行（参考实现的 ul/* 圆角块（参考实现：rounded-xl bg-white/8 px-3.5 py-3） */
+/* 指标行（iTab的 ul/* 圆角块（iTab：rounded-xl bg-white/8 px-3.5 py-3） */
 .wx-block {
   padding: var(--desk-sp-3) 14px;
   border-radius: 12px;
@@ -447,7 +439,7 @@ function dayLabel(date: string, index: number) {
   color: rgb(255 255 255 / 55%);
 }
 
-/* 折线铺在 7 列下面一条，只做趋势（参考实现那条用 echarts，这里不引图表库） */
+/* 折线铺在 7 列下面一条，只做趋势（iTab那条用 echarts，这里不引图表库） */
 .wx-daily-chart {
   display: block;
   width: 100%;
@@ -455,7 +447,7 @@ function dayLabel(date: string, index: number) {
   margin-top: var(--desk-sp-1);
 }
 
-/* ── 右：天气列表（参考实现在 w-60 / bg-white-7 / p-4 pl-2）──── */
+/* ── 右：天气列表（iTab在 w-60 / bg-white-7 / p-4 pl-2）──── */
 /* 右侧地点栏：与日历/倒计日一致的双栏结构（统一令牌，不是浮层） */
 
 @container (max-width: 720px) {

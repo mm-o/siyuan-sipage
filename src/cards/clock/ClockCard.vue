@@ -36,7 +36,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { pad } from "@/core/util"
-import { t } from "@/core/i18n"
+import { weekdayFull } from "@/core/i18n"
 
 const props = defineProps<{ size?: string; w?: number; h?: number }>()
 
@@ -63,7 +63,7 @@ const monthDay = computed(() => {
   const d = now.value
   return `${d.getMonth() + 1}/${d.getDate()}`
 })
-const week = computed(() => t(`card.clock.week${now.value.getDay()}`))
+const week = computed(() => weekdayFull(now.value.getDay()))
 </script>
 
 <style scoped>

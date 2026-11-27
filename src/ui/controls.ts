@@ -462,14 +462,11 @@ export function photoBg(cover: string) {
  * 每「2 格 × 2 格」= 1 个元素（快捷方式 / 最近文档 / 快捷打开共用）。
  *   2×2 → 1 个；4×4 → 4 个；6×6 → 9 个；任意尺寸按 floor(w/2) × floor(h/2)。
  */
-/* ── 文档列表配色（移植 Neo 1.8.3 的「彩色」取色法）────────────
-   源码：Neo/styles/element/heading.scss
-     --_element-heading-colored-base: oklch(from var(--b3-theme-base) clamp(0.55, l, 0.68) max(c, 0.2) h);
-     --_element-heading-colored-c: 0.08;               // 默认；soft 0.05 / vivid 0.2
-     色相步进：calc(initial-hue + (level - 1) * 50)     // 每级 +50°
-     outline-l: l - 0.05（浅色）/ l + 0.05（深色）
-   也就是“中亮度 + 低彩度 + 50° 色相步进”，颜色是叠上去的淡色、文字用同族深色。 */
-const HUE_BASE = 265   // Neo 默认 base #6a85e3 的色相
+/* ── 文档列表配色：中亮度 + 低彩度 + 50° 色相步进 ─────────────
+   底色 = oklch(亮 0.82 / 彩 0.14 / 色相 265° + i×50°)，文字用同族深色；
+   相邻两行差 50° 色相，认得出来是不同行，又不会跳成彩虹。
+   （取色思路来自 Neo 主题的彩色标题方案。） */
+const HUE_BASE = 265   // 基准色相：偏蓝紫
 const HUE_STEP = 50    // 每行 +50°
 const DOC_L = 0.82     // 亮而有色
 const DOC_C = 0.14     // 稍艳一点：认得出来、不过分

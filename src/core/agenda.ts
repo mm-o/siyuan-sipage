@@ -12,7 +12,7 @@
  * 存储：`persisted()`（与桌面同一套 petal 存储，跟工作空间一起同步）。
  */
 import { computed, ref } from "vue"
-import { t } from "@/core/i18n"
+import { t, weekdayFull } from "@/core/i18n"
 import { persisted } from "@/core/store"
 import { pad } from "@/core/util"
 
@@ -70,7 +70,7 @@ const parts = (key: string) => key.split("-").map(Number)
 
 export function weekdayOf(key: string) {
   const [y, m, d] = parts(key)
-  return t(`core.weekday.${new Date(y, m - 1, d).getDay()}`)
+  return weekdayFull(new Date(y, m - 1, d).getDay())
 }
 
 /** 人类可读的日期：今天 / 明天 / 昨天 / 12月5日 / 2027年1月1日 */

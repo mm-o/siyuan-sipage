@@ -448,7 +448,7 @@ onBeforeUnmount(() => {
 .item.is-dragging :deep(.frame *) { pointer-events: none; }
 
 /* 工具组：品牌标常驻，悬停时向左展开操作按钮。 */
-.tools { position: relative; display: grid; place-items: center; width: 100%; height: 100%; --tool: 44px; --mini: 30px; }
+.tools { position: relative; display: grid; place-items: center; width: 100%; height: 100%; --tool: 44px; }
 .brand { width: var(--tool); height: var(--tool); }
 .brand svg { fill: currentColor; stroke: none; }
 .actions { position: absolute; top: 50%; right: calc(var(--tool) + 6px); display: none; width: max-content; transform: translateY(-50%); gap: var(--desk-sp-1); }

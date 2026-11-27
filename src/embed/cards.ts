@@ -8,11 +8,11 @@ import { createApp, h, type App } from "vue"
  * 文档内嵌：让卡片能插进文档，而且是「活的」
  *
  * 做法：
- *   1. 插入占位元素：<div data-desk-card="yiyan" data-size="2x2"></div>
+ *   1. 插入占位元素：<div data-sipage-card="yiyan" data-size="2x2"></div>
  *   2. 启动时扫描 DOM，把每个占位挂载成真实卡片
  *   3. MutationObserver 监听后续新增/移除（切文档、粘贴、撤销都能覆盖）
  */
-const ATTR = "data-desk-card"
+const ATTR = "data-sipage-card"
 const SIZES = new Set(["1x1", "1x2", "2x1", "2x2", "2x4", "4x2"])
 const mounted = new Map<HTMLElement, App>()
 

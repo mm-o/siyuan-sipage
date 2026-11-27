@@ -189,7 +189,7 @@ export function resetAppearance() {
 
 /* ── 卡片实例状态（每张卡一份）────────────────────────────
  * 同一张卡可以放多张，各有各的数据：状态按实例 uid 存，卡组件与详情弹窗拿 uid 取自己那一份。
- * 新实例第一次取用时用 defaults 建一份；旧版按卡片类型共享的数据由各卡自己「认领」迁移。
+ * 新实例第一次取用时用 defaults 建一份；之后这份状态就归这个实例自己。
  */
 interface CardStateBox {
   data: Record<string, Record<string, unknown>>
@@ -333,7 +333,7 @@ function seedDefaultDesk() {
 
 /** 按当前列数摆放「自动」面板：时钟居中、工具组最右（幂等，随时可调） */
 /**
- * 一键整理 / 自动补位（对齐 参考实现 的 findFitPosition）。
+ * 一键整理 / 自动补位（对齐 iTab 的 findFitPosition）。
  *
  * 规则：
  *   时钟那一块下方留 1 格，卡片从这里开始，逐行逐列找第一个空矩形；

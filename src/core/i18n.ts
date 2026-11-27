@@ -8,7 +8,8 @@
  * 不需要响应式包装。
  *
  * 键名约定（扁平、点号分段；前半段 = 出处，方便回查）：
- *   common.*        跨处复用的词（关闭 / 重置 / 加载中 …）
+ *   common.*        跨处复用的词（关闭 / 重置 / 加载中 / 星期 …）
+ *   common.weekday.*  星期（full / short / tiny 三档，0 = 周日），卡片一律用 weekdayFull() 等取，不要各存一份
  *   card.<id>.name  注册表里的卡片名
  *   card.<id>.desc  注册表里的一句话说明
  *   card.<id>.*     卡片自己的文案（卡片目录内使用）
@@ -22,7 +23,7 @@
 import zhCN from "@/i18n/zh_CN.json"
 import enUS from "@/i18n/en_US.json"
 
-export type Lang = "zh_CN" | "en_US"
+type Lang = "zh_CN" | "en_US"
 
 const DICTS: Record<Lang, Record<string, string>> = {
   zh_CN: zhCN as Record<string, string>,
@@ -58,3 +59,12 @@ export function t(key: string, vars?: Record<string, string | number>): string {
 export const cardName = (id: string) => t(`card.${id}.name`)
 /** 注册表用：卡片说明 */
 export const cardDesc = (id: string) => t(`card.${id}.desc`)
+
+/* ── 星期：0 = 周日 … 6 = 周六（与 Date.getDay() 同序）──
+ * 全站共用一套，卡片不要各自再存一份七天名字。 */
+/** 全称：周一 … 周日 / "Mon" … "Sun" */
+export const weekdayFull = (day: number) => t(`common.weekday.full.${day}`)
+/** 短名：一 … 日 / "Mon" … "Sun" */
+export const weekdayShort = (day: number) => t(`common.weekday.short.${day}`)
+/** 两字母缩写：一 … 日 / "Mo" … "Su"（只给窄表头，例如迷你日历） */
+export const weekdayTiny = (day: number) => t(`common.weekday.tiny.${day}`)

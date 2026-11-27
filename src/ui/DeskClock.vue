@@ -8,12 +8,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, shallowRef } from "vue"
 import { pad } from "@/core/util"
-import { t } from "@/core/i18n"
+import { t, weekdayShort } from "@/core/i18n"
 
 const now = shallowRef(new Date())
 const timeText = computed(() => [now.value.getHours(), now.value.getMinutes()].map(pad).join(":"))
-const WEEKDAY_KEYS = ["ui.clock.sun", "ui.clock.mon", "ui.clock.tue", "ui.clock.wed", "ui.clock.thu", "ui.clock.fri", "ui.clock.sat"]
-const dateText = computed(() => t("ui.clock.date", { m: now.value.getMonth() + 1, d: now.value.getDate(), weekday: t(WEEKDAY_KEYS[now.value.getDay()]) }))
+const dateText = computed(() => t("ui.clock.date", { m: now.value.getMonth() + 1, d: now.value.getDate(), weekday: weekdayShort(now.value.getDay()) }))
 let timer = 0
 
 /** 每次按真实时间对齐下一分钟，避免累计误差；卸载即停止。 */

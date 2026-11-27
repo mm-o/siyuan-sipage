@@ -1,6 +1,6 @@
 <template>
   <div class="cal">
-    <!-- 今日格（参考实现 CalendarDay）：日号 + 农历 + 星期 + 班/休 -->
+    <!-- 今日格（iTab CalendarDay）：日号 + 农历 + 星期 + 班/休 -->
     <div class="day">
       <i v-if="v.rest" class="mark">{{ t("card.calendar.restMark") }}</i>
       <b class="num" :class="`wk${v.wk}`">{{ v.day }}</b>
@@ -16,13 +16,13 @@
 
 <script setup lang="ts">
 /**
- * 日历卡（对齐 参考实现：CalendarDay + widget-calendar）
+ * 日历卡（对齐 iTab：CalendarDay + widget-calendar）
  * 字号全部 cqmin → 8x4 / 10x5 / 12x6 等比例放大时是同一套版式。
  */
 import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { SolarDay } from "tyme4ts"
 import { itemsOf, todayKey } from "@/core/agenda"
-import { t } from "@/core/i18n"
+import { t, weekdayFull } from "@/core/i18n"
 
 import MiniCalendar from "@/ui/MiniCalendar.vue"
 import { calendarOf } from "./calendar"
@@ -32,15 +32,7 @@ const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string 
 /* 每张日历卡一份：看哪个月、一周从哪天开始 */
 const state = calendarOf(props.uid || "calendar")
 
-const WEEK = [
-  t("card.calendar.week.1"),
-  t("card.calendar.week.2"),
-  t("card.calendar.week.3"),
-  t("card.calendar.week.4"),
-  t("card.calendar.week.5"),
-  t("card.calendar.week.6"),
-  t("card.calendar.week.7"),
-]
+const WEEK = [1, 2, 3, 4, 5, 6, 0].map(weekdayFull)
 const tick = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
 

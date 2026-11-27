@@ -2,7 +2,7 @@
   <div class="cd-card" :class="`is-${size}`">
     <div class="cd-body" :class="{ 'no-rows': !rows.length }">
       <template v-if="hero">
-        <!-- 主事件：封面 + 标题 + 还剩/已经 + 大数字（对齐 参考实现 的 .dma-hero） -->
+        <!-- 主事件：封面 + 标题 + 还剩/已经 + 大数字（对齐 iTab 的 .dma-hero） -->
         <article class="cd-hero" :style="{ backgroundImage: coverStyleOf(hero.event) }">
           <p class="cd-hero-title">
             {{ hero.event.title }}<span class="cd-hero-prefix">{{ hero.prefix }}</span>
@@ -42,7 +42,7 @@
 /**
  * 倒数日卡片
  *
- * 视觉对齐 参考实现 的 daysMatter：封面压暗 + 白字的主事件块（标题 / 还剩·已经 / 大数字 / 目标日），
+ * 视觉对齐 iTab 的 daysMatter：封面压暗 + 白字的主事件块（标题 / 还剩·已经 / 大数字 / 目标日），
  * 其余事件是「图标块 + 标题日期 + 数字」的列表行，卡面交由框架提供。
  * 按尺寸裁块，不缩外框。
  *
@@ -173,7 +173,7 @@ const rows = computed(() => (plan.value.rows ? ordered.value.slice(1, 1 + plan.v
   grid-auto-rows: minmax(0, 1fr);
   gap: clamp(3px, 1.4cqh, 8px);
   margin: 0;
-  /* 行不贴死卡片边：白的只在这里露一圈，和参考实现卡片里的行一致 */
+  /* 行不贴死卡片边：白的只在这里露一圈，和iTab卡片里的行一致 */
   padding: 0 clamp(4px, 2cqw, 10px) clamp(4px, 2cqh, 10px);
   min-height: 0;
   list-style: none;

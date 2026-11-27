@@ -2,12 +2,12 @@ import { LunarDay, SolarDay } from "tyme4ts"
 /**
  * 倒数日的数据与算法（卡片与详情共用）
  *
- * 取值对齐 参考实现 的 daysMatter：分类名/颜色、还剩·已经 的文案、日/周/月/年 四种单位、
+ * 取值对齐 iTab 的 daysMatter：分类名/颜色、还剩·已经 的文案、日/周/月/年 四种单位、
  * 「不重复 / 每年」两种重复方式。这里只做「事件 → 显示数字」的纯计算，不碰 DOM、不发请求。
  */
 import type { Component } from "vue"
 import { Briefcase, Flag, Gift, Heart, House, LayoutGrid, Target } from "lucide-vue-next"
-import { t } from "@/core/i18n"
+import { t, weekdayFull } from "@/core/i18n"
 import { COVERS } from "@/core/image"
 import { pad } from "@/core/util"
 import type { CountdownCategory, CountdownEvent } from "@/core/store"
@@ -18,7 +18,7 @@ export type { CountdownEvent }
 interface CountdownCategoryDef {
   id: "all" | CountdownCategory
   name: string
-  /** 分类色（取 参考实现 的取值） */
+  /** 分类色（取 iTab 的取值） */
   color: string
   icon: Component
 }
@@ -73,15 +73,7 @@ export function repeatText(event: CountdownEvent) {
   return event.lunar ? t("card.countdown.repeat.yearLunar") : REPEAT_LABEL.year
 }
 
-const WEEK = [
-  t("card.countdown.week.7"),
-  t("card.countdown.week.1"),
-  t("card.countdown.week.2"),
-  t("card.countdown.week.3"),
-  t("card.countdown.week.4"),
-  t("card.countdown.week.5"),
-  t("card.countdown.week.6"),
-]
+const WEEK = [0, 1, 2, 3, 4, 5, 6].map(weekdayFull)
 
 /** 每年重复：按公历或农历取「下一次」；不重复就直接用存的日期 */
 function effectiveDate(event: CountdownEvent, from = todayKey()) {
@@ -208,7 +200,7 @@ export function categoryCounts(events: CountdownEvent[]) {
   return counts
 }
 
-/** 分类软色：分类色 12% 铺底（参考实现 的 --cat-soft） */
+/** 分类软色：分类色 12% 铺底（iTab 的 --cat-soft） */
 export const softOf = (color: string) => (color ? `color-mix(in srgb, ${color} 14%, transparent)` : "transparent")
 
 /** 空表单 */

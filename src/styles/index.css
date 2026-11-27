@@ -52,7 +52,7 @@
   --desk-glass-fill-strong: rgb(255 255 255 / 92%);
   --desk-stroke: rgb(0 0 0 / 8%);
 
-  /* 纯色卡片面（对齐 参考实现 的 --bg-card：浅 #fff / 深 #222） */
+  /* 纯色卡片面（对齐 iTab 的 --bg-card：浅 #fff / 深 #222） */
   --desk-surface: #fff;
 
   /* 详情里的「栏」：接近纯色的毛玻璃（92% 面 + 一点模糊），对比够、还看得出玻璃 */
@@ -93,11 +93,10 @@
   --desk-r-control: 10px;
   --desk-r-card: 16px;
   /* 卡内图标：与卡片同一曲率（卡片 16px ≈ 其边长的 10%） */
-  /* 层级：卡片 < 详情弹层 9000 < 全屏 9200 < 下拉 9600 < 编辑器提示 9800 < 思源浮层 10000 < toast 99999 */
+  /* 层级：卡片 < 详情弹层 9000 < 全屏 9200 < 下拉 9600 < 思源浮层 10000 < toast 99999 */
   --desk-z-sheet: 9000;
   --desk-z-full: 9200;
   --desk-z-pop: 9600;
-  --desk-z-hint: 9800;
   --desk-z-foreign: 10000;
 
   --desk-r-sheet: 18px;
@@ -1748,10 +1747,6 @@ html.dark,
   border-top: 1px solid var(--desk-stroke);
 }
 
-.desk-block.is-grow {
-  flex: 1 1 auto;
-}
-
 .desk-block-head {
   display: flex;
   align-items: center;
@@ -2049,12 +2044,6 @@ body[data-desk-style="native"] .block__icon svg {
 .desk-native-slider {
   width: 100%;
   min-width: 0;
-}
-
-/* 思源下拉：宽度跟设置行的控件列一致 */
-.desk-native-select {
-  min-width: 160px;
-  flex: 0 0 auto;
 }
 
 /* 照片卡上的图标按钮 / 胶囊：思源组件默认是深色字，压在照片上看不见 */

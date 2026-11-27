@@ -86,7 +86,7 @@ for (const file of files) {
 }
 
 const isDynamic = (key) => dynamic.some((prefix) => key.startsWith(prefix))
-/* 键也可能以「字符串数组 / 查表」的形式出现（WEEKDAY_KEYS），所以再按字面量全文搜一遍 */
+/* 键也可能以「字符串数组 / 查表」的形式出现，所以再按字面量全文搜一遍 */
 const mentioned = (key) => sources.some((text) => text.includes(`"${key}"`) || text.includes(`'${key}'`) || text.includes(`\`${key}\``))
 const missing = [...used.keys()].filter((k) => !zhKeys.has(k) || !enKeys.has(k))
   .filter((k) => !isDynamic(k))
@@ -95,7 +95,6 @@ const unused = [...zhKeys].filter((k) => !used.has(k)
   && !mentioned(k)
   && !isDynamic(k)
   && !/^card\.[\w]+\.(name|desc)$/.test(k) // 注册表经 cardName()/cardDesc() 取
-  && !/^core\.weekday\.\d$/.test(k) // 按 getDay() 拼键
   && !/^(openDesk|insertDeskCard)$/.test(k)) // 思源按 langKey 取
 
 const report = {

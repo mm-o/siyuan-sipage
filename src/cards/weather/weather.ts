@@ -98,7 +98,7 @@ export function describe(code: number, night = false) {
 /**
  * 天气状况 → 一套白天/夜间渐变。
  *
- * 数值取自 参考实现 的 `.weather-*`（sunny / cloudy / yin / foggy 是它的原渐变）；
+ * 数值取自 iTab 的 `.weather-*`（sunny / cloudy / yin / foggy 是它的原渐变）；
  * 它把 rain / snow / thunder 做成 webp 贴图，这里按同一套深蓝-灰蓝色系改成渐变，
  * 不额外引图片资源。
  */

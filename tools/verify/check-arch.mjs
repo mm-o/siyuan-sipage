@@ -5,7 +5,7 @@
  *
  *   1. core/**      不得依赖 ui/ cards/ embed/（core 与 UI 无关）
  *   2. ui/**        不得依赖 cards/（UI 不能反向依赖卡片）
- *   3. ui/controls 不得依赖 core/ cards/（基础控件只吃 props）
+ *   3. ui/controls 不得依赖 cards/，core 里只许 i18n（基础控件只吃 props + 文案）
  *   4. cards/<id>/** 不得依赖别的卡片目录
  *   5. cards/**     只允许依赖 core/ ui/ 自身目录 + vue/lucide
  *   6. 每个 cards/<id>/ 恰有一个 *Card.vue（一个卡片一个主组件）
@@ -64,9 +64,12 @@ for (const file of files) {
     }
     // 2. ui 不得依赖卡片
     if (isUi(from) && isCards(to)) violations.push(`[2 ui→cards] ${where}`)
-    // 3. 基础控件只吃 props：不碰 core / cards
-    if (from.startsWith('ui/controls/') && (isCore(to) || isCards(to))) {
-      violations.push(`[3 primitive→core/cards] ${where}`)
+    // 3. 基础控件只吃 props：cards 一律不许碰；core 只许 i18n（文案），不许碰状态/数据
+    //    `@/x` 的目标不带扩展名，`./x` 的带，两种写法都要认
+    if (from === 'ui/controls.ts') {
+      const allowed = new Set(['core/i18n', 'core/i18n.ts'])
+      if (isCards(to)) violations.push(`[3 primitive→cards] ${where}`)
+      if (isCore(to) && !allowed.has(to)) violations.push(`[3 primitive→core] ${where}`)
     }
     // 4. 卡片之间不许互相 import
     if (isCards(from) && isCards(to) && cardIdOf(from) !== cardIdOf(to)) {

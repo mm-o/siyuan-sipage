@@ -142,10 +142,10 @@ Back up the last two folders and copy them back when moving machines.
 You can also write the block by hand:
 
 ```html
-<div data-desk-card="yiyan" data-size="2x2" style="height:320px"></div>
+<div data-sipage-card="yiyan" data-size="2x2" style="height:320px"></div>
 ```
 
-- `data-desk-card`: card id — `clock`, `calendar`, `weather`, `yiyan`, `shici`, `english`, `countdown`, `heatmap`, `pomodoro`, `memo`, `daily`, `docstats`, `quickopen`, `recent`, `shortcut`, `block`.
+- `data-sipage-card`: card id — `clock`, `calendar`, `weather`, `yiyan`, `shici`, `english`, `countdown`, `heatmap`, `pomodoro`, `memo`, `daily`, `docstats`, `quickopen`, `recent`, `shortcut`, `block`.
 - `data-size`: `1x1`, `1x2`, `2x1`, `2x2`, `2x4`, `4x2`; defaults to `2x2`.
 
 ## Troubleshooting

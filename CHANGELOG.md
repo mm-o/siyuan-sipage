@@ -1,5 +1,24 @@
 # Changelog
 
+## 未发布 — 深度清理：删掉死代码、重复词条与失效守卫
+
+不改变功能，只在「没有历史包袱就不要背负它」这条上再往前一步。
+
+### 删掉的东西
+
+- **星期词条从 9 套并成 3 套**：`card.calendar.week/shortWeek`、`card.clock.week*`、`card.countdown.week.*`、`card.heatmap.week.*`、`card.weather.week.*`、`core.weekday.*`、`ui.clock.mon…sun`、`ui.mini.wd*` 共 63 条，全是同一份「周一…周日」；收成 `common.weekday.full/short/tiny` 三档共 21 条，`core/i18n.ts` 提供 `weekdayFull()/weekdayShort()/weekdayTiny()`（0 = 周日，与 `Date.getDay()` 同序），卡片不再各存一份。词条数 642 → 600。
+- **死 CSS**：`.desk-native-select`（下拉已改用 `GlassSelect`）、`.desk-block.is-grow`（无模板使用）、`--desk-z-hint`（层级表里没人引用）、工具组的 `--mini`。
+- **死字段**：`CoverItem.photographer_url` / `pexels_url`（从不写入也不读取）。
+- **死导出**：`findDaily` 只在 `dailyNote.ts` 内部用，取消 `export`；`Lang` 类型同理。
+- **失效守卫**：`check-arch` 的第 3 条写的是 `ui/controls/`（目录），而控件是 `ui/controls.ts`，这条规则从建立起就没生效过；改成按文件精确匹配，并把「core 只许 i18n」写成显式白名单（`ui/controls.ts` 需要 `t()`，之前是漏检）。`check-i18n` 里 `core.weekday.\d` 的豁免随词条合并一并删掉。
+
+### 清掉的旧痕迹
+
+- 内嵌卡片的属性 `data-desk-card` → `data-sipage-card`（dev 验证页、README 中英、代码常量同步）。**1.0.2 及更早版本在文档里手写的内嵌块需要把属性名改一下**。
+- 源码里 26 处「参考实现」改为它真正的名字 **iTab**（`reference/` 早已不入库，旧词是个悬空指针）；`dev/index.html` 标题改为「思页 · 框架验证」。
+- 删掉 `Neo 1.8.3 / heading.scss` 这类已无处可查的源码路径引用，只留公式本身；`store.ts` 里「旧版按卡片类型共享的数据由各卡自己认领迁移」的过期注释（那个机制 v1.0.1 就删了）。
+- `plugin.json` 里空的 `funding.custom: []`。
+
 ## v1.0.2 — 集市校验补正：仓库根目录补 `LICENSE`
 
 - 集市 PR Check 报「仓库根目录缺少 `LICENSE` / `LICENSE.txt`」：包内的 `LICENSE.md` 不算，校验看的是仓库根目录。补上无扩展名的 `LICENSE`（与包内同文），`LICENSE.md` 保留给 `package.zip`。

@@ -110,7 +110,7 @@
  */
 import { EmptyArt, GlassButton } from "@/ui/controls"
 import { computed, ref } from "vue"
-import { t } from "@/core/i18n"
+import { t, weekdayFull } from "@/core/i18n"
 import { buildGrid, buildStats, recentActive, splitGrid, useHeatmap, WEEKS_YEAR } from "./heatmap"
 import "./styles.css"
 
@@ -131,15 +131,7 @@ const hoveredDay = computed(() => {
   return { date: hovered.value, count }
 })
 
-const WEEK = [
-  t("card.heatmap.week.sun"),
-  t("card.heatmap.week.mon"),
-  t("card.heatmap.week.tue"),
-  t("card.heatmap.week.wed"),
-  t("card.heatmap.week.thu"),
-  t("card.heatmap.week.fri"),
-  t("card.heatmap.week.sat"),
-]
+const WEEK = [0, 1, 2, 3, 4, 5, 6].map(weekdayFull)
 const weekdayOf = (date: string) => {
   const [y, m, d] = date.split("-").map(Number)
   return WEEK[new Date(y, m - 1, d).getDay()]

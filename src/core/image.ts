@@ -48,9 +48,8 @@ export async function forwardProxy(
 export interface CoverItem {
   file: string
   category: string
+  /** 作者名（悬停 aria-label 里显示） */
   photographer?: string
-  photographer_url?: string
-  pexels_url?: string
 }
 
 export interface CoverGroup {

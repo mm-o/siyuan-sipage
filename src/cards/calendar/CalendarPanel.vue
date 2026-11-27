@@ -35,7 +35,7 @@
         </div>
 
         <ul class="cal-head">
-          <li v-for="label in headLabels" :key="label" :class="{ 'is-weekend': label === t('card.calendar.shortWeek.6') || label === t('card.calendar.shortWeek.7') }">
+          <li v-for="label in headLabels" :key="label" :class="{ 'is-weekend': label === weekdayShort(6) || label === weekdayShort(0) }">
             {{ label }}
           </li>
         </ul>
@@ -129,23 +129,15 @@ import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
 import { addItem, dateKey, dayDots, itemsOf, todayKey, toggleItem } from "@/core/agenda"
 import { ensureDaily, loadDaily, openDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
-import { t } from "@/core/i18n"
+import { t, weekdayFull, weekdayShort } from "@/core/i18n"
 import { calendarOf } from "./calendar"
 import "./styles.css"
 
-const WEEK_NAMES = [
-  t("card.calendar.shortWeek.7"),
-  t("card.calendar.shortWeek.1"),
-  t("card.calendar.shortWeek.2"),
-  t("card.calendar.shortWeek.3"),
-  t("card.calendar.shortWeek.4"),
-  t("card.calendar.shortWeek.5"),
-  t("card.calendar.shortWeek.6"),
-]
+const WEEK_NAMES = [0, 1, 2, 3, 4, 5, 6].map(weekdayShort)
 const MONDAY_FIRST = [...WEEK_NAMES.slice(1), WEEK_NAMES[0]]
 const WEEK_OPTIONS = [
-  { label: t("card.calendar.shortWeek.1"), value: "mon" },
-  { label: t("card.calendar.shortWeek.7"), value: "sun" },
+  { label: weekdayShort(1), value: "mon" },
+  { label: weekdayShort(0), value: "sun" },
 ]
 
 /** 每张日历卡一份：一周开端、写日记开关、固定月份都按实例 uid 存 */
@@ -210,7 +202,7 @@ const monthChoices = Array.from({ length: 12 }, (_, index) => ({ label: t("card.
 
 /* ── 节日导航（扫库的节日表，按年缓存；只有这个面板用）── */
 
-/** 与 参考实现 一致的 7 个导航节日（顺序即下拉顺序） */
+/** 与 iTab 一致的 7 个导航节日（顺序即下拉顺序） */
 const NAV_FESTIVALS = ["元旦", "春节", "清明节", "劳动节", "端午节", "中秋节", "国庆节"] as const // i18n-keep
 const festivalCache = new Map<number, Array<{ name: string; key: number }>>()
 
@@ -334,7 +326,7 @@ const detail = computed(() => {
 
   return {
     date: solar.toString().replace("年", "-").replace("月", "-").replace("日", ""), // i18n-keep
-    week: t(`card.calendar.week.${((date.getDay() + 6) % 7) + 1}`),
+    week: weekdayFull(date.getDay()),
     day: date.getDate(),
     lunar: `${lunar.getLunarMonth().getName()}${lunar.getName()}`,
     ganzhi: `${yearCycle.getName()}年 ${lunar.getSixtyCycle().getName()}日`, // i18n-keep

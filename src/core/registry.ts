@@ -47,7 +47,7 @@ export type CardSize = `${number}x${number}`
 export type CardConstrain = { step?: number; min?: number; max?: number }
 
 interface CardDef {
-/** 唯一 id，同时用于文档内嵌属性 data-desk-card */
+/** 唯一 id，同时用于文档内嵌属性 data-sipage-card */
   id: string
   name: string
   /** 一句话说明，卡片库里显示 */
@@ -59,7 +59,7 @@ interface CardDef {
   /**
    * 卡片面材质：
    *   glass（默认）玻璃半透明，跟随外观里的不透明度
-   *   solid        不透明纯色面，对齐 参考实现 的 --bg-card（浅 #fff / 深 #222）
+   *   solid        不透明纯色面，对齐 iTab 的 --bg-card（浅 #fff / 深 #222）
    * 照片型卡片（一言/英语/诗词）必须是 glass——它们的内容本身就是一张照片。
    */
   surface?: "glass" | "solid"
@@ -99,7 +99,7 @@ export const CARDS: CardDef[] = [
     /* 左黄历 240 + 中月历 + 右「日程 / 日记」上下各半 */
     detailSize: { width: "min(1040px, 94vw)", height: "min(720px, 90vh)" },
     constrain: { step: 1, min: 2, max: 16 },
-    // 参考实现 的日历是白卡（--bg-card: #fff / #222），不是玻璃
+    // iTab 的日历是白卡（--bg-card: #fff / #222），不是玻璃
     surface: "solid",
   },
   {
@@ -141,7 +141,7 @@ export const CARDS: CardDef[] = [
     detail: CountdownPanel,
     // 详情是三栏（200 / 自适应 / 300），要宽一点才站得住
     detailSize: { width: "min(1080px, 92vw)", height: "min(680px, 86vh)" },
-    // 对齐 参考实现 的倒数日：白卡片面，不是玻璃
+    // 对齐 iTab 的倒数日：白卡片面，不是玻璃
     surface: "solid",
   },
   {

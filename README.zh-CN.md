@@ -142,10 +142,10 @@
 也可以手动写 HTML 块：
 
 ```html
-<div data-desk-card="yiyan" data-size="2x2" style="height:320px"></div>
+<div data-sipage-card="yiyan" data-size="2x2" style="height:320px"></div>
 ```
 
-- `data-desk-card`：卡片 id，可选 `clock` / `calendar` / `weather` / `yiyan` / `shici` / `english` / `countdown` / `heatmap` / `pomodoro` / `memo` / `daily` / `docstats` / `quickopen` / `recent` / `shortcut` / `block`。
+- `data-sipage-card`：卡片 id，可选 `clock` / `calendar` / `weather` / `yiyan` / `shici` / `english` / `countdown` / `heatmap` / `pomodoro` / `memo` / `daily` / `docstats` / `quickopen` / `recent` / `shortcut` / `block`。
 - `data-size`：`1x1` / `1x2` / `2x1` / `2x2` / `2x4` / `4x2`，默认 `2x2`。
 
 ## 常见问题

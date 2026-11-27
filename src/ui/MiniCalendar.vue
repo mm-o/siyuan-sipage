@@ -8,7 +8,7 @@
     </header>
 
     <ul class="mc-week">
-      <li v-for="w in head" :key="w" :class="{ 'is-end': w === t('ui.mini.wdSat') || w === t('ui.mini.wdSun') }">{{ w }}</li>
+      <li v-for="w in head" :key="w" :class="{ 'is-end': w === weekdayTiny(6) || w === weekdayTiny(0) }">{{ w }}</li>
     </ul>
 
     <ul class="mc-grid">
@@ -41,7 +41,7 @@
 import { computed, ref, watch } from "vue"
 import { ChevronLeft, ChevronRight } from "lucide-vue-next"
 import { GlassButton } from "@/ui/controls"
-import { t } from "@/core/i18n"
+import { t, weekdayTiny } from "@/core/i18n"
 import { dateKey, dayDots, todayKey } from "@/core/agenda"
 
 const props = withDefaults(defineProps<{
@@ -60,8 +60,8 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ "update:modelValue": [string] }>()
 
-const WEEK = [t("ui.mini.wdMon"), t("ui.mini.wdTue"), t("ui.mini.wdWed"), t("ui.mini.wdThu"), t("ui.mini.wdFri"), t("ui.mini.wdSat"), t("ui.mini.wdSun")]
-const head = computed(() => (props.weekBegin === "mon" ? WEEK : [t("ui.mini.wdSun"), ...WEEK.slice(0, 6)]))
+const WEEK = [1, 2, 3, 4, 5, 6, 0].map(weekdayTiny)
+const head = computed(() => (props.weekBegin === "mon" ? WEEK : [weekdayTiny(0), ...WEEK.slice(0, 6)]))
 
 const parse = (key: string) => {
   const [y, m, d] = key.split("-").map(Number)

@@ -106,7 +106,7 @@
 
 <script setup lang="ts">
 /**
- * 倒数日详情（三栏，对齐 参考实现 的 daysMatter）
+ * 倒数日详情（三栏，对齐 iTab 的 daysMatter）
  *
  * 左 200px「分类」竖栏（图标 + 名称 + 数量）｜中间自适应「列表」：分类胶囊（窄屏才显示）+ 时间段
  * 分段控件 + 新建按钮 + 主事件大卡 + 事件行｜右 300px「详情」：封面头 + 标题 + 大数字 + 日/周/月/年
@@ -246,7 +246,7 @@ function removeSelected() {
   if (editingId.value === id) cancelEdit()
 }
 
-/* ── 窄屏：详情盖在列表上（对齐 参考实现 的 568px 行为） ──── */
+/* ── 窄屏：详情盖在列表上（对齐 iTab 的 568px 行为） ──── */
 const narrowOpen = ref(false)
 const narrowDetail = computed(() => narrowOpen.value || editing.value)
 function backToList() {
@@ -257,7 +257,7 @@ function backToList() {
 
 <style scoped>
 /**
- * 尺寸/间距/圆角照抄 参考实现 的 daysMatter：
+ * 尺寸/间距/圆角照抄 iTab 的 daysMatter：
  * 页面留白 8、栏间距 8、三栏卡片圆角 20 + 1px 边、列表里主事件 margin 8/12、
  * 行内 44px 图标块、28px 药丸主按钮、28px 分段控件。
  * 颜色走本项目的 `--desk-*`（它的 `--d-*` 与我们的语义一一对应：#fff 面板 / 半透明标签 / #0586ff 主色）。

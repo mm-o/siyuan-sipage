@@ -1,11 +1,11 @@
-/**
- * 日记（卡片与详情共用）
+﻿/**
+ * 鏃ヨ锛堝崱鐗囦笌璇︽儏鍏辩敤锛?
  *
- * 思源的日记就是一篇文档，标识在 `attributes` 里：`custom-dailynote-YYYYMMDD = root_id`。
- * 所以「找某天的日记」是一条 SQL，「新建今天的日记」走内核 `/api/filetree/createDailyNote`。
+ * 鎬濇簮鐨勬棩璁板氨鏄竴绡囨枃妗ｏ紝鏍囪瘑鍦?`attributes` 閲岋細`custom-dailynote-YYYYMMDD = root_id`銆?
+ * 鎵€浠ャ€屾壘鏌愬ぉ鐨勬棩璁般€嶆槸涓€鏉?SQL锛屻€屾柊寤轰粖澶╃殑鏃ヨ銆嶈蛋鍐呮牳 `/api/filetree/createDailyNote`銆?
  *
- * 卡片给「字数 / 待办 / 前几行」，详情用 Protyle 就地编辑；
- * 两者都按实例偏移找日期，多张日记卡可以各看各的那一天。
+ * 鍗＄墖缁欍€屽瓧鏁?/ 寰呭姙 / 鍓嶅嚑琛屻€嶏紝璇︽儏鐢?Protyle 灏卞湴缂栬緫锛?
+ * 涓よ€呴兘鎸夊疄渚嬪亸绉绘壘鏃ユ湡锛屽寮犳棩璁板崱鍙互鍚勭湅鍚勭殑閭ｄ竴澶┿€?
  */
 import { dateKey } from "@/core/agenda"
 import { t } from "@/core/i18n"
@@ -17,7 +17,7 @@ interface DailyNote {
 }
 
 interface DailyTodo {
-  /** 待办块的 id：点一下能滚到正文那一行 */
+  /** 寰呭姙鍧楃殑 id锛氱偣涓€涓嬭兘婊氬埌姝ｆ枃閭ｄ竴琛?*/
   id: string
   text: string
   done: boolean
@@ -29,15 +29,15 @@ export interface DailyPreview extends DailyNote {
   todos: DailyTodo[]
 }
 
-/** 相对今天偏移几天 */
+/** 鐩稿浠婂ぉ鍋忕Щ鍑犲ぉ */
 export function dayOf(offset: number, base = new Date()) {
   return new Date(base.getFullYear(), base.getMonth(), base.getDate() + offset)
 }
 
 const attrOf = (date: Date) => `custom-dailynote-${dateKey(date).replace(/-/g, "")}`
 
-/** 找某天的日记文档；没有就返回 null */
-export async function findDaily(date: Date): Promise<DailyNote | null> {
+/** 鎵炬煇澶╃殑鏃ヨ鏂囨。锛涙病鏈夊氨杩斿洖 null */
+async function findDaily(date: Date): Promise<DailyNote | null> {
   const rows = await sql(
     `select root_id as id from attributes where type = 'b' and name = '${attrOf(date)}' limit 1`,
   ).catch(() => [])
@@ -47,7 +47,7 @@ export async function findDaily(date: Date): Promise<DailyNote | null> {
   return { id, title: String((docs[0] as { title?: string } | undefined)?.title || dateKey(date)) }
 }
 
-/** 日记该建在哪个笔记本：优先用最近一篇日记所在的库，没有才退到第一个 */
+/** 鏃ヨ璇ュ缓鍦ㄥ摢涓瑪璁版湰锛氫紭鍏堢敤鏈€杩戜竴绡囨棩璁版墍鍦ㄧ殑搴擄紝娌℃湁鎵嶉€€鍒扮涓€涓?*/
 async function dailyNotebook(): Promise<string> {
   const rows = await sql(`select box from attributes where name like 'custom-dailynote-%' order by name desc limit 1`).catch(() => [])
   const box = String((rows[0] as { box?: string } | undefined)?.box || "")
@@ -56,7 +56,7 @@ async function dailyNotebook(): Promise<string> {
   return books?.notebooks?.[0]?.id || ""
 }
 
-/** 最近一篇日记所在的笔记本与目录：新建别的日期时放在同样的位置 */
+/** 鏈€杩戜竴绡囨棩璁版墍鍦ㄧ殑绗旇鏈笌鐩綍锛氭柊寤哄埆鐨勬棩鏈熸椂鏀惧湪鍚屾牱鐨勪綅缃?*/
 async function dailySeed(): Promise<{ box: string; dir: string }> {
   const rows = await sql(`select b.box as box, b.path as path from attributes a join blocks b on b.id = a.block_id
     where a.name like 'custom-dailynote-%' order by a.name desc limit 1`).catch(() => [])
@@ -66,10 +66,10 @@ async function dailySeed(): Promise<{ box: string; dir: string }> {
 }
 
 /**
- * 取某天的日记，没有就建一个
+ * 鍙栨煇澶╃殑鏃ヨ锛屾病鏈夊氨寤轰竴涓?
  *
- * 今天交给内核（它会按日记模板建）；别的日期在「最近一篇日记」的同一个笔记本、同一层目录下建，
- * 建完补上 `custom-dailynote-YYYYMMDD` 属性，之后 findDaily 就能找到它。
+ * 浠婂ぉ浜ょ粰鍐呮牳锛堝畠浼氭寜鏃ヨ妯℃澘寤猴級锛涘埆鐨勬棩鏈熷湪銆屾渶杩戜竴绡囨棩璁般€嶇殑鍚屼竴涓瑪璁版湰銆佸悓涓€灞傜洰褰曚笅寤猴紝
+ * 寤哄畬琛ヤ笂 `custom-dailynote-YYYYMMDD` 灞炴€э紝涔嬪悗 findDaily 灏辫兘鎵惧埌瀹冦€?
  */
 export async function ensureDaily(date: Date): Promise<DailyNote> {
   const hit = await findDaily(date)
@@ -83,7 +83,7 @@ export async function ensureDaily(date: Date): Promise<DailyNote> {
     return { id: doc.id, title: key }
   }
   const seed = await dailySeed()
-  /* 这个接口的 data 直接是文档 id（字符串），跟 createDailyNote 的 { id } 不一样 */
+  /* 杩欎釜鎺ュ彛鐨?data 鐩存帴鏄枃妗?id锛堝瓧绗︿覆锛夛紝璺?createDailyNote 鐨?{ id } 涓嶄竴鏍?*/
   const created = await post<string | { id?: string }>("/api/filetree/createDocWithMd", {
     notebook,
     path: `${seed.dir}/${key}`,
@@ -98,7 +98,7 @@ export async function ensureDaily(date: Date): Promise<DailyNote> {
   return { id, title: key }
 }
 
-/** 某篇日记的字数与块数（编辑时就地刷新统计，不重挂 Protyle） */
+/** 鏌愮瘒鏃ヨ鐨勫瓧鏁颁笌鍧楁暟锛堢紪杈戞椂灏卞湴鍒锋柊缁熻锛屼笉閲嶆寕 Protyle锛?*/
 export async function dailyStat(id: string): Promise<{ words: number; blocks: number }> {
   const [row] = await sql(
     `select coalesce(sum(length), 0) as words, count(*) as blocks from blocks
@@ -108,7 +108,7 @@ export async function dailyStat(id: string): Promise<{ words: number; blocks: nu
   return { words: Number(hit.words) || 0, blocks: Number(hit.blocks) || 0 }
 }
 
-/** 日记里的待办（单独查：不受正文行数限制，编辑时可单独刷新） */
+/** 鏃ヨ閲岀殑寰呭姙锛堝崟鐙煡锛氫笉鍙楁鏂囪鏁伴檺鍒讹紝缂栬緫鏃跺彲鍗曠嫭鍒锋柊锛?*/
 export async function dailyTodos(id: string): Promise<DailyTodo[]> {
   const rows = await sql(
     `select id, content from blocks
@@ -123,19 +123,19 @@ export async function dailyTodos(id: string): Promise<DailyTodo[]> {
   return out
 }
 
-/** 已知文档时直接取摘要：新建的日记不必等属性索引刷新 */
+/** 宸茬煡鏂囨。鏃剁洿鎺ュ彇鎽樿锛氭柊寤虹殑鏃ヨ涓嶅繀绛夊睘鎬х储寮曞埛鏂?*/
 export async function previewOf(note: DailyNote): Promise<DailyPreview> {
   const [stat, todos] = await Promise.all([dailyStat(note.id), dailyTodos(note.id)])
   return { ...note, words: stat.words, blocks: stat.blocks, todos }
 }
 
-/** 某天的日记摘要（找不到就是 null；正文由 Protyle 直接渲染） */
+/** 鏌愬ぉ鐨勬棩璁版憳瑕侊紙鎵句笉鍒板氨鏄?null锛涙鏂囩敱 Protyle 鐩存帴娓叉煋锛?*/
 export async function loadDaily(date: Date): Promise<DailyPreview | null> {
   const note = await findDaily(date)
   return note ? previewOf(note) : null
 }
 
-/** 打开日记文档（在本页签里打开） */
+/** 鎵撳紑鏃ヨ鏂囨。锛堝湪鏈〉绛鹃噷鎵撳紑锛?*/
 export async function openDaily(id: string) {
   const { openDoc } = await import("@/core/quickdocs")
   await openDoc(id)

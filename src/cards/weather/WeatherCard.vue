@@ -41,12 +41,12 @@
 
 <script setup lang="ts">
 /**
- * 天气卡（对齐 参考实现 app-weather）
+ * 天气卡（对齐 iTab app-weather）
  * 上：地名 + 大温度 / 天气 + 高低温；下：未来 6 天。字号全部 cqmin，等比放大不变形。
  */
 import { computed } from "vue"
 import { MapPin, RotateCcw } from "lucide-vue-next"
-import { t } from "@/core/i18n"
+import { t, weekdayFull } from "@/core/i18n"
 import { GlassButton } from "@/ui/controls"
 import { describe, skyBackdrop, useWeather } from "./weather"
 
@@ -61,15 +61,7 @@ const hours = computed(() => (data.value?.hours ?? []).slice(1, 5))
 
 const forecast = computed(() => (data.value?.days ?? []).slice(1, 7))
 
-const WEEK = [
-  t("card.weather.week.sun"),
-  t("card.weather.week.mon"),
-  t("card.weather.week.tue"),
-  t("card.weather.week.wed"),
-  t("card.weather.week.thu"),
-  t("card.weather.week.fri"),
-  t("card.weather.week.sat"),
-]
+const WEEK = [0, 1, 2, 3, 4, 5, 6].map(weekdayFull)
 function weekOf(date: string, i: number) {
   if (i === 0) return t("common.tomorrow")
   const d = new Date(date)
