@@ -50,6 +50,17 @@ src/styles/index.css     设计令牌、共享控件、设置骨架、整理模�
 
 `pnpm check:arch` 校验上述模块边界；`pnpm check:types` 同时禁止无用导入、局部变量与参数。
 
+## 样式命名（全局样式表）
+
+`src/styles/index.css` 是**全局**样式表（卡片内的 `<style scoped>` 与 `styles.css` 才有作用域），所以它里面的类名会作用于整个思源页面和所有插件。
+
+- 首层类名一律 `desk-` 开头；卡片自己的类以卡片前缀开头（`qn-` / `cal-` / `wx-` …），并且在全局表里一律写成 `.<前缀>…` 的下级选择器。
+- 状态类用 `.is-*`，但必须挂在 `desk-` 元素之下（`.desk-slot.is-active`），不允许裸 `.is-active` 单独出现。
+- `pnpm check:css` 校验：新出现的首层类名必须 `desk-` 开头；历史遗留的裸类名记在 `tools/verify/check-css.mjs` 的 `LEGACY` 白名单里，**只能减不能增**。
+- 思源自有的类（`body--dark` / `.dark` / `.layout-tab-container` / `.protyle-*`）只作为**祖先条件**使用，不要去修改它们的样式。
+
+> 事故背景：2026-11-27 首次真机启用时「界面错乱」，就是因为全局表里有 `.set-*` / `.slot` / `.doc-row` 这类通用类名，和 iTab modules、思桌等插件的同名类互相覆盖。见 `ROADMAP.md` 的「附录 C 事故复盘」。
+
 ## 语言与文案
 
 界面文案只有一个出口：`core/i18n` 的 `t(key, vars?)`，词条本体在 `src/i18n/zh_CN.json` 与 `en_US.json`（同一份文件也被思源读取，用于命令的 `langKey`）。

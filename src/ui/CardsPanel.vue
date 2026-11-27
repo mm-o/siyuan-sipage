@@ -1,23 +1,23 @@
 <template>
-  <div class="set-page">
+  <div class="desk-set-page">
     <h2 class="set-h2">{{ t('ui.cards.title') }}</h2>
-    <p class="set-p">{{ t('ui.cards.intro') }}</p>
+    <p class="desk-set-p">{{ t('ui.cards.intro') }}</p>
 
-    <div class="set-group">
-      <h4 class="set-group-title">{{ t('ui.cards.groupStyle') }}</h4>
+    <div class="desk-set-group">
+      <h4 class="desk-set-group-title">{{ t('ui.cards.groupStyle') }}</h4>
       <Segmented v-model="a.style" :options="STYLE_OPTIONS" />
-      <p class="set-p">{{ styleHint }}</p>
+      <p class="desk-set-p">{{ styleHint }}</p>
     </div>
 
-    <div class="set-group">
-      <h4 class="set-group-title">{{ t('ui.cards.groupLayout') }}</h4>
+    <div class="desk-set-group">
+      <h4 class="desk-set-group-title">{{ t('ui.cards.groupLayout') }}</h4>
       <Slider v-model="a.cell" :label="t('ui.cards.cell')" :min="CELL_MIN" :max="CELL_MAX" :step="1" suffix="px" :default-value="D.cell" />
     </div>
 
-    <div class="set-group">
-      <h4 class="set-group-title">{{ t('ui.cards.groupMotion') }}</h4>
-      <div class="set-row">
-        <div class="set-label"><b>{{ t('ui.cards.motion') }}</b></div>
+    <div class="desk-set-group">
+      <h4 class="desk-set-group-title">{{ t('ui.cards.groupMotion') }}</h4>
+      <div class="desk-set-row">
+        <div class="desk-set-label"><b>{{ t('ui.cards.motion') }}</b></div>
         <GlassSwitch v-model="a.motion" :label="t('ui.cards.motion')" />
       </div>
       <Slider v-model="a.motionDur" :label="t('ui.cards.motionDur')" :min="0" :max="1200" :step="20" suffix="ms" :default-value="D.motionDur" />
@@ -25,8 +25,8 @@
       <Slider v-model="a.motionChar" :label="t('ui.cards.motionChar')" :min="0" :max="80" :step="2" suffix="ms" :default-value="D.motionChar" />
     </div>
 
-    <div class="set-group">
-      <h4 class="set-group-title">{{ t('ui.cards.groupCard') }}</h4>
+    <div class="desk-set-group">
+      <h4 class="desk-set-group-title">{{ t('ui.cards.groupCard') }}</h4>
       <Slider v-model="a.radius" :label="t('ui.cards.radius')" :min="0" :max="32" :step="2" suffix="px" :default-value="D.radius" />
       <Slider v-model="a.blur" :label="t('ui.cards.blur')" :min="0" :max="40" :step="2" suffix="px" :default-value="D.blur" />
       <Slider v-model="a.opacity" :label="t('ui.cards.opacity')" :min="0.15" :max="1" :step="0.02" suffix="%" :scale="100" :default-value="D.opacity" />
@@ -34,13 +34,13 @@
       <Slider v-model="a.lift" :label="t('ui.cards.lift')" :min="0" :max="6" :step="1" suffix="px" :default-value="D.lift" />
     </div>
 
-    <div class="set-group">
-      <h4 class="set-group-title">{{ t('ui.cards.groupPane') }}</h4>
+    <div class="desk-set-group">
+      <h4 class="desk-set-group-title">{{ t('ui.cards.groupPane') }}</h4>
       <Slider v-model="a.paneOpacity" :label="t('ui.cards.paneOpacity')" :min="0.6" :max="1" :step="0.02" suffix="%" :scale="100" :default-value="D.paneOpacity" />
     </div>
 
-    <div class="set-group">
-      <h4 class="set-group-title">{{ t('ui.cards.groupWallpaper') }}</h4>
+    <div class="desk-set-group">
+      <h4 class="desk-set-group-title">{{ t('ui.cards.groupWallpaper') }}</h4>
       <p v-if="isTheme" class="desk-hint">{{ t('ui.cards.themeHint') }}</p>
       <template v-else>
         <Slider v-model="wallpaper.blur" :label="t('ui.cards.wallBlur')" :min="0" :max="24" suffix="px" />

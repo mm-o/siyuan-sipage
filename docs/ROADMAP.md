@@ -12,15 +12,16 @@
 
 | 项 | 数值 | 备注 |
 | --- | --- | --- |
-| 卡片数 | 16 | 见下表 |
-| `src/cards/**` 代码量 | 7 716 行（.vue） | 含模板、脚本、样式 |
-| 其中样式行数 | **4 140 行（53%）** | 独立 `styles.css` 只有 2 个（calendar / heatmap） |
-| 单文件入口 | 603.6 KB（gzip 200.3 KB） | 无分包 |
-| 词条 | 600 条 × 2 语言 | `common.*` / `card.*` / `ui.*` / `core.*` / `embed.*` |
-| 工程护栏 | 类型 / 分层 / 断点 / 词条 / 产物 / 集市规范 | `pnpm check` 一条命令全跑 |
+| 卡片数 | 17 | 见下表（含阶段 1 新增的「快速记录」） |
+| `src/cards/**` 代码量 | 约 8 100 行（.vue） | 含模板、脚本、样式 |
+| 其中样式行数 | 约 4 200 行 | 独立 `styles.css` 3 个（calendar / heatmap / quicknote） |
+| 单文件入口 | 614.6 KB（gzip 203.0 KB） | 无分包 |
+| 词条 | 631 条 × 2 语言 | `common.*` / `card.*` / `ui.*` / `core.*` / `embed.*` |
+| 工程护栏 | 类型 / 分层 / 断点 / 词条 / **全局样式命名** / 产物 / 集市规范 | `pnpm check` 一条命令全跑 |
+| 浏览器回归 | 11 个 `tools/verify/shot-*.mjs` | 含新增 `shot-quicknote.mjs`，`pnpm check:browser` 串跑 |
 
-现有 16 张卡：`clock` 时钟、`calendar` 日历、`weather` 天气、`daily` 日记、`memo` 日程备忘、
-`countdown` 倒数日、`heatmap` 写作热力图、`pomodoro` 番茄钟、`docstats` 文档统计、
+现有 17 张卡：`clock` 时钟、`calendar` 日历、`weather` 天气、`daily` 日记、`quicknote` 快速记录、
+`memo` 日程备忘、`countdown` 倒数日、`heatmap` 写作热力图、`pomodoro` 番茄钟、`docstats` 文档统计、
 `yiyan` 每日一言、`english` 每日英语、`shici` 每日诗词、`recent` 最近文档、
 `quickopen` 快捷打开、`shortcut` 快捷方式、`block` 思源块。
 
@@ -206,7 +207,7 @@ src/cards/<id>/styles.css         样式（阶段 4 起强制独立）
 registry.ts                       一条定义：id / category / name / desc / component / detail / icon / constrain
 src/i18n/{zh_CN,en_US}.json       卡片名 + 说明 + 全部文案（check:i18n 会拦未迁中文）
 README.md / README.zh-CN.md       卡片表 + 内嵌 id 列表
-pnpm check                        类型 / 分层 / 断点 / 词条 / 构建 / 集市规范
+pnpm check                        类型 / 分层 / 断点 / 词条 / 全局样式命名 / 构建 / 集市规范
 真机                              桌面 + 详情 + 内嵌三种位置各看一眼
 ```
 
@@ -246,3 +247,53 @@ gh api 'repos/Glaube-TY/siyuan-homepage/git/trees/main?recursive=1' | jq -r '.tr
 # 3. 量我们自己的样式占比
 node -e "…（见第 1 节表格；口径：src/cards/**/*.vue 的 <style> 块 + 独立 css 文件）"
 ```
+
+---
+
+## 附录 C：事故复盘（2026-11-27 首次真机启用）
+
+第一次在真实工作区启用时报了两个现象：**界面错乱**，刷新后页签**不可用**。两个独立原因，都不是渲染细节，而是「边界」没守住。
+
+### C1 「刷新不可用」= 启动链路被一个 404 打断
+
+```text
+/api/file/readDir  →  data/public/siyuan-sipage 不存在  →  Code 404
+      ↓
+listFavs() 抛错  →  bootStore() reject  →  Plugin.onload() reject
+      ↓
+addTab() 没执行  →  页签类型没注册
+      ↓
+刷新后思源恢复上次的页签 → 找不到类型 → 标注「不可用」
+```
+
+全新工作区里 `data/public/siyuan-sipage` 一定不存在（收藏目录是第一次收藏时才建的），所以这是**每个新用户都会踩**的问题，只是首次启用时表现为"半加载"，刷新才彻底暴露。
+
+修复（两条都要有）：
+
+1. `bootStore()` 里收藏读取单点容错：拿不到就当空列表，不让整条启动链断。
+2. `onload()` 兜底：`bootStore()` 仍然失败时打日志继续，页签、顶栏、命令照常注册。
+
+### C2 「界面错乱」= 全局样式表没有命名空间
+
+`src/styles/index.css` 是全局表，当时里面有 `.set-*`、`.slot`、`.slot-ic`、`.doc-row`、`.doc-title` 这类通用类名。
+实测安装的 iTab modules / itab-embed / 思桌 三个插件的产物里各能搜到 18 处同名选择器 —— 谁后加载谁赢，于是**启用思页就把别的插件界面重绘了**。
+
+修复：
+
+1. 这些类统一加 `desk-` 前缀（模板与样式同步改），并清掉 `ShortcutCard` 里已失效的 scoped 样式块。
+2. 新增 `pnpm check:css`：全局表的首层类名必须 `desk-` 开头，历史裸类名进 `LEGACY` 白名单且**只能减不能增**。
+
+### C3 与 Homepage 架构的对照
+
+这起事故正好验证了第 3 节的判断：Homepage 把「内容」与「外观」分开（`scope` + 主题 `widgets/manifest.ts`），本质就是**给样式划作用域**；我们目前的 `CardDef` 只有 `surface` 一个材质开关，样式仍压在卡片与全局表里，才会一启用就污染别人。
+
+所以：
+
+- 短期已做：命名收敛 + 守卫（本次）。
+- 中期（阶段 4）：卡片样式全部外置，全局表只留令牌与外壳；`CardDef` 再补 `placement` / `scope`，让同一份内容能进侧栏/移动端而不带一整套全局样式。
+
+### C4 教训（已写进新卡 checklist）
+
+- 任何 `await` 在 `onload` 里的调用，都要能失败而**不影响注册**：页签、顶栏、命令这类"门面"必须无条件注册。
+- 插件是**寄居**在思源里的：全局 CSS / 全局变量 / 全局事件都要带命名空间，不能假设"这个页面只有我"。
+- 真机验证必须在**空工作区**跑一遍（新建 workspace），打磨过的旧工作区会掩盖这类首装问题。

@@ -1,58 +1,58 @@
 <template>
   <Sheet v-model:open="open" :title="t('common.settings')" :icon="SettingsIcon" :origin="origin" width="min(1040px, 94vw)" height="min(660px, 86vh)">
-    <div class="set">
+    <div class="desk-set">
       <!-- ① 导航 -->
-      <nav class="set-nav desk-pane is-left">
+      <nav class="desk-set-nav desk-pane is-left">
         <button
           v-for="s in SECTIONS"
           :key="s.value"
-          class="set-nav-item"
+          class="desk-set-nav-item"
           :class="{ 'is-active': current === s.value }"
           type="button"
           @click="current = s.value"
         >
-          <span class="set-nav-icon"><component :is="s.icon" :size="16" :stroke-width="1.7" /></span>
-          <span class="set-nav-label">{{ s.label }}</span>
-          <span v-if="s.badge" class="set-nav-badge">{{ s.badge }}</span>
+          <span class="desk-set-nav-icon"><component :is="s.icon" :size="16" :stroke-width="1.7" /></span>
+          <span class="desk-set-nav-label">{{ s.label }}</span>
+          <span v-if="s.badge" class="desk-set-nav-badge">{{ s.badge }}</span>
         </button>
       </nav>
 
       <!-- ② 内容 -->
-      <div class="set-main desk-pane is-mid">
+      <div class="desk-set-main desk-pane is-mid">
         <AboutPanel v-if="current === 'about'" />
         <LibraryPanel v-else-if="current === 'library'" :selected="selected" @select="selected = $event" />
         <component :is="activeComponent" v-else />
       </div>
 
       <!-- ③ 侧栏：当前状态的实时反馈 -->
-      <aside class="set-side desk-pane is-right">
-        <h3 class="set-side-title">{{ sideTitle }}</h3>
+      <aside class="desk-set-side desk-pane is-right">
+        <h3 class="desk-set-side-title">{{ sideTitle }}</h3>
 
         <!-- 预览卡：外观 / 壁纸分区 -->
         <template v-if="current === 'wallpaper' || current === 'cards'">
-          <div class="set-preview" :style="previewBg">
-            <div class="set-preview-card desk-surface">
+          <div class="desk-set-preview" :style="previewBg">
+            <div class="desk-set-preview-card desk-surface">
               <span class="pc-date">{{ t('ui.set.previewDate') }}</span>
               <span class="pc-big">13</span>
               <span class="pc-line" />
               <span class="pc-quote" />
             </div>
-            <span class="set-preview-tag">{{ tag }}</span>
+            <span class="desk-set-preview-tag">{{ tag }}</span>
           </div>
 
           <!-- 当前壁纸：来源 + 尺寸 -->
-          <div class="set-meta">
-            <span class="set-meta-src">{{ sourceLabel }}</span>
-            <span class="set-meta-size">{{ wallSize }}</span>
+          <div class="desk-set-meta">
+            <span class="desk-set-meta-src">{{ sourceLabel }}</span>
+            <span class="desk-set-meta-size">{{ wallSize }}</span>
           </div>
 
           <!-- 收藏：点一下换过去，右上角叉删掉 -->
           <template v-if="current === 'wallpaper'">
-            <h4 class="set-side-sub">{{ t('ui.set.favCount', { n: favorites.length }) }}</h4>
-            <div v-if="favorites.length" class="set-fav">
-              <div v-for="name in favorites" :key="name" class="set-fav-item" :class="{ 'is-active': wallpaper.value === favUrl(name) }" :style="{ backgroundImage: `url(${favUrl(name)})` }">
-                <button class="set-fav-pick" type="button" :aria-label="t('ui.set.pickFav', { name })" @click="setWallpaper('cover', favUrl(name), 'cover')" />
-                <GlassButton class="set-fav-x" :icon="X" :label="t('ui.set.removeFav')" tone="photo" variant="danger" @click.stop="dropFav(name)" />
+            <h4 class="desk-set-side-sub">{{ t('ui.set.favCount', { n: favorites.length }) }}</h4>
+            <div v-if="favorites.length" class="desk-set-fav">
+              <div v-for="name in favorites" :key="name" class="desk-set-fav-item" :class="{ 'is-active': wallpaper.value === favUrl(name) }" :style="{ backgroundImage: `url(${favUrl(name)})` }">
+                <button class="desk-set-fav-pick" type="button" :aria-label="t('ui.set.pickFav', { name })" @click="setWallpaper('cover', favUrl(name), 'cover')" />
+                <GlassButton class="desk-set-fav-x" :icon="X" :label="t('ui.set.removeFav')" tone="photo" variant="danger" @click.stop="dropFav(name)" />
               </div>
             </div>
             <p v-else class="desk-hint">{{ t('ui.set.favEmptyHint') }}</p>
@@ -61,48 +61,48 @@
 
         <!-- 卡片库：选中卡片的预览 + 张数 + 添加 -->
         <template v-else-if="current === 'library'">
-          <div v-if="picked" class="set-card-preview">
+          <div v-if="picked" class="desk-set-card-preview">
             <!-- 真卡片：同一份组件、同一个外框，只是这里不响应点击 -->
-            <div class="set-card-live">
+            <div class="desk-set-card-live">
               <CardFrame :card-id="picked.id" :w="pv.w" :h="pv.h" preview>
                 <component :is="picked.component" :size="`${pv.w}x${pv.h}`" :w="pv.w" :h="pv.h" />
               </CardFrame>
             </div>
-            <b class="set-card-name">{{ picked.name }}</b>
-            <small class="set-card-desc">{{ picked.desc }}</small>
-            <span class="set-count desk-badge" :class="{ 'is-on': countOnDesk(picked.id) }">
+            <b class="desk-set-card-name">{{ picked.name }}</b>
+            <small class="desk-set-card-desc">{{ picked.desc }}</small>
+            <span class="desk-set-count desk-badge" :class="{ 'is-on': countOnDesk(picked.id) }">
               {{ countOnDesk(picked.id) ? t('ui.set.addedCount', { n: countOnDesk(picked.id) }) : t('ui.set.notAdded') }}
             </span>
-            <GlassButton class="set-add" text :variant="countOnDesk(picked.id) ? 'default' : 'primary'" :icon="Plus" :label="t('common.addToDesk')" @click="addToDesk(picked.id)" />
-            <GlassButton v-if="countOnDesk(picked.id)" class="set-remove" text variant="danger" :icon="Minus" :label="t('common.removeOne')" @click="removeOne(picked.id)" />
+            <GlassButton class="desk-set-add" text :variant="countOnDesk(picked.id) ? 'default' : 'primary'" :icon="Plus" :label="t('common.addToDesk')" @click="addToDesk(picked.id)" />
+            <GlassButton v-if="countOnDesk(picked.id)" class="desk-set-remove" text variant="danger" :icon="Minus" :label="t('common.removeOne')" @click="removeOne(picked.id)" />
           </div>
         </template>
 
         <!-- 关于：版本信息 + 重置桌面 -->
         <template v-else-if="current === 'about'">
-          <dl class="set-kv">
+          <dl class="desk-set-kv">
             <dt>{{ t('ui.set.aboutVersion') }}</dt><dd>v{{ version }}</dd>
             <dt>{{ t('ui.set.aboutRuntime') }}</dt><dd>{{ t('ui.set.aboutRuntimeValue', { v: frontend }) }}</dd>
             <dt>{{ t('ui.set.aboutRepo') }}</dt>
-            <dd><a class="set-link" :href="pkg.homepage" target="_blank" rel="noreferrer">{{ pkg.homepage.replace("https://github.com/", "") }}</a></dd>
+            <dd><a class="desk-set-link" :href="pkg.homepage" target="_blank" rel="noreferrer">{{ pkg.homepage.replace("https://github.com/", "") }}</a></dd>
           </dl>
-          <div class="set-about-reset">
+          <div class="desk-set-about-reset">
             <b>{{ t('ui.set.resetDesk') }}</b>
             <small>{{ t('ui.set.resetDeskHint') }}</small>
             <GlassButton text :label="t('common.reset')" @click="resetDesk()" />
           </div>
         </template>
 
-        <p v-if="current === 'library'" class="set-side-hint">{{ t('ui.set.libraryHint') }}</p>
-        <p v-else-if="current === 'cards'" class="set-side-hint">{{ t('ui.set.cardsHint') }}</p>
+        <p v-if="current === 'library'" class="desk-set-side-hint">{{ t('ui.set.libraryHint') }}</p>
+        <p v-else-if="current === 'cards'" class="desk-set-side-hint">{{ t('ui.set.cardsHint') }}</p>
 
-        <dl v-if="current === 'wallpaper'" class="set-stats">
+        <dl v-if="current === 'wallpaper'" class="desk-set-stats">
           <div><dt>{{ t('ui.set.statBlur') }}</dt><dd>{{ isTheme ? "—" : wallpaper.blur }}</dd></div>
           <div><dt>{{ t('ui.set.statMask') }}</dt><dd>{{ isTheme ? "—" : `${Math.round(wallpaper.mask * 100)}%` }}</dd></div>
           <div><dt>{{ t('ui.set.statPlaced') }}</dt><dd>{{ desk.cards.length }}</dd></div>
         </dl>
 
-        <div class="set-side-foot">
+        <div class="desk-set-side-foot">
           <GlassButton text :label="t('common.restoreDefault')" @click="resetAll" />
         </div>
       </aside>
@@ -251,7 +251,7 @@ function resetAll() {
 }
 
 /* ① 导航 */
-.set-nav {
+.desk-set-nav {
   flex: 0 0 156px;
   display: flex;
   flex-direction: column;
@@ -259,7 +259,7 @@ function resetAll() {
   padding: var(--desk-sp-2);
 }
 
-.set-nav-item {
+.desk-set-nav-item {
   display: flex;
   align-items: center;
   gap: var(--desk-sp-2);
@@ -274,16 +274,16 @@ function resetAll() {
   cursor: pointer;
 }
 
-.set-nav-item:hover {
+.desk-set-nav-item:hover {
   background: color-mix(in srgb, var(--desk-text) 6%, transparent);
 }
 
-.set-nav-item.is-active {
+.desk-set-nav-item.is-active {
   background: color-mix(in srgb, var(--desk-accent) 14%, transparent);
   color: var(--desk-accent);
 }
 
-.set-nav-label {
+.desk-set-nav-label {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -291,14 +291,14 @@ function resetAll() {
   white-space: nowrap;
 }
 
-.set-nav-badge {
+.desk-set-nav-badge {
   font-size: var(--desk-fs-2xs);
   color: var(--desk-text-3);
   font-variant-numeric: tabular-nums;
 }
 
 /* ② 内容 */
-.set-main {
+.desk-set-main {
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
@@ -307,7 +307,7 @@ function resetAll() {
 }
 
 /* ③ 侧栏 */
-.set-side {
+.desk-set-side {
   flex: 0 0 260px;
   display: flex;
   flex-direction: column;
@@ -316,7 +316,7 @@ function resetAll() {
   min-height: 0;
 }
 
-.set-side-title {
+.desk-set-side-title {
   margin: 0;
   font-size: var(--desk-fs-caption);
   font-weight: 500;
@@ -325,14 +325,14 @@ function resetAll() {
   color: var(--desk-text-3);
 }
 
-.set-side-hint {
+.desk-set-side-hint {
   margin: 0;
   font-size: var(--desk-fs-caption);
   line-height: 1.6;
   color: var(--desk-text-3);
 }
 
-.set-side-foot {
+.desk-set-side-foot {
   margin-top: auto;
   padding-top: var(--desk-sp-2);
   border-top: 1px solid var(--desk-stroke);
@@ -340,7 +340,7 @@ function resetAll() {
 }
 
 /* 收藏网格：整栏剩余空间全部给它，装不下就自己滚，底部按钮永远不被挤走 */
-.set-side > .set-fav {
+.desk-set-side > .desk-set-fav {
   flex: 1 1 0;
   min-height: 96px;
   overflow-y: auto;
@@ -348,31 +348,31 @@ function resetAll() {
   padding-right: var(--desk-sp-0);
 }
 
-.set-side > .set-side-hint {
+.desk-set-side > .desk-set-side-hint {
   margin-top: var(--desk-sp-2);
 }
 
 /* 底部小统计：把右栏剩余空间变成实时反馈 */
-.set-stats {
+.desk-set-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--desk-sp-1h);
   margin: auto 0 0;
 }
 
-.set-stats div {
+.desk-set-stats div {
   padding: var(--desk-sp-1h) var(--desk-sp-2);
   border-radius: var(--desk-r-md);
   border: 1px solid var(--desk-stroke);
   text-align: center;
 }
 
-.set-stats dt {
+.desk-set-stats dt {
   font-size: var(--desk-fs-2xs);
   color: var(--desk-text-3);
 }
 
-.set-stats dd {
+.desk-set-stats dd {
   margin: 2px 0 0;
   font-size: var(--desk-fs-body);
   font-variant-numeric: tabular-nums;
@@ -380,7 +380,7 @@ function resetAll() {
 }
 
 /* 预览卡：真实壁纸 + 当前外观参数 */
-.set-preview {
+.desk-set-preview {
   position: relative;
   display: grid;
   place-items: center;
@@ -392,26 +392,26 @@ function resetAll() {
 }
 
 /* 来源 + 尺寸 */
-.set-meta {
+.desk-set-meta {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--desk-sp-2);
 }
 
-.set-meta-src {
+.desk-set-meta-src {
   font-size: var(--desk-fs-caption);
   color: var(--desk-text-2);
 }
 
-.set-meta-size {
+.desk-set-meta-size {
   font-size: var(--desk-fs-2xs);
   color: var(--desk-text-3);
   font-variant-numeric: tabular-nums;
 }
 
 /* 收藏：3 列，与来源网格同构；每格右上角带删除 */
-.set-side-sub {
+.desk-set-side-sub {
   margin: 0;
   font-size: var(--desk-fs-caption);
   font-weight: 500;
@@ -419,14 +419,14 @@ function resetAll() {
   color: var(--desk-text-3);
 }
 
-.set-fav {
+.desk-set-fav {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--desk-sp-1h);
   align-content: start;
 }
 
-.set-fav-item {
+.desk-set-fav-item {
   position: relative;
   aspect-ratio: 16 / 10;
   padding: 0;
@@ -440,23 +440,23 @@ function resetAll() {
     box-shadow var(--desk-dur-fast) var(--desk-ease);
 }
 
-.set-fav-item:hover {
+.desk-set-fav-item:hover {
   transform: translateY(-1px);
   box-shadow: var(--desk-shadow-2);
 }
 
-.set-fav-item.is-active {
+.desk-set-fav-item.is-active {
   box-shadow: 0 0 0 2px var(--desk-accent);
 }
 
 /* 删除叉：只在悬停/选中时露出来，不挡缩略图 */
-.set-fav-pick { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
-.set-fav-pick:focus-visible { outline: var(--desk-ring); outline-offset: 2px; }
-.set-fav-x { position: absolute; top: 2px; right: 2px; opacity: 0; }
-.set-fav-item:hover .set-fav-x, .set-fav-item:focus-within .set-fav-x { opacity: 1; }
-@media (hover: none) { .set-fav-x { opacity: 1; } }
+.desk-set-fav-pick { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.desk-set-fav-pick:focus-visible { outline: var(--desk-ring); outline-offset: 2px; }
+.desk-set-fav-x { position: absolute; top: 2px; right: 2px; opacity: 0; }
+.desk-set-fav-item:hover .desk-set-fav-x, .desk-set-fav-item:focus-within .desk-set-fav-x { opacity: 1; }
+@media (hover: none) { .desk-set-fav-x { opacity: 1; } }
 
-.set-preview-card {
+.desk-set-preview-card {
   --dg-surface-fill: var(--dg-card-fill);
   --dg-surface-radius: var(--desk-r-card);
   --dg-surface-blur: var(--desk-blur-regular);
@@ -490,7 +490,7 @@ function resetAll() {
   background: color-mix(in srgb, currentColor 18%, transparent);
 }
 
-.set-preview-tag {
+.desk-set-preview-tag {
   position: absolute;
   left: var(--desk-sp-2);
   bottom: var(--desk-sp-2);
@@ -502,7 +502,7 @@ function resetAll() {
 }
 
 /* 卡片库：右栏预览与操作 */
-.set-card-preview {
+.desk-set-card-preview {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -510,37 +510,37 @@ function resetAll() {
 }
 
 /* 真卡片的画布：4:2 的比例，卡片在里面按 cqmin 自适应 */
-.set-card-live {
+.desk-set-card-live {
   position: relative;
   width: 100%;
   aspect-ratio: 2 / 1;
   overflow: hidden;
 }
 
-.set-card-name {
+.desk-set-card-name {
   margin-top: var(--desk-sp-1);
   font-size: var(--desk-fs-body);
   font-weight: 600;
   text-align: center;
 }
 
-.set-card-desc {
+.desk-set-card-desc {
   font-size: var(--desk-fs-caption);
   line-height: 1.5;
   color: var(--desk-text-3);
   text-align: center;
 }
 
-.set-count {
+.desk-set-count {
   align-self: flex-start;
   margin-top: var(--desk-sp-1);
 }
 
-.set-add { width: 100%; min-height: 30px; margin-top: var(--desk-sp-2); }
-.set-remove { width: 100%; }
+.desk-set-add { width: 100%; min-height: 30px; margin-top: var(--desk-sp-2); }
+.desk-set-remove { width: 100%; }
 
 /* 关于：说明 + 键值表 */
-.set-kv {
+.desk-set-kv {
   display: grid;
   grid-template-columns: 84px minmax(0, 1fr);
   gap: var(--desk-sp-2) var(--desk-sp-3);
@@ -548,22 +548,22 @@ function resetAll() {
   font-size: var(--desk-fs-body);
 }
 
-.set-kv dt {
+.desk-set-kv dt {
   color: var(--desk-text-3);
 }
 
-.set-kv dd {
+.desk-set-kv dd {
   margin: 0;
   color: var(--desk-text);
 }
 
-.set-link {
+.desk-set-link {
   color: var(--desk-accent);
   text-decoration: none;
 }
 
 /* 关于：重置桌面（危险操作放最下面，和右栏「恢复默认」分开） */
-.set-about-reset {
+.desk-set-about-reset {
   display: flex;
   flex-direction: column;
   gap: var(--desk-sp-1);
@@ -573,16 +573,16 @@ function resetAll() {
   font-size: var(--desk-fs-caption);
 }
 
-.set-about-reset b {
+.desk-set-about-reset b {
   font-weight: 600;
   color: var(--desk-text);
 }
 
-.set-about-reset small {
+.desk-set-about-reset small {
   color: var(--desk-text-3);
 }
 
-.set-about-reset .gb {
+.desk-set-about-reset .gb {
   margin-top: var(--desk-sp-1);
 }
 </style>

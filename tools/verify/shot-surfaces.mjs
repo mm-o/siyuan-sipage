@@ -48,7 +48,7 @@ try {
   await page.locator('.tools').hover()
   await page.getByRole('button', { name: '设置', exact: true }).last().click()
   await dialog.waitFor()
-  await dialog.locator('.set-nav').getByRole('button', { name: '组件设置', exact: true }).click()
+  await dialog.locator('.desk-set-nav').getByRole('button', { name: '组件设置', exact: true }).click()
   const toggle = dialog.getByRole('switch', { name: '入场动效', exact: true })
   assert.equal(await toggle.getAttribute('aria-checked'), 'false')
   await toggle.click()
@@ -78,7 +78,7 @@ try {
   assert.equal(await cell.getAttribute('aria-valuetext'), '27px')
   checks.push('slider Home/End/arrows change model and fill; double-click restores the default')
 
-  const pane = dialog.locator('.set-main')
+  const pane = dialog.locator('.desk-set-main')
   await theme(false)
   const lightPane = await surface(pane)
   await screenshot('surfaces-settings-light.png')

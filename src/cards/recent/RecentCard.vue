@@ -1,17 +1,17 @@
 <template>
-  <div class="slot-card is-plain">
+  <div class="desk-slot-card is-plain">
     <div class="doc-list desk-seq" :style="{ '--rows': rowsMax }">
       <button
         v-for="(doc, i) in rows"
         :key="i"
-        class="doc-row"
+        class="desk-doc-row"
         :class="{ 'is-more': !doc }"
         type="button"
         :style="{ '--bg': docColor(i).bg, '--line': docColor(i).line, '--ink': docColor(i).ink }"
         @click="doc && onRow(doc, $event)"
       >
         <component :is="doc ? FileText : Ellipsis" :size="16" :stroke-width="1.8" />
-        <span class="doc-title">{{ doc ? doc.title : t("common.more") }}</span>
+        <span class="desk-doc-title">{{ doc ? doc.title : t("common.more") }}</span>
       </button>
     </div>
   </div>

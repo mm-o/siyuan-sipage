@@ -576,8 +576,14 @@ export async function bootStore() {
   await Promise.all([...boxes].map(async ([key, box]) => {
     Object.assign(box.state, await read(key, box.defaults as Record<string, unknown>))
   }))
-  /* 收藏没有第二份状态：公开文件夹里有什么，收藏就是什么 */
-  favorites.splice(0, favorites.length, ...(await listFavs()))
+  /* 收藏没有第二份状态：公开文件夹里有什么，收藏就是什么。
+     新装的工作区里这个目录还不存在（readDir 会返回 404），收藏就是空的——
+     绝不能因为"还没有收藏目录"就让整个 bootStore 抛错（那会把插件卡在加载阶段）。 */
+  try {
+    favorites.splice(0, favorites.length, ...(await listFavs()))
+  } catch {
+    favorites.splice(0, favorites.length)
+  }
   seedCountdown()
   countdown.seeded = true
   seedDefaultDesk()

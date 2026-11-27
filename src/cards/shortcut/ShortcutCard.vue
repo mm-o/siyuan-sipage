@@ -1,28 +1,28 @@
 <template>
-  <div class="slot-card" :style="bgStyle">
-    <div class="slot-grid desk-seq" :style="{ '--cols': g.cols, '--rows': g.rows }">
+  <div class="desk-slot-card" :style="bgStyle">
+    <div class="desk-slot-grid desk-seq" :style="{ '--cols': g.cols, '--rows': g.rows }">
       <button
         v-for="(s, i) in items"
         :key="i"
-        class="slot ariaLabel"
+        class="desk-slot ariaLabel"
         type="button"
         data-position="north"
         data-tooltip-encoding="none"
         :aria-label="s?.label"
         @click.stop="runShortcut(s)"
       >
-        <span class="slot-ic">
+        <span class="desk-slot-ic">
           <svg v-if="sprite" aria-hidden="true"><use :xlink:href="'#' + s.icon" /></svg>
           <component :is="s.fallback" v-else :size="18" :stroke-width="1.7" />
         </span>
       </button>
 
       <!-- 紧跟最后一个图标：打开卡片 -->
-      <button class="slot ariaLabel" type="button" data-position="north" data-tooltip-encoding="none" :aria-label="t('card.shortcut.openCard')">
-        <span class="slot-ic is-open"><Ellipsis :size="18" :stroke-width="1.9" /></span>
+      <button class="desk-slot ariaLabel" type="button" data-position="north" data-tooltip-encoding="none" :aria-label="t('card.shortcut.openCard')">
+        <span class="desk-slot-ic is-open"><Ellipsis :size="18" :stroke-width="1.9" /></span>
       </button>
 
-      <button v-for="n in blanks" :key="'b' + n" class="slot" type="button" disabled />
+      <button v-for="n in blanks" :key="'b' + n" class="desk-slot" type="button" disabled />
     </div>
   </div>
 </template>
@@ -65,21 +65,3 @@ const g = computed(() => {
 const items = computed<Shortcut[]>(() => enabledShortcuts(state).slice(0, Math.max(0, g.value.count - 1)))
 const blanks = computed(() => Math.max(0, g.value.count - items.value.length - 1))
 </script>
-
-<style scoped>
-/* 卡片：照片底 + 一层压暗，图标本身自带彩色底，所以不再需要额外渐变 */
-/* 槽位：外观全部来自全局 .slot（与工具按钮同源），这里不再覆盖间距 */
-
-.slot:disabled { cursor: default; }
-
-/* 图标：横竖同源（短边的 84%），圆角与卡片同为边长 10% */
-.slot:hover .ic {
-  background: rgb(255 255 255 / 28%);
-  transform: translateY(-1px);
-}
-
-.slot:active .ic {
-  transform: scale(0.94);
-}
-
-</style>

@@ -1,7 +1,7 @@
 <template>
-  <div class="desk-panel set-page">
+  <div class="desk-panel desk-set-page">
     <h2 class="set-h2">{{ t("ui.wall.title") }}</h2>
-    <p class="set-p">{{ t("ui.wall.desc") }}</p>
+    <p class="desk-set-p">{{ t("ui.wall.desc") }}</p>
 
     <!-- 来源统一选择：图标与来源一一对应，同一尺寸同一线宽 -->
     <div class="sources">

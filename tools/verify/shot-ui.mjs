@@ -4,7 +4,7 @@ import path from 'node:path'
 import { openBrowser, panels, out, report } from './browser.mjs'
 
 const cards = [
-  ['clock', '时钟', true], ['calendar', '日历', true], ['daily', '日记', true], ['english', '每日英语', false],
+  ['clock', '时钟', true], ['calendar', '日历', true], ['daily', '日记', true], ['quicknote', '快速记录', true], ['english', '每日英语', false],
   ['yiyan', '每日一言', false], ['shici', '每日诗词', false], ['weather', '天气', false],
   ['countdown', '倒数日', true], ['heatmap', '写作热力图', true], ['pomodoro', '番茄钟', true],
   ['memo', '日程备忘', true], ['docstats', '文档统计', true], ['quickopen', '快捷打开', true],
@@ -15,11 +15,11 @@ const { page, errors } = harness
 const checks = []
 const screenshots = process.env.VERIFY_NO_SCREENSHOTS ? [] : ['ui-library.png', 'ui-desktop-dark.png']
 const dialog = page.locator('.desk-sheet')
-const nav = page.locator('.set-nav')
+const nav = page.locator('.desk-set-nav')
 async function openLibrary() {
   await page.locator('.tools').hover()
   await page.getByRole('button', { name: '添加卡片', exact: true }).click()
-  await page.locator('.lib-list').waitFor()
+  await page.locator('.lib-row').first().waitFor()
 }
 async function closeSheet() {
   await dialog.locator('.desk-sheet-close').click()
@@ -29,17 +29,17 @@ try {
   await harness.goto()
   await openLibrary()
   assert.equal(await page.locator('.lib-row').count(), cards.length, 'Add card opens the library directly')
-  const preview = page.locator('.set-card-live .frame')
+  const preview = page.locator('.desk-set-card-live .frame')
   for (const [, name, solid] of cards) {
     await page.locator('.lib-row').filter({ has: page.locator('b', { hasText: new RegExp(`^${name}$`) }) }).click()
     await page.waitForFunction(({ name, solid }) => {
-      const frame = document.querySelector('.set-card-live .frame')
-      return document.querySelector('.set-card-name')?.textContent === name && frame?.classList.contains('is-solid') === solid
+      const frame = document.querySelector('.desk-set-card-live .frame')
+      return document.querySelector('.desk-set-card-name')?.textContent === name && frame?.classList.contains('is-solid') === solid
     }, { name, solid })
     assert.equal(await preview.locator('.body > *').count(), 1, `${name} preview renders`)
     assert.equal(await preview.locator(':scope > button.gb').count(), 0, 'Previews have no floating controls')
   }
-  checks.push('all 16 library previews render and switch solid/glass materials reactively')
+  checks.push(`all ${cards.length} library previews render and switch solid/glass materials reactively`)
 
   await page.locator('.lib-row').filter({ has: page.locator('b', { hasText: /^日历$/ }) }).click()
   await page.getByRole('button', { name: '添加到桌面', exact: true }).click()
@@ -50,7 +50,7 @@ try {
 
   for (const name of ['壁纸', '组件设置', '关于', '卡片库']) {
     await nav.getByRole('button', { name: new RegExp(`^${name}`) }).click()
-    assert.equal(await page.locator('.set-main h2').textContent(), name)
+    assert.equal(await page.locator('.desk-set-main h2').textContent(), name)
   }
   await preview.click()
   assert.equal(await dialog.count(), 1, 'Preview cannot open another detail')
@@ -61,7 +61,7 @@ try {
   await radius.press('Home')
   await radius.press('ArrowRight')
   await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--desk-r-card').trim() === '2px')
-  assert.equal(await page.locator('.set-preview-card').evaluate(el => getComputedStyle(el).borderRadius), '2px')
+  assert.equal(await page.locator('.desk-set-preview-card').evaluate(el => getComputedStyle(el).borderRadius), '2px')
   await page.getByRole('button', { name: '恢复默认', exact: true }).click()
   await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--desk-r-card').trim() === '18px')
   checks.push('all settings tabs work; appearance slider updates shared CSS variables and reset restores defaults')
@@ -71,12 +71,12 @@ try {
     await page.getByRole('tab', { name: label, exact: true }).click()
     await page.waitForFunction((want) => document.body.dataset.deskStyle === want, style)
     assert.equal(
-      await page.locator('.set-preview-card').first().evaluate((el) => getComputedStyle(el).backdropFilter),
+      await page.locator('.desk-set-preview-card').first().evaluate((el) => getComputedStyle(el).backdropFilter),
       blur === '0px' ? 'none' : 'blur(18px) saturate(1.35)',
       `${style} swaps the surface material`,
     )
     /* 控件也跟着换：非玻璃风格没有镜片、也没有模糊 */
-    const chrome = await page.locator('.set-nav-item').first().evaluate((el) => {
+    const chrome = await page.locator('.desk-set-nav-item').first().evaluate((el) => {
       const cs = getComputedStyle(el)
       return { filter: cs.backdropFilter, radius: cs.borderTopLeftRadius }
     })
@@ -171,11 +171,11 @@ try {
   await page.evaluate(() => globalThis.__sipageFavorites.push('verify-kept.png'))
   await page.route('**/api/file/removeFile', route => route.fulfill({ json: { code: -1, msg: 'fixture deletion failed' } }))
   const deleteResponse = page.waitForResponse(response => response.url().endsWith('/api/file/removeFile'))
-  await page.locator('.set-fav-item').first().getByRole('button', { name: '删除收藏', exact: true }).click({ force: true })
+  await page.locator('.desk-set-fav-item').first().getByRole('button', { name: '删除收藏', exact: true }).click({ force: true })
   await deleteResponse
   await page.waitForFunction(() => [...document.querySelectorAll('body > div')].some(el => el.textContent.includes('删除收藏失败')))
   assert.ok(await page.evaluate(() => globalThis.__sipageFavorites.includes('verify-kept.png')))
-  assert.equal(await page.locator('.set-fav-item').count(), 1)
+  assert.equal(await page.locator('.desk-set-fav-item').count(), 1)
   await page.evaluate(() => globalThis.__sipageFavorites.splice(0))
   checks.push('failed favorite deletion preserves both the favorites mirror and visible item')
   await closeSheet()
@@ -184,7 +184,7 @@ try {
     globalThis.__sipageDesk.cards = [...panels, ...cards.map(([cardId], index) => ({ uid: `verify-${cardId}`, cardId, w: 6, h: 6, x: 1 + index % 6 * 8, y: 8 + Math.floor(index / 6) * 8 }))]
   }, { cards, panels })
   const frames = page.locator('.desk-root .item:not(.is-panel) > .frame')
-  await page.waitForFunction(() => document.querySelectorAll('.desk-root .item:not(.is-panel) > .frame').length === 16)
+  await page.waitForFunction((n) => document.querySelectorAll('.desk-root .item:not(.is-panel) > .frame').length === n, cards.length)
   for (const [w, h] of [[6, 6], [12, 6], [6, 12]]) {
     await page.evaluate(({ w, h }) => {
       for (const card of globalThis.__sipageDesk.cards) if (!card.cardId.startsWith('@')) { card.w = w; card.h = h }
@@ -197,7 +197,7 @@ try {
     }))
     assert.ok(boxes.every(box => box.content && box.width > 0 && box.height > 0), `All cards have nonzero content boxes at ${w}×${h}`)
   }
-  checks.push('all 16 desktop cards render square, wide and tall content boxes without runtime errors')
+  checks.push(`all ${cards.length} desktop cards render square, wide and tall content boxes without runtime errors`)
   // 操作较小的日历，避免测试点击落到视口外。
   await page.evaluate(() => {
     for (const c of globalThis.__sipageDesk.cards) if (!c.cardId.startsWith('@')) { c.w = 6; c.h = 6 }
@@ -222,7 +222,7 @@ try {
   await page.evaluate(() => {
     const host = document.createElement('section')
     host.id = 'verify-embed-host'
-    host.innerHTML = '<div data-desk-card="clock" data-size="2x2"></div>'
+    host.innerHTML = '<div data-sipage-card="clock" data-size="2x2"></div>'
     document.body.append(host)
     globalThis.__verifyEmbed = host.firstElementChild
   })

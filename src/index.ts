@@ -19,7 +19,13 @@ export default class SiPagePlugin extends Plugin {
       load: (key) => this.loadData(key),
       save: (key, value) => this.saveData(key, value),
     })
-    await bootStore()
+    /* 存储失败不能连累插件：拿不到已保存的状态就用默认值，
+       否则 onload 抛错 → 页签类型没注册 → 刷新后思源会把恢复的页签标成「不可用」 */
+    try {
+      await bootStore()
+    } catch (error) {
+      console.error("[siyuan-sipage] 读取插件状态失败，改用默认值", error) // i18n-keep
+    }
 
     // 页签：往 this.element 挂载 DeskShell（思源的标准约定）
     this.addTab({

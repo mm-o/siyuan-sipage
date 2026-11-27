@@ -498,19 +498,19 @@ html.dark,
 
 /* 设置面板骨架：壁纸 / 组件设置 / 卡片库 / 关于 四个面板共用 */
 .desk-panel,
-.set .set-page {
+.desk-set .desk-set-page {
   display: flex;
   flex-direction: column;
   gap: var(--desk-sp-3);
 }
 
-.set .set-group {
+.desk-set .desk-set-group {
   padding: var(--desk-sp-2) var(--desk-sp-3);
   border-radius: var(--desk-r-md);
   background: color-mix(in srgb, var(--desk-text) 3%, transparent);
 }
 
-.set .set-group-title {
+.desk-set .desk-set-group-title {
   margin: 0 0 var(--desk-sp-1);
   font-size: var(--desk-fs-body);
   font-weight: 600;
@@ -518,7 +518,7 @@ html.dark,
   color: var(--desk-text);
 }
 
-.set .set-row {
+.desk-set .desk-set-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -526,20 +526,20 @@ html.dark,
   min-height: 32px;
 }
 
-.set .set-label {
+.desk-set .desk-set-label {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.set .set-label b {
+.desk-set .desk-set-label b {
   font-size: var(--desk-fs-body);
   font-weight: 400;
   color: var(--desk-text-2);
 }
 
-.set .set-h2 { margin: 0; font-size: var(--desk-fs-title); font-weight: var(--desk-fw-semibold); }
-.set .set-p { margin: 0; font-size: var(--desk-fs-body); line-height: 1.6; color: var(--desk-text-2); }
+.desk-set .set-h2 { margin: 0; font-size: var(--desk-fs-title); font-weight: var(--desk-fw-semibold); }
+.desk-set .desk-set-p { margin: 0; font-size: var(--desk-fs-body); line-height: 1.6; color: var(--desk-text-2); }
 
 .desk-hint {
   margin: 0;
@@ -1212,7 +1212,7 @@ html.dark,
 
 /* ── 图标网格卡（快捷方式 / 最近文档 / 快捷打开共用）────────────
    规则只有三条：每 2*2 格一个槽位；槽位内留白形成缝隙；图标白玻璃、正方形。 */
-.slot-card {
+.desk-slot-card {
   position: relative;
   display: flex;
   width: 100%;
@@ -1227,12 +1227,12 @@ html.dark,
 }
 
 /* 文档列表卡：不要照片底，直接贴在卡片材质上 */
-.slot-card.is-plain {
+.desk-slot-card.is-plain {
   background-image: none;
   background-color: transparent;
 }
 
-.slot-grid {
+.desk-slot-grid {
   position: relative;
   z-index: 1;
   display: grid;
@@ -1245,7 +1245,7 @@ html.dark,
   grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
 }
 
-.slot {
+.desk-slot {
   container-type: size;
   display: grid;
   place-items: center;
@@ -1258,9 +1258,9 @@ html.dark,
   overflow: hidden;
 }
 
-.slot:disabled { cursor: default; }
+.desk-slot:disabled { cursor: default; }
 
-.slot-ic {
+.desk-slot-ic {
   display: grid;
   place-items: center;
   width: 84cqmin;
@@ -1279,20 +1279,20 @@ html.dark,
     transform var(--desk-dur-fast) var(--desk-ease);
 }
 
-.slot:hover .slot-ic {
+.desk-slot:hover .desk-slot-ic {
   background: rgb(255 255 255 / 28%);
   transform: translateY(-1px);
 }
 
-.slot:active .slot-ic { transform: scale(0.94); }
+.desk-slot:active .desk-slot-ic { transform: scale(0.94); }
 
 /* 末位「打开卡片」：和快捷方式同一套白玻璃，不参与内容数据 */
-.slot-ic.is-open {
+.desk-slot-ic.is-open {
   background: rgb(255 255 255 / 22%);
 }
 
 /* 图标沿用符号自身或 lucide 的描边设置，这里只负责尺寸与投影。 */
-.slot-ic svg {
+.desk-slot-ic svg {
   width: 54%;
   height: 54%;
   fill: none;
@@ -1300,7 +1300,7 @@ html.dark,
   stroke-width: 1.7;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 38%));
 }
-.slot-ic svg.lucide { fill: none; }
+.desk-slot-ic svg.lucide { fill: none; }
 
 /* ── 文档列表卡（最近文档 / 快捷打开）──────────────
    整卡铺满的彩色列表：每行 2 格高，行色按索引走彩虹，行内 = 图标 + 标题。 */
@@ -1316,7 +1316,7 @@ html.dark,
   gap: 0;
 }
 
-.doc-row {
+.desk-doc-row {
   display: flex;
   align-items: center;
   flex: 0 0 calc(100% / var(--rows, 6));
@@ -1334,17 +1334,17 @@ html.dark,
   transition: filter var(--desk-dur-fast) var(--desk-ease);
 }
 
-.doc-row:hover { filter: brightness(1.05) saturate(1.15); }
+.desk-doc-row:hover { filter: brightness(1.05) saturate(1.15); }
 
-.doc-row.is-more {
+.desk-doc-row.is-more {
   justify-content: center;
   color: var(--ink, #181051);
   opacity: 0.86;
 }
 
-.doc-row svg { flex: none; opacity: 0.85; }
+.desk-doc-row svg { flex: none; opacity: 0.85; }
 
-.doc-title {
+.desk-doc-title {
   min-width: 0;
   flex: 1 1 auto;
   font-size: clamp(9px, 10cqh, 13px);
@@ -1423,7 +1423,7 @@ html.dark,
 .gb:focus-visible, .seg-item:focus-visible, .chip:focus-visible { outline: var(--desk-ring); outline-offset: 3px; }
 
 /* 普通面板跟随思源主题；照片与天空背景始终提供稳定的明亮文字。 */
-.gb.on-photo, .on-photo .gb, .desk-photo-card .gb, .slot-card:not(.is-plain) .gb {
+.gb.on-photo, .on-photo .gb, .desk-photo-card .gb, .desk-slot-card:not(.is-plain) .gb {
   --dg-ink: #fff;
   --dg-base: #263447;
   --dg-fill: rgb(15 27 44 / 38%);
@@ -1451,7 +1451,7 @@ html.dark,
 .chip.on-photo.active { background: rgb(255 255 255 / 90%); color: #1d2836; }
 
 /* 开关、输入与列表选择沿用同一组材质，不逐控件叠加背景模糊。 */
-:is(.desk-sheet-mask, .desk-root) :is(.set-nav-item, .lib-row, .source, .cd-cat-chip, .cd-chip, .cd-nav-btn, .mm-row).is-active { border-color: var(--dg-rim); background: color-mix(in srgb, var(--desk-accent) 12%, var(--dg-fill)); box-shadow: inset 0 1px 0 var(--dg-highlight); }
+:is(.desk-sheet-mask, .desk-root) :is(.desk-set-nav-item, .lib-row, .source, .cd-cat-chip, .cd-chip, .cd-nav-btn, .mm-row).is-active { border-color: var(--dg-rim); background: color-mix(in srgb, var(--desk-accent) 12%, var(--dg-fill)); box-shadow: inset 0 1px 0 var(--dg-highlight); }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .gb > .gb-lens { background: var(--desk-surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -1717,7 +1717,7 @@ html.dark,
 /* 带描边的选项只在需要边界时出现边线，底色仍由上面统一。 */
 :is(.desk-sheet-mask, .desk-root) :is(.source, .cd-chip, .cd-cat-chip, .rc-cell) { border: 1px solid var(--dg-field-rim); }
 :is(.desk-sheet-mask, .desk-root, .desk-embed-card) :is(.lib-row, .source, .cd-nav-btn, .cd-chip, .cd-cat-chip, .wx-hit, .qp-item, .mm-row, .rc-cell):not(.is-empty):not(:disabled):hover { background: var(--dg-hover); }
-:is(.desk-sheet-mask, .desk-root, .desk-embed-card) :is(.set-nav-item, .lib-row, .source, .cd-nav-btn, .cd-chip, .cd-cat-chip, .wx-hit, .qp-item, .mm-row, .rc-cell):focus-visible { outline: var(--desk-ring); outline-offset: 2px; }
+:is(.desk-sheet-mask, .desk-root, .desk-embed-card) :is(.desk-set-nav-item, .lib-row, .source, .cd-nav-btn, .cd-chip, .cd-cat-chip, .wx-hit, .qp-item, .mm-row, .rc-cell):focus-visible { outline: var(--desk-ring); outline-offset: 2px; }
 /* 天气抽屉在天空底上，行反馈改用亮色。 */
 .desk-sheet-mask :is(.wx-hit, .wx-loc) { color: #fff; }
 .desk-sheet-mask :is(.wx-hit, .wx-loc-pick):hover { background: rgb(255 255 255 / 14%); }
@@ -2279,46 +2279,46 @@ body[data-desk-style="md3"] .seg-item.active {
   color: var(--dg-primary);
   box-shadow: none;
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-page {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-set-page {
   gap: 16px;
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-group {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-set-group {
   padding: 4px 16px 8px;
   border: 1px solid var(--b3-border-color, rgb(0 0 0 / 10%));
   border-radius: var(--b3-border-radius-b, 8px);
   background: var(--b3-theme-surface, #fff);
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-group-title {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-set-group-title {
   margin: 12px 0 4px;
   font-size: 14px;
   font-weight: 600;
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set :is(.set-row, .desk-slider) {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set :is(.desk-set-row, .desk-slider) {
   padding: 9px 0;
   min-height: 40px;
   border-bottom: 1px solid var(--b3-border-color, rgb(0 0 0 / 10%));
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set :is(.set-row, .desk-slider):last-child {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set :is(.desk-set-row, .desk-slider):last-child {
   border-bottom: 0;
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-label b {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-set-label b {
   font-size: 14px;
   color: var(--b3-theme-on-background, var(--desk-text));
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .desk-slider {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-slider {
   grid-template-columns: minmax(0, 1fr) 160px 40px;
   gap: 12px;
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-nav-item {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-set-nav-item {
   height: 32px;
   border: 0;
   background: transparent;
   color: var(--b3-theme-on-background, var(--desk-text));
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-nav-item:hover {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-set-nav-item:hover {
   background: var(--b3-list-hover, rgb(0 0 0 / 4%));
 }
-body:is([data-desk-style="native"], [data-desk-style="md3"]) .set .set-nav-item.is-active {
+body:is([data-desk-style="native"], [data-desk-style="md3"]) .desk-set .desk-set-nav-item.is-active {
   background: var(--b3-theme-surface-lighter, rgb(0 0 0 / 6%));
   color: var(--b3-theme-on-background, var(--desk-text));
 }

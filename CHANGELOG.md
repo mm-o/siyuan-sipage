@@ -13,6 +13,17 @@
 - **词条**：+31 条 ×2 语言（卡片名/说明/占位/提示/分组名），现为 631 条；新增卡片的样式外置到 `src/cards/quicknote/styles.css`。
 - **回归护栏**：新增 `tools/verify/shot-quicknote.mjs` 并接进 `pnpm check:browser`——断言「渲染不建日记」「提交走 appendBlock」「待办前缀正确」等 7 项。
 
+### 修复：首次真机启用「界面错乱 / 刷新后不可用」
+
+详见 `docs/ROADMAP.md` 附录 C。
+
+- **刷新后页签「不可用」**：全新工作区没有 `data/public/siyuan-sipage`，`/api/file/readDir` 返回 404 → `listFavs()` 抛错 → `bootStore()` reject → `onload()` reject → `addTab()` 没执行，刷新的恢复页签找不到类型。
+  现在：收藏读取单点容错（拿不到当空列表），`onload()` 对 `bootStore()` 再兜一层——页签 / 顶栏 / 命令这类门面无条件注册。
+- **界面错乱**：`src/styles/index.css` 是全局表，里面的 `.set-*` / `.slot` / `.slot-ic` / `.doc-row` / `.doc-title` 与 iTab modules、itab-embed、思桌等插件的同名类互相覆盖。
+  现在：这些类统一加 `desk-` 前缀（模板与样式同步），并删掉 `ShortcutCard` 里已失效的 scoped 样式块。
+- **新护栏 `pnpm check:css`**：全局表的首层类名必须 `desk-` 开头；历史裸类名进 `LEGACY` 白名单，只能减不能增；思源自有类（`body--dark` / `.dark` / `.layout-tab-container` / `.protyle-*`）列为外部例外。
+- 浏览器回归脚本同步更新：设置面板类名改 `desk-set-*`、内嵌属性改 `data-sipage-card`、卡片数改为动态（不再写死 16）。
+
 ## v1.0.3 — 深度清理：删掉死代码、重复词条与失效守卫
 
 不改变功能，只在「没有历史包袱就不要背负它」这条上再往前一步。

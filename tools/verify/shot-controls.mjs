@@ -17,7 +17,7 @@ const checks = []
 const screenshot = name => process.env.VERIFY_NO_SCREENSHOTS ? Promise.resolve() : page.screenshot({ path: path.join(out, name) })
 try {
   await harness.goto()
-  const icons = await page.locator('.slot-ic svg').evaluateAll(elements => elements.map(svg => {
+  const icons = await page.locator('.desk-slot-ic svg').evaluateAll(elements => elements.map(svg => {
     const style = getComputedStyle(svg)
     return { fill: style.fill, stroke: style.stroke, width: svg.getBoundingClientRect().width }
   }))
@@ -69,11 +69,11 @@ try {
   await page.locator('.tools').hover()
   await page.getByRole('button', { name: '添加卡片', exact: true }).click()
   await page.locator('.lib-list').waitFor()
-  const badge = dialog.locator('.set-count')
+  const badge = dialog.locator('.desk-set-count')
   assert.match(await badge.textContent(), /尚未添加/, 'library shows an explicit empty state')
   const before = await badge.evaluate(el => el.getBoundingClientRect().width)
   await dialog.getByRole('button', { name: '添加到桌面', exact: true }).click()
-  await page.waitForFunction(() => document.querySelector('.set-count')?.textContent.includes('已添加'))
+  await page.waitForFunction(() => document.querySelector('.desk-set-count')?.textContent.includes('已添加'))
   const badgeAfter = await badge.evaluate(el => ({ width: el.getBoundingClientRect().width, color: getComputedStyle(el).color }))
   assert.ok(badgeAfter.width > 0 && Math.abs(badgeAfter.width - before) < 200, 'badge stays compact')
   assert.match(await badge.getAttribute('class'), /is-on/)

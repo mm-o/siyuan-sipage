@@ -1,7 +1,7 @@
 <template>
-  <section class="lib set-page">
+  <section class="lib desk-set-page">
     <h2 class="set-h2">{{ t('ui.lib.title') }}</h2>
-    <p class="set-p">{{ t('ui.lib.intro') }}</p>
+    <p class="desk-set-p">{{ t('ui.lib.intro') }}</p>
 
     <div v-for="group in groups" :key="group.key" class="lib-group">
       <h3 class="lib-group-title">{{ group.label }}</h3>
