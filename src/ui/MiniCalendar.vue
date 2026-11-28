@@ -1,9 +1,9 @@
 <template>
   <div class="mc">
     <header v-if="nav" class="mc-head">
-      <GlassButton :icon="ChevronLeft" :label="t('ui.mini.prevMonth')" @click="shift(-1)" />
+      <GlassButton :icon="ChevronLeft" :label="t('common.prevMonth')" @click="shift(-1)" />
       <span class="mc-title">{{ title }}</span>
-      <GlassButton :icon="ChevronRight" :label="t('ui.mini.nextMonth')" @click="shift(1)" />
+      <GlassButton :icon="ChevronRight" :label="t('common.nextMonth')" @click="shift(1)" />
       <GlassButton v-if="today" text :label="t('common.today')" @click="goToday" />
     </header>
 

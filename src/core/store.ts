@@ -512,31 +512,8 @@ export function selectWeatherPlace(id: string) {
 
 /* ═══ 存储层（唯一入口）════════════════════════════════════
  * 用户状态 → 思源 petal（plugin.loadData/saveData），桌面 / 外观 / 壁纸 / 领域数据 / 各卡状态都在这里
- * 派生缓存 → localStorage（siyuan-sipage-cache: 命名空间，可丢可重建）
+ * 派生缓存 → `core/cache`（可丢可重建，只给天气这类响应加速）
  */
-
-/* ── 派生缓存（唯一允许落 localStorage 的地方）── */
-const CACHE_NS = "siyuan-sipage-cache:"
-
-export function cacheGet<T>(key: string, ttl = 0): T | null {
-  try {
-    const raw = localStorage.getItem(CACHE_NS + key)
-    if (!raw) return null
-    const box = JSON.parse(raw) as { at: number; v: T }
-    if (ttl && Date.now() - box.at > ttl) return null
-    return box.v
-  } catch {
-    return null
-  }
-}
-
-export function cacheSet(key: string, value: unknown) {
-  try {
-    localStorage.setItem(CACHE_NS + key, JSON.stringify({ at: Date.now(), v: value }))
-  } catch {
-    /* 配额满就算了：缓存只是加速 */
-  }
-}
 
 /* ── 卡片自己的状态：与桌面 / 外观走同一套 petal 存储 ──
  * 模块加载时建 reactive 对象并挂上自己的写盘 watcher，bootStore 里一次性灌入已保存的值。

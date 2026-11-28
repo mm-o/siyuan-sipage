@@ -1,6 +1,6 @@
 <template>
   <div class="qnp desk-seq desk-panel-row">
-    <!-- 左：写入目标 -->
+    <!-- 左：写到哪 -->
     <section class="qnp-col desk-pane is-left">
       <h4 class="qnp-sub desk-note">{{ t("card.quicknote.target") }}</h4>
 
@@ -11,7 +11,7 @@
           text
           :icon="RotateCcw"
           :label="t('card.quicknote.resetTarget')"
-          @click="resetTarget"
+          @click="setTarget(null)"
         />
         <span v-else class="qnp-tag">{{ t("card.quicknote.targetAuto") }}</span>
       </div>
@@ -32,7 +32,7 @@
           :key="doc.id"
           class="qnp-item"
           :class="{ 'is-on': state.target?.id === doc.id }"
-          @click="pick(doc)"
+          @click="setTarget(doc)"
         >
           <span class="qnp-ic"><FileText :size="13" :stroke-width="2" /></span>
           <span class="qnp-name desk-ellipsis">{{ doc.title }}</span>
@@ -45,27 +45,23 @@
       </ul>
     </section>
 
-    <!-- 右：写入格式 + 最近记录 -->
-    <section class="qnp-col desk-pane is-right">
-      <h4 class="qnp-sub desk-note">{{ t("card.quicknote.format") }}</h4>
-      <Segmented v-model="format" :options="FORMATS" />
+    <!-- 右：同一套输入条 + 目标文档本体（和日记详情共用 DocPane，可直接编辑） -->
+    <section class="qnp-doc desk-pane is-right">
+      <header class="qnp-doc-head">
+        <span class="qnp-doc-title desk-ellipsis" :title="pinnedTitle">{{ pinnedTitle }}</span>
+        <span class="qnp-tag">{{ t("card.quicknote.docEdit") }}</span>
+      </header>
 
-      <h4 class="qnp-sub desk-note">{{ t("card.quicknote.history") }}</h4>
-      <ul class="qnp-list desk-seq">
-        <li v-for="row in state.history" :key="row.at" class="qnp-item is-link" @click="open(row)">
-          <span class="qnp-time">{{ timeOf(row.at) }}</span>
-          <span class="qnp-name desk-ellipsis">{{ row.text }}</span>
-          <span class="qnp-doc desk-ellipsis">{{ row.title }}</span>
-        </li>
-        <li v-if="!state.history.length" class="qnp-empty desk-empty is-tight">
-          <EmptyArt />
-          <span>{{ t("card.quicknote.historyEmpty") }}</span>
-        </li>
-      </ul>
+      <QuickNoteComposer :uid="uid" class="qnp-doc-compose" @written="onWritten" />
 
-      <div v-if="state.history.length" class="qnp-foot">
-        <GlassButton text variant="danger" :icon="Trash2" :label="t('card.quicknote.clearHistory')" @click="clearHistory(state)" />
-      </div>
+      <DocPane
+        ref="pane"
+        :key="`${docId}-${renderKey}`"
+        :id="docId"
+        editable
+        full
+        :empty-text="t('card.quicknote.previewEmpty')"
+      />
     </section>
   </div>
 </template>
@@ -74,42 +70,43 @@
 /**
  * 快速记录详情
  *
- * 左栏决定"写到哪"：默认今天的日记（写入时现算），也可以搜/选一篇文档钉住。
- * 右栏决定"怎么写"：纯文本 / 待办 / 时间戳，以及最近 8 条记录（点击跳回那篇文档）。
+ * 左栏决定"写到哪"（默认今天的日记，可搜/钉任意文档）；
+ * 右栏 = 与卡片同一套输入条 + 目标文档本体（`ui/DocPane`，与日记详情同一套外观与编辑器）。
  */
-import { computed, ref } from "vue"
-import { Check, FileText, RotateCcw, Search, Trash2 } from "lucide-vue-next"
-import { EmptyArt, GlassButton, GlassField, Segmented } from "@/ui/controls"
-import { openDoc, recentDocs, searchDocs, type PickDoc } from "@/core/quickdocs"
+import { computed, nextTick, ref } from "vue"
+import { Check, FileText, RotateCcw, Search } from "lucide-vue-next"
+import { EmptyArt, GlassButton, GlassField } from "@/ui/controls"
+import DocPane from "@/ui/DocPane.vue"
+import { recentDocs, searchDocs, type PickDoc } from "@/core/quickdocs"
 import { t } from "@/core/i18n"
-import { clearHistory, quickNoteOf, type NoteFormat, type NoteRecord } from "./quicknote"
+import QuickNoteComposer from "./QuickNoteComposer.vue"
+import { useNoteDoc } from "./useNoteDoc"
 import "./styles.css"
 
 const props = defineProps<{ mode?: string; uid?: string }>()
 
-/* 详情跟着卡片实例走：同一张卡放多张，各记各的 */
-const state = quickNoteOf(props.uid || "quicknote")
+const uid = computed(() => props.uid || "quicknote")
+const { state, docId, renderKey, refresh } = useNoteDoc(uid.value)
 
-const FORMATS = [
-  { label: t("card.quicknote.format.text"), value: "text" },
-  { label: t("card.quicknote.format.todo"), value: "todo" },
-  { label: t("card.quicknote.format.stamp"), value: "stamp" },
-]
-
-const format = computed({
-  get: () => state.format,
-  set: (value: string) => { state.format = value as NoteFormat },
-})
-
+const pane = ref<InstanceType<typeof DocPane>>()
 const keyword = ref("")
 const hits = ref<PickDoc[]>([])
 const recent = ref<PickDoc[]>([])
 
 const list = computed(() => (hits.value.length ? hits.value : recent.value))
 const pinnedTitle = computed(() => state.target?.title || t("card.quicknote.targetToday"))
-const timeOf = (at: number) => {
-  const d = new Date(at)
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+
+async function setTarget(target: PickDoc | null) {
+  state.target = target ? { id: target.id, title: target.title } : null
+  keyword.value = ""
+  hits.value = []
+  await refresh()
+}
+
+async function onWritten() {
+  await refresh()
+  await nextTick()
+  pane.value?.scrollToEnd()
 }
 
 async function run() {
@@ -118,22 +115,6 @@ async function run() {
   } catch {
     hits.value = []
   }
-}
-
-function pick(doc: PickDoc) {
-  state.target = { id: doc.id, title: doc.title }
-  keyword.value = ""
-  hits.value = []
-}
-
-function resetTarget() {
-  state.target = null
-  keyword.value = ""
-  hits.value = []
-}
-
-function open(row: NoteRecord) {
-  void openDoc(row.id)
 }
 
 recentDocs(12)

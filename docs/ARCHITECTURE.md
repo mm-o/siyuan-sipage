@@ -26,6 +26,8 @@ src/ui/
   Sheet.vue              统一标题栏、弹层、钉住、顶栏拖动/四角缩放与 FLIP
   MiniCalendar.vue       可复用月格：月份切换 / 周首 / 今天 / 日程点，尺寸全用 em
   protyle.ts             Protyle 挂载：只读与就地编辑（含提示菜单出弹层）
+  ProtyleView.vue        给一个 id 就把 Protyle 挂上去，切 id 重挂、卸载即销毁
+  DocPane.vue            文档正文区（日记 / 快速记录共用）：pane 材质、内边距、空态、reveal / scrollToEnd
   SettingsSheet.vue      壁纸/组件设置/卡片库/关于，统一预览与重置
   WallpaperPanel.vue     壁纸来源选择
   CardsPanel.vue         外观参数
@@ -84,7 +86,9 @@ src/styles/index.css     设计令牌、共享控件、设置骨架、整理模�
 
 ## 状态与资源
 
-`store.ts` 的 reactive 是状态来源；思源插件存储通过 `loadData/saveData` 读取与防抖写入。先完成启动读取，再允许写盘。桌面、壁纸、外观、天气地点与倒数日状态保存到思源插件存储；部分卡片偏好通过 `persisted()` 保存到本地存储，派生缓存使用 `siyuan-sipage-cache:` 前缀。
+`store.ts` 的 reactive 是状态来源；思源插件存储通过 `loadData/saveData` 读取与防抖写入。先完成启动读取，再允许写盘。桌面、壁纸、外观、天气地点、倒数日与各卡状态（含 `persisted()` 的 agenda / docstats / pomodoro）**全部**走思源 petal，跟工作空间一起同步。
+
+只有"丢了能重建"的派生数据（天气响应、城市表）进 `core/cache.ts`：`siyuan-sipage-cache:` 命名空间、带时间戳与 TTL、写失败静默。用户状态一律不进 localStorage。启动流程里任何读取失败都不能中断插件加载（页签、顶栏、命令必须无条件注册）。
 
 外观参数通过一处监听同步为 CSS 变量，卡片、预览与 Teleport 弹层使用同一配置。壁纸身份与运行时图片只通过 `setWallpaper()` 一起替换，避免切换来源后残留旧 `resolved`；`resolved` 不落盘。快速连续选择只接受最后一次异步结果。
 

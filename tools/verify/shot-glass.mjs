@@ -36,7 +36,7 @@ try {
   await harness.goto()
   await page.locator('.tools').hover()
   await page.getByRole('button', { name: '添加卡片', exact: true }).click()
-  await page.locator('.lib-list').waitFor()
+  await page.locator('.lib-row').first().waitFor()
   const add = dialog.getByRole('button', { name: '添加到桌面', exact: true })
   const secondary = dialog.getByRole('button', { name: '恢复默认', exact: true })
   const close = dialog.locator('.desk-sheet-close')

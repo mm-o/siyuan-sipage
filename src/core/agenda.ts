@@ -75,7 +75,7 @@ export function weekdayOf(key: string) {
 
 /** 人类可读的日期：今天 / 明天 / 昨天 / 12月5日 / 2027年1月1日 */
 export function dayLabel(key: string) {
-  if (key === todayKey()) return t("core.date.today")
+  if (key === todayKey()) return t("common.today")
   if (key === dayKey(1)) return t("core.date.tomorrow")
   if (key === dayKey(-1)) return t("core.date.yesterday")
   const [y, m, d] = parts(key)

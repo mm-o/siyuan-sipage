@@ -5,11 +5,11 @@
     <GlassButton class="cd-back" :icon="ChevronLeft" :label="t('card.countdown.back')" text @click="backToList" />
     <div class="cd-form-body cd-scroll">
       <label class="cd-field">
-        <span class="cd-field-label">{{ t("card.countdown.fieldTitle") }}</span>
+        <span class="cd-field-label">{{ t("common.fieldTitle") }}</span>
         <GlassField v-model="draft.title" :label="t('card.countdown.titleLabel')" :placeholder="t('card.countdown.titlePlaceholder')" maxlength="24" />
       </label>
       <label class="cd-field">
-        <span class="cd-field-label">{{ t("card.countdown.fieldDate") }}</span>
+        <span class="cd-field-label">{{ t("common.fieldDate") }}</span>
         <GlassField v-model="draft.date" :label="t('card.countdown.dateLabel')" type="date" />
       </label>
       <div class="cd-field">

@@ -247,7 +247,11 @@ try {
   assert.equal(await page.locator('.desk-sheet').count(), 3, 'two pinned sheets plus one new modal')
   assert.equal(await page.locator('.desk-sheet-mask.is-pinned').count(), 2, 'both pinned sheets stay pinned')
   await page.keyboard.press('Escape')
-  await page.waitForTimeout(600)
+  /* 关闭有动画：等标题落到期望值，而不是赌一个固定的 600ms（会偶发失败） */
+  for (let i = 0; i < 30; i += 1) {
+    if (JSON.stringify(await sheetTitles()) === JSON.stringify(['日历', '时钟'])) break
+    await page.waitForTimeout(100)
+  }
   assert.deepEqual(await sheetTitles(), ['日历', '时钟'], 'Escape closes only the topmost sheet')
   checks.push('pinned sheets survive other cards and stack; Escape closes only the topmost')
 

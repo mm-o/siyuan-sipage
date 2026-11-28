@@ -40,7 +40,7 @@ try {
   const todoTexts = await sheet.locator('.dl-todos .mm-text').allTextContents()
   assert.ok(todoTexts.includes('给日记卡加联动'), 'diary task blocks are listed')
   assert.ok(await sheet.locator('.dl-todos .mm-row .mm-dot').count() >= 1, 'rows carry the shared dot')
-  assert.ok(await sheet.locator('.dl-protyle p').count() >= 1, 'protyle placeholder is mounted (real render happens in SiYuan)')
+  assert.ok(await sheet.locator('.dl-body .doc-pane-view p').count() >= 1, 'protyle placeholder is mounted (real render happens in SiYuan)')
   /* 统计行固定：没有日记也占位（这里换成前一天验证） */
   await sheet.locator('.mc-cell').nth(2).click()
   await page.waitForFunction(() => document.querySelector('.desk-sheet .dl-meta')?.textContent?.startsWith('0 块'))

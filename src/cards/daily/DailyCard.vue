@@ -5,10 +5,8 @@
       <span class="dl-meta">{{ meta }}</span>
     </header>
 
-    <!-- 正文就是思源渲染出来的那篇日记，只读、不拦点击 -->
-    <div v-if="preview" class="dl-body">
-      <ProtyleView :id="preview.id" />
-    </div>
+    <!-- 正文就是思源渲染出来的那篇日记，只读、不拦点击（与快速记录卡共用 ui/DocPane） -->
+    <DocPane v-if="preview" class="dl-body" compact plain :id="preview.id" />
     <div v-else class="dl-empty desk-empty is-tight"><EmptyArt /><span>{{ empty }}</span></div>
   </div>
 </template>
@@ -23,7 +21,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { stateOf } from "@/core/store"
 import { EmptyArt } from "@/ui/controls"
-import ProtyleView from "@/ui/ProtyleView.vue"
+import DocPane from "@/ui/DocPane.vue"
 import { dateKey, dayLabel, itemsOf, weekdayOf } from "@/core/agenda"
 import { dayOf, loadDaily, type DailyPreview } from "@/core/dailyNote"
 import { t } from "@/core/i18n"
@@ -47,7 +45,7 @@ const meta = computed(() => {
   const open =
     itemsOf(dateKey(date.value)).filter((item) => !item.done).length +
     (p?.todos.filter((todo) => !todo.done).length ?? 0)
-  return [t("card.daily.words", { n: p?.words ?? 0 }), open ? t("card.daily.openTodos", { n: open }) : ""].filter(Boolean).join(" · ")
+  return [t("common.words", { n: p?.words ?? 0 }), open ? t("card.daily.openTodos", { n: open }) : ""].filter(Boolean).join(" · ")
 })
 
 async function load() {

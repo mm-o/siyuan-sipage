@@ -27,9 +27,9 @@
       <section class="cal-main desk-pane is-mid">
         <div class="cal-toolbar">
           <GlassSelect v-model.number="viewYear" class="cal-select" :label="t('card.calendar.year')" :options="yearChoices" />
-          <GlassButton :icon="ChevronLeft" :label="t('card.calendar.prevMonth')" @click="shift(-1)" />
+          <GlassButton :icon="ChevronLeft" :label="t('common.prevMonth')" @click="shift(-1)" />
           <GlassSelect v-model.number="viewMonth" class="cal-select" :label="t('card.calendar.month')" :options="monthChoices" />
-          <GlassButton :icon="ChevronRight" :label="t('card.calendar.nextMonth')" @click="shift(1)" />
+          <GlassButton :icon="ChevronRight" :label="t('common.nextMonth')" @click="shift(1)" />
           <GlassSelect v-model="viewFestival" class="cal-select" :label="t('card.calendar.festivalFilter')" :options="festivalChoices" />
           <GlassButton text :label="t('common.today')" :disabled="isToday" @click="picked(new Date())" />
         </div>
@@ -78,7 +78,7 @@
                 type="button"
                 role="checkbox"
                 :aria-checked="item.done"
-                :aria-label="item.done ? t('card.calendar.markUndone') : t('card.calendar.markDone')"
+                :aria-label="item.done ? t('common.markUndone') : t('common.markDone')"
                 @click="toggleItem(item.id)"
               />
               <span v-if="item.time" class="mm-time">{{ item.time }}</span>
@@ -96,7 +96,7 @@
         <section class="desk-block cal-day-diary">
           <header class="desk-block-head">
             <b>{{ t("card.calendar.diary") }}</b>
-            <span v-if="diary">· {{ t("card.calendar.words", { n: diary.words }) }}</span>
+            <span v-if="diary">· {{ t("common.words", { n: diary.words }) }}</span>
             <span class="desk-block-grow" />
             <GlassButton text :icon="NotebookPen" :label="diary ? t('common.open') : t('card.calendar.writeDay')" @click="diary ? openDiary() : createDiary()" />
           </header>
@@ -128,7 +128,8 @@ import { computed, ref, watch } from "vue"
 import { ChevronLeft, ChevronRight, NotebookPen, Plus } from "lucide-vue-next"
 import { EarthBranch, SolarDay, SolarMonth, SolarYear, Zodiac } from "tyme4ts"
 import { addItem, dateKey, dayDots, itemsOf, todayKey, toggleItem } from "@/core/agenda"
-import { ensureDaily, loadDaily, openDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
+import { ensureDaily, loadDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
+import { openDoc } from "@/core/quickdocs"
 import { t, weekdayFull, weekdayShort } from "@/core/i18n"
 import { calendarOf } from "./calendar"
 import "./styles.css"
@@ -404,7 +405,7 @@ async function openDiary() {
       toast(t("card.calendar.noDiary"), 2000)
       return
     }
-    await openDaily(note.id)
+    await openDoc(note.id)
   } catch (e) {
     toast(t("card.calendar.openFailed", { msg: (e as Error).message }), 3000)
   }

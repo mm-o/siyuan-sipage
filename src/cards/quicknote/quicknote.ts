@@ -1,17 +1,17 @@
 /**
  * 快速记录 —— 一行文字追加到目标文档末尾
  *
- * 目标默认是「今天的日记」：**写入时才解析**，所以跨零点、以及今天还没有日记的情况都正确；
- * 也可以钉在任意一篇文档上（指定后长期有效，直到改回）。
+ * 目标默认是「今天的日记」：**写入时才解析**，所以跨零点、今天还没有日记都正确；
+ * 也可以钉在任意文档上（长期有效，直到改回）。
  *
- * 写入走内核 `/api/block/appendBlock`（dataType = markdown），目标必须是容器块，
- * 文档块 id 就是这个容器；失败原样抛出，由卡片提示，不吞异常。
+ * 写入走内核 `/api/block/appendBlock`（dataType = markdown），目标必须是容器块（文档块 id 就是）；
+ * 失败原样抛出，由 UI 提示，不吞异常。
  */
 import { stateOf } from "@/core/store"
 import { ensureDaily } from "@/core/dailyNote"
 import { pad, post } from "@/core/util"
 
-/** 写入格式：纯文本 / 待办 / 带时间戳 */
+/** 写入写法：纯文本 / 待办 / 带时间戳 */
 export type NoteFormat = "text" | "todo" | "stamp"
 
 export interface NoteTarget {
@@ -19,40 +19,25 @@ export interface NoteTarget {
   title: string
 }
 
-export interface NoteRecord {
-  /** 写入时刻（毫秒），也是列表的 key */
-  at: number
-  /** 实际写进文档的那段 markdown（已含格式前缀） */
-  text: string
-  /** 写到哪篇文档（标题，便于识别） */
-  title: string
-  id: string
-}
-
 interface QuickNoteState {
   /** 钉住的目标文档；null = 今天的日记 */
   target: NoteTarget | null
+  /** 上一次用过的写法：回车与按钮高亮都跟着它 */
   format: NoteFormat
-  /** 本卡最近写入：只做"我刚才记了什么"的提示，最多 8 条 */
-  history: NoteRecord[]
+  /** 每写一条记一个时刻，只用来算「今天几条」 */
+  marks: number[]
 }
 
-const HISTORY_MAX = 8
+/** 只留最近这些条的时刻：卡片只显示今天的计数，不需要长期日志 */
+const MARKS_MAX = 40
 
-/** 每张卡一份：目标、格式、最近写入各卡各的 */
+/** 每张卡一份：目标、写法、计数各卡各的 */
 export function quickNoteOf(uid: string): QuickNoteState {
-  return stateOf<QuickNoteState>(uid, { target: null, format: "text", history: [] })
+  return stateOf<QuickNoteState>(uid, { target: null, format: "text", marks: [] })
 }
 
-/** 解析写入目标：钉住的文档，或者今天的日记（没有就建一个） */
-export async function noteTarget(state: QuickNoteState): Promise<NoteTarget> {
-  if (state.target?.id) return state.target
-  const daily = await ensureDaily(new Date())
-  return { id: daily.id, title: daily.title }
-}
-
-/** 按格式把一行文字拼成 markdown 片段 */
-export function composeNote(text: string, format: NoteFormat): string {
+/** 按写法把一行文字拼成 markdown 片段 */
+function compose(text: string, format: NoteFormat): string {
   const body = text.trim()
   if (!body) return ""
   if (format === "todo") return `- [ ] ${body}`
@@ -63,22 +48,19 @@ export function composeNote(text: string, format: NoteFormat): string {
   return body
 }
 
-/** 追加一条并记账；返回写到的目标文档 */
-export async function appendNote(state: QuickNoteState, text: string): Promise<NoteTarget> {
-  const body = composeNote(text, state.format)
+/** 追加一条并记账；`format` 缺省沿用上次用过的写法 */
+export async function appendNote(state: QuickNoteState, text: string, format: NoteFormat = state.format): Promise<NoteTarget> {
+  const body = compose(text, format)
   if (!body) throw new Error("empty")
-  const target = await noteTarget(state)
+  const target = state.target?.id ? state.target : await ensureDaily(new Date())
   await post("/api/block/appendBlock", { parentID: target.id, dataType: "markdown", data: body })
-  state.history = [{ at: Date.now(), text: body, title: target.title, id: target.id }, ...state.history].slice(0, HISTORY_MAX)
+  state.format = format
+  state.marks = [...state.marks, Date.now()].slice(-MARKS_MAX)
   return target
 }
 
-export function clearHistory(state: QuickNoteState) {
-  state.history = []
-}
-
-/** 今天记了几条（历史里按本地日期算） */
+/** 今天记了几条（按本地日期） */
 export function todayCount(state: QuickNoteState): number {
   const today = new Date().toDateString()
-  return state.history.filter((r) => new Date(r.at).toDateString() === today).length
+  return state.marks.filter((at) => new Date(at).toDateString() === today).length
 }

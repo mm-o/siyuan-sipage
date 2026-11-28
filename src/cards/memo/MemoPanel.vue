@@ -44,7 +44,7 @@
               type="button"
               role="checkbox"
               :aria-checked="row.item.done"
-              :aria-label="row.item.done ? t('card.memo.markUndone') : t('card.memo.markDone')"
+              :aria-label="row.item.done ? t('common.markUndone') : t('common.markDone')"
               @click.stop="toggleItem(row.item.id)"
             />
             <span class="mm-text">{{ row.item.text }}</span>
@@ -67,13 +67,13 @@
       <template v-if="active">
         <div class="mm-detail-body mm-scroll">
           <label class="mm-field">
-            <span class="mm-field-label">{{ t("card.memo.fieldTitle") }}</span>
+            <span class="mm-field-label">{{ t("common.fieldTitle") }}</span>
             <GlassField :model-value="active.text" :label="t('card.memo.titleLabel')" :placeholder="t('card.memo.titlePlaceholder')" @update:model-value="setText" />
           </label>
 
           <div class="mm-field-row">
             <label class="mm-field">
-              <span class="mm-field-label">{{ t("card.memo.fieldDate") }}</span>
+              <span class="mm-field-label">{{ t("common.fieldDate") }}</span>
               <GlassField :model-value="active.date" :label="t('card.memo.dateLabel')" type="date" @update:model-value="setDate" />
             </label>
             <label class="mm-field mm-field--time">
@@ -98,7 +98,7 @@
         </div>
 
         <footer class="mm-foot">
-          <GlassSwitch :model-value="active.done" :label="t('card.memo.markDone')" @update:model-value="toggleItem(active.id)" />
+          <GlassSwitch :model-value="active.done" :label="t('common.markDone')" @update:model-value="toggleItem(active.id)" />
           <span class="desk-note">{{ active.done ? t("card.memo.statusDone") : t("card.memo.statusOpen") }}</span>
           <span class="desk-block-grow" />
           <GlassButton :icon="Trash2" :label="t('common.delete')" variant="danger" @click="drop(active.id)" />

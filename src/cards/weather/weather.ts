@@ -5,14 +5,15 @@
  *   国内（有 9 位 AREAID）→ 国内天气接口（当前 + 逐时 24 + 7 日）
  *   其它（有坐标）        → Open-Meteo（当前 + 逐时 24 + 7 日）
  * 定位只有一条：同一家的 /api/getLocation（服务端按 IP 查区县库）。
- * 缓存：内存 10 分钟 + localStorage（core/store 的 cacheGet/cacheSet）。
+ * 缓存：内存 10 分钟 + localStorage（core/cache 的 cacheGet/cacheSet）。
  */
 import type { Component } from "vue"
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue"
 import { API_BASE } from "@/core/api"
 import { t } from "@/core/i18n"
 import { Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudMoon, CloudRain, CloudSnow, CloudSun, Cloudy, Moon, Sun } from "lucide-vue-next"
-import { cacheGet, cacheSet, placeId, weather, type WeatherPlace } from "@/core/store"
+import { cacheGet, cacheSet } from "@/core/cache"
+import { placeId, weather, type WeatherPlace } from "@/core/store"
 import { COVERS, forwardProxy } from "@/core/image"
 
 /* ══ 1. 数据形状 ══════════════════════════════════════════ */

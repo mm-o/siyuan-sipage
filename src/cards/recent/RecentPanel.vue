@@ -20,7 +20,7 @@
             <span class="rc-name">{{ doc.title }}</span>
             <span v-if="doc.notebook" class="rc-pill">{{ doc.notebook }}</span>
             <span class="rc-foot">
-              <span class="rc-num">{{ t("card.recent.words", { n: doc.words }) }}</span>
+              <span class="rc-num">{{ t("common.words", { n: doc.words }) }}</span>
               <span class="rc-time">{{ doc.updated }}</span>
             </span>
           </template>

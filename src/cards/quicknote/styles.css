@@ -1,3 +1,5 @@
+/* ── 卡片 ───────────────────────────────────────────── */
+
 .qn-card {
   display: flex;
   flex-direction: column;
@@ -27,6 +29,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 输入条（卡片与详情共用） */
+.qn-compose {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-sp-1h);
+  min-width: 0;
+}
 .qn-form {
   display: flex;
   align-items: center;
@@ -40,61 +51,50 @@
   min-width: 0;
 }
 
-.qn-history {
+/* 三个写入动作：点哪个就用哪种写法直接落盘，当前高亮的那个是回车会用的 */
+.qn-acts {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  overflow: hidden;
-}
-
-.qn-row {
+  gap: 4px;
   min-width: 0;
 }
 
-.qn-row-btn {
-  display: flex;
+.qn-act {
+  display: inline-flex;
+  flex: 1 1 0;
   align-items: center;
-  gap: var(--desk-sp-1h);
-  width: 100%;
-  height: 24px;
-  padding: 0 2px;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  height: 22px;
+  padding: 0 6px;
   border: 0;
-  border-radius: var(--desk-r-sm);
-  background: none;
-  color: inherit;
+  border-radius: var(--desk-r-pill);
+  background: color-mix(in srgb, var(--desk-text) 6%, transparent);
+  color: var(--desk-text-2);
   font: inherit;
   font-size: var(--desk-fs-caption);
-  text-align: left;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.qn-row-btn:hover {
-  background: var(--dg-hover, color-mix(in srgb, var(--desk-text) 7%, transparent));
+.qn-act:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--desk-text) 11%, transparent);
+  color: var(--desk-text);
 }
 
-.qn-time {
+.qn-act.is-on {
+  background: color-mix(in srgb, var(--desk-accent) 16%, transparent);
+  color: var(--desk-accent);
+}
+
+
+.qn-act svg {
   flex: none;
-  color: var(--desk-text-3);
-  font-variant-numeric: tabular-nums;
 }
 
-.qn-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--desk-text-2);
-}
+/* ── 详情：左「写到哪」/ 右「文档本体」─────────────── */
 
-.qn-hint {
-  margin: 0;
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-}
-
-/* ── 详情：左「写到哪」/ 右「怎么写 + 最近记录」 ── */
 .qnp {
   display: flex;
   height: 100%;
@@ -196,21 +196,40 @@
   min-width: 0;
 }
 
-.qnp-time {
-  flex: none;
-  color: var(--desk-text-3);
-  font-variant-numeric: tabular-nums;
+.qnp-empty {
+  margin-top: var(--desk-sp-2);
 }
 
+/* 右栏：输入条 + 文档本体 */
 .qnp-doc {
-  flex: 0 1 40%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   min-width: 0;
-  font-size: var(--desk-fs-caption);
-  color: var(--desk-text-3);
-  text-align: right;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.qnp-foot {
+.qnp-doc-head {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: var(--desk-sp-1h);
+  padding: var(--desk-detail-pad) var(--desk-detail-pad) 0;
+  min-width: 0;
+}
+
+.qnp-doc-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--desk-fs-body);
+  font-weight: 500;
+}
+
+/* 输入条：和卡片里同一个组件，这里只补弹窗的内边距与分隔线 */
+.qnp-doc-compose {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  padding: var(--desk-sp-2) var(--desk-detail-pad) var(--desk-sp-2);
+  border-bottom: 1px solid var(--desk-stroke);
 }

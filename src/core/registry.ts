@@ -52,7 +52,7 @@ export type CardConstrain = { step?: number; min?: number; max?: number }
  * 卡片分类：卡片库按它分组，顺序即分组顺序。
  *   note 笔记 / task 任务 / time 时间 / data 数据 / life 生活 / system 系统
  */
-export type CardCategory = "note" | "task" | "time" | "data" | "life" | "system"
+type CardCategory = "note" | "task" | "time" | "data" | "life" | "system"
 export const CARD_CATEGORIES: CardCategory[] = ["note", "task", "time", "data", "life", "system"]
 
 interface CardDef {

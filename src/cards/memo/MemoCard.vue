@@ -18,7 +18,7 @@
               type="button"
               role="checkbox"
               :aria-checked="row.item.done"
-              :aria-label="row.item.done ? t('card.memo.markUndone') : t('card.memo.markDone')"
+              :aria-label="row.item.done ? t('common.markUndone') : t('common.markDone')"
               @click.stop="toggleItem(row.item.id)"
             />
             <span v-if="row.item.time" class="mm-time">{{ row.item.time }}</span>

@@ -5,27 +5,18 @@
       <span class="qn-count">{{ t("card.quicknote.count", { n: count }) }}</span>
     </header>
 
-    <!-- 输入区拦住点击与拖动：点输入框不该弹详情，整理模式下也不该被拖走 -->
-    <form class="qn-form" @submit.prevent="submit" @click.stop @pointerdown.stop>
-      <GlassField
-        v-model="draft"
-        class="qn-input"
-        :label="t('card.quicknote.label')"
-        :placeholder="t('card.quicknote.placeholder')"
-        :disabled="writing"
-      />
-      <GlassButton type="submit" :icon="CornerDownLeft" :label="t('card.quicknote.save')" :disabled="!draft.trim() || writing" />
-    </form>
+    <!-- 输入条与详情共用：写一行 → 点三个动作之一直接落盘 -->
+    <QuickNoteComposer :uid="uid" @written="onWritten" />
 
-    <ul v-if="rows.length" class="qn-history" @click.stop>
-      <li v-for="row in rows" :key="row.at" class="qn-row">
-        <button class="qn-row-btn" type="button" :title="t('card.quicknote.openTarget')" @click="open(row)">
-          <span class="qn-time">{{ timeOf(row.at) }}</span>
-          <span class="qn-text desk-ellipsis">{{ row.text }}</span>
-        </button>
-      </li>
-    </ul>
-    <p v-else class="qn-hint desk-ellipsis">{{ t("card.quicknote.empty") }}</p>
+    <!-- 目标文档本体（思源 Protyle 只读）：写完重挂并滚到底，和日记卡同一套排版 -->
+    <DocPane
+      ref="pane"
+      compact
+      plain
+      :key="`${docId}-${renderKey}`"
+      :id="docId"
+      :empty-text="t('card.quicknote.previewEmpty')"
+    />
   </div>
 </template>
 
@@ -33,60 +24,37 @@
 /**
  * 快速记录卡（桌面）
  *
- * 只做一件事：写一行 → 追加到目标文档末尾。目标默认「今天的日记」，
- * 想钉在别的文档上在详情里选；历史只做提示（我刚刚记了什么），点击回到那篇文档。
+ * 输入条与详情共用 `QuickNoteComposer`；下半部分直接挂目标文档本体（`ui/DocPane` 只读压缩态），
+ * 写完重挂一次并滚到底——和日记卡看到的是同一份文档、同一套排版。
  *
- * 行数按格子高度给：h≥6 才出历史，最多 4 行——一行都不许切成两半。
+ * 预览不做任何"自动创建"：没有日记就显示提示，渲染阶段绝不调 ensureDaily。
  */
-import { computed, ref } from "vue"
-import { CornerDownLeft } from "lucide-vue-next"
-import { GlassButton, GlassField, toast } from "@/ui/controls"
-import { openDoc } from "@/core/quickdocs"
+import { computed, nextTick, onMounted, ref } from "vue"
 import { t } from "@/core/i18n"
-import { appendNote, quickNoteOf, todayCount, type NoteRecord } from "./quicknote"
+import DocPane from "@/ui/DocPane.vue"
+import QuickNoteComposer from "./QuickNoteComposer.vue"
+import { todayCount } from "./quicknote"
+import { useNoteDoc } from "./useNoteDoc"
 import "./styles.css"
 
 const props = defineProps<{ size?: string; w?: number; h?: number; uid?: string }>()
 
-/* 每张卡一份：目标、格式、历史各卡各的 */
-const state = quickNoteOf(props.uid || "quicknote")
+const uid = computed(() => props.uid || "quicknote")
+const { state, docId, renderKey, refresh } = useNoteDoc(uid.value)
 
-const draft = ref("")
-const writing = ref(false)
+const pane = ref<InstanceType<typeof DocPane>>()
 
-/**
- * 标题只做展示，不查文档：没钉住就写「今天的日记」。
- * 卡片渲染时绝不调 ensureDaily —— 那会凭空建出一篇日记，用户只是想看一眼桌面。
- */
 const targetLabel = computed(() => state.target?.title || t("card.quicknote.targetToday"))
-
 const count = computed(() => todayCount(state))
-const rows = computed(() => {
-  const max = Math.max(0, Math.min(4, Math.floor(((props.h ?? 6) - 4) / 2)))
-  return state.history.slice(0, max)
+
+async function onWritten() {
+  await refresh()
+  await nextTick()
+  pane.value?.scrollToEnd()
+}
+
+onMounted(async () => {
+  await nextTick()
+  pane.value?.scrollToEnd()
 })
-
-const timeOf = (at: number) => {
-  const d = new Date(at)
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
-}
-
-async function submit() {
-  const text = draft.value.trim()
-  if (!text || writing.value) return
-  writing.value = true
-  try {
-    const target = await appendNote(state, text)
-    draft.value = ""
-    toast(t("card.quicknote.saved", { title: target.title }))
-  } catch (e) {
-    toast(t("card.quicknote.failed", { msg: String((e as Error)?.message || e) }))
-  } finally {
-    writing.value = false
-  }
-}
-
-function open(row: NoteRecord) {
-  void openDoc(row.id)
-}
 </script>

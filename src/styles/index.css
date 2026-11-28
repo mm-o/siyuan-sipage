@@ -1837,9 +1837,19 @@ body.desk-overlay .protyle-util {
   display: none !important;
 }
 
+/* 宿主本身也要透明：Protyle 会往我们给的容器上写内联背景，
+   只清 `.protyle` 内部会留下一层白底，把卡片/弹层的玻璃材质盖掉 */
+.db-block {
+  background: transparent !important;
+  background-image: none !important;
+}
+
 .db-block .protyle,
 .db-block .protyle-content,
-.db-block .protyle-wysiwyg {
+.db-block .protyle-wysiwyg,
+.db-block .protyle-background,
+.db-block .protyle-title,
+.db-block .protyle-breadcrumb {
   border: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;

@@ -29,15 +29,20 @@
       <GlassButton v-if="!preview && state.offset === 0" class="dl-open" text variant="primary" :icon="PenLine" :label="t('card.daily.writeToday')" @click="create" />
     </aside>
 
-    <!-- 右：只读全文（思源 Protyle 渲染） -->
-    <section class="dl-body desk-pane is-right">
-      <ProtyleView v-if="preview" ref="view" class="dl-protyle" :id="preview.id" editable full :on-input="refreshStat" />
-      <div v-if="!preview" class="dl-empty desk-empty">
-        <EmptyArt />
-        <span>{{ state.offset === 0 ? t("card.daily.emptyTodayWrite") : t("card.daily.noDiary") }}</span>
+    <!-- 右：只读全文（思源 Protyle 渲染）—— 共用 ui/DocPane，与快速记录详情同一套外观 -->
+    <DocPane
+      ref="view"
+      class="dl-body"
+      :id="preview?.id || ''"
+      editable
+      full
+      :on-input="refreshStat"
+      :empty-text="state.offset === 0 ? t('card.daily.emptyTodayWrite') : t('card.daily.noDiary')"
+    >
+      <template #empty-action>
         <GlassButton text variant="primary" :icon="PenLine" :label="t('card.daily.writeDay')" @click="create" />
-      </div>
-    </section>
+      </template>
+    </DocPane>
   </div>
 </template>
 
@@ -53,7 +58,7 @@ import { PenLine } from "lucide-vue-next"
 import { EmptyArt, GlassButton, toast } from "@/ui/controls"
 import { stateOf } from "@/core/store"
 import MiniCalendar from "@/ui/MiniCalendar.vue"
-import ProtyleView from "@/ui/ProtyleView.vue"
+import DocPane from "@/ui/DocPane.vue"
 import { dateKey, dayLabel, itemsOf, toggleItem, weekdayOf } from "@/core/agenda"
 import { dailyStat, dailyTodos, dayOf, ensureDaily, loadDaily, previewOf, type DailyPreview } from "@/core/dailyNote"
 import { t } from "@/core/i18n"
@@ -89,7 +94,7 @@ const meta = computed(() => {
 })
 
 const preview = ref<DailyPreview | null>(null)
-const view = ref<InstanceType<typeof ProtyleView>>()
+const view = ref<InstanceType<typeof DocPane>>()
 const todos = computed(() => preview.value?.todos ?? [])
 
 /** 左栏待办 = 那天的日程 + 日记里自己写的待办块（日程可勾，日记块点了滚到正文） */
@@ -190,29 +195,8 @@ load()
   align-self: flex-start;
 }
 
-/* 和其它栏同一套玻璃：提示菜单已经被收养到 body，不再需要为 fixed 定位牺牲背景 */
+/* 正文栏的外观（内边距 / 字号 / 空态）已收进 ui/DocPane，这里只留本栏的占位规则 */
 .dl-body {
-  position: relative;
   flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* 高度交给 Protyle 自己（.protyle 是 flex 列，内容区自己滚），这里不抢 overflow */
-.dl-protyle {
-  width: 100%;
-  height: 100%;
-  padding: var(--desk-detail-pad);
-  color: var(--desk-text);
-  font-size: var(--desk-fs-body);
-}
-
-.dl-empty {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 </style>

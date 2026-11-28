@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 鏃ヨ锛堝崱鐗囦笌璇︽儏鍏辩敤锛?
  *
  * 鎬濇簮鐨勬棩璁板氨鏄竴绡囨枃妗ｏ紝鏍囪瘑鍦?`attributes` 閲岋細`custom-dailynote-YYYYMMDD = root_id`銆?
@@ -45,6 +45,11 @@ async function findDaily(date: Date): Promise<DailyNote | null> {
   if (!id) return null
   const docs = await sql(`select content as title from blocks where id = '${id}' limit 1`).catch(() => [])
   return { id, title: String((docs[0] as { title?: string } | undefined)?.title || dateKey(date)) }
+}
+
+/** 只读：找某天已经存在的日记，找不到返回 null —— **不会创建文档**（卡片渲染预览时用） */
+export async function peekDaily(date: Date): Promise<DailyNote | null> {
+  return findDaily(date)
 }
 
 /** 鏃ヨ璇ュ缓鍦ㄥ摢涓瑪璁版湰锛氫紭鍏堢敤鏈€杩戜竴绡囨棩璁版墍鍦ㄧ殑搴擄紝娌℃湁鎵嶉€€鍒扮涓€涓?*/
@@ -133,10 +138,4 @@ export async function previewOf(note: DailyNote): Promise<DailyPreview> {
 export async function loadDaily(date: Date): Promise<DailyPreview | null> {
   const note = await findDaily(date)
   return note ? previewOf(note) : null
-}
-
-/** 鎵撳紑鏃ヨ鏂囨。锛堝湪鏈〉绛鹃噷鎵撳紑锛?*/
-export async function openDaily(id: string) {
-  const { openDoc } = await import("@/core/quickdocs")
-  await openDoc(id)
 }

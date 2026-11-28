@@ -14,11 +14,11 @@
 | --- | --- | --- |
 | 卡片数 | 17 | 见下表（含阶段 1 新增的「快速记录」） |
 | `src/cards/**` 代码量 | 约 8 100 行（.vue） | 含模板、脚本、样式 |
-| 其中样式行数 | 约 4 200 行 | 独立 `styles.css` 3 个（calendar / heatmap / quicknote） |
-| 单文件入口 | 614.6 KB（gzip 203.0 KB） | 无分包 |
-| 词条 | 631 条 × 2 语言 | `common.*` / `card.*` / `ui.*` / `core.*` / `embed.*` |
+| 其中样式行数 | 约 4 100 行 | 独立 `styles.css` 3 个（calendar / heatmap / quicknote） |
+| 单文件入口 | 615.1 KB（gzip 203.4 KB） | 无分包 |
+| 词条 | 621 条 × 2 语言 | `common.*` / `card.*` / `ui.*` / `core.*` / `embed.*` |
 | 工程护栏 | 类型 / 分层 / 断点 / 词条 / **全局样式命名** / 产物 / 集市规范 | `pnpm check` 一条命令全跑 |
-| 浏览器回归 | 11 个 `tools/verify/shot-*.mjs` | 含新增 `shot-quicknote.mjs`，`pnpm check:browser` 串跑 |
+| 浏览器回归 | 12 个 `tools/verify/shot-*.mjs` | 含 `shot-quicknote.mjs`、`shot-settings-layout.mjs`，`pnpm check:browser` 串跑 |
 
 现有 17 张卡：`clock` 时钟、`calendar` 日历、`weather` 天气、`daily` 日记、`quicknote` 快速记录、
 `memo` 日程备忘、`countdown` 倒数日、`heatmap` 写作热力图、`pomodoro` 番茄钟、`docstats` 文档统计、
@@ -135,18 +135,22 @@
 
 - [x] `CardDef` 增加两个字段：`category`（`note` / `task` / `time` / `data` / `life` / `system`）、`writable?: boolean`
 - [x] `LibraryPanel`（卡片库）按 `category` 分组显示（分组顺序固定在 `CARD_CATEGORIES`，空组不显示），「可写」标记来自 `writable`
-- [x] 新卡 `src/cards/quicknote/`：`QuickNoteCard.vue`（一行输入 + 提交）、`QuickNotePanel.vue`（目标 / 格式 / 历史）、`quicknote.ts`（模型）、`styles.css`（样式外置）
+- [x] 新卡 `src/cards/quicknote/`：`QuickNoteCard.vue`（一行输入 + 三个写入动作 + 文档本体预览）、`QuickNotePanel.vue`（左目标 / 右可直接编辑的文档本体）、`quicknote.ts`（模型）、`styles.css`（样式外置）
 - [x] 写入走 `/api/block/appendBlock`（`dataType: markdown`），目标默认「今天的日记」，可在详情里改成任意文档
-- [x] 词条：卡片名 / 说明 / 占位文案 / 成功与失败提示 / 分组名（中英，+31 条）
+- [x] 写法做成输入框下面的三个按钮：点哪个就用哪种写法**直接写入**，回车沿用上一次（省掉"先选模式再提交"两步）
+- [x] 卡片下半部分直接挂**目标文档本体**（`ProtyleView` 只读，写完自动滚到底）；详情右栏是**可直接编辑**的文档本体，不再自造历史列表
+- [x] 只读解析用 `peekDaily()`：渲染阶段只"查"今天的日记，不创建文档
+- [x] 词条：卡片名 / 说明 / 占位 / 三种写法 / 提示（中英）
 - [x] README 卡片表 + 内嵌 id 列表（`quicknote`）
 - [x] 浏览器回归 `tools/verify/shot-quicknote.mjs`（已进 `check:browser`）
 
 验收记录（2026-11-27，headless Edge）：
 
-- 渲染卡片时 `createDailyNote` 调用 **0** 次（卡片不查文档、不凭空建日记）
-- 回车提交 → `/api/block/appendBlock`，`dataType=markdown`，toast 回目标标题，历史 +1、计数 +1
-- 详情三格式可切换；切「待办」后写入体为 `- [ ] 待办格式的一条`
-- `pnpm check` 全绿；`shot-quicknote.mjs` 七条断言全过、无浏览器报错
+- 渲染卡片时 `createDailyNote` 调用 **0** 次（已有日记就直接渲染，没有就提示"写下第一条会自动创建"）
+- 回车 → 纯文本（首次）；点「待办」→ `- [ ] …`；再回车 → 沿用待办；点「时间」→ `- HH:MM …`
+- 空输入时三个动作按钮全部禁用
+- 写完卡片内 `/qn-view` 重新挂载并滚到底；详情右栏 `.qnp-doc-body` 是文档本体
+- `pnpm check` 全绿；`shot-quicknote.mjs` 全过、无浏览器报错
 
 待人工验证：真机上往今天的日记写一行（当天文档末尾应出现），再在详情里钉一篇别的文档写第二行。
 

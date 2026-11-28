@@ -1,28 +1,44 @@
 # Changelog
 
-## 未发布 — 新卡「快速记录」+ 卡片库分组
+## v1.0.4 — 新卡「快速记录」：记完立刻能看见
 
-按 `docs/ROADMAP.md` 的阶段 1 落地：桌面能直接往文档里写字，卡片库按用途分组。
+按 `docs/ROADMAP.md` 的阶段 1 落地，并把这一版里反复出现的三份重复实现收敛成共用件。
 
-- **新卡「快速记录」**（`quicknote`）：敲一行、回车，追加到目标文档末尾。目标默认「今天的日记」，详情里可以搜/选任意文档钉住；写入格式三选一（纯文本 / 待办 `- [ ]` / 时间戳 `- HH:MM`）；卡片上显示今天记了几条与最近几条，点最近一条回到那篇文档。
-  - 写入走 `/api/block/appendBlock`（`dataType: markdown`），目标是文档块 id，失败原样提示不吞异常。
-  - **渲染不建文档**：卡片只显示「今天的日记」这个标签，只有真正提交时才解析目标（`ensureDaily`），打开桌面不会凭空多出一篇日记。
-  - 输入区 `click/pointerdown` 都被拦住：点输入框不会弹详情，整理模式下也不会被拖走。
-- **`CardDef` 扩展**：新增 `category`（`note` / `task` / `time` / `data` / `life` / `system`，16 张卡全部标注）与 `writable`（能在卡片里动数据 / 执行动作的卡，先给了日程备忘、快捷方式、快速记录）。
-- **卡片库分组**：按 `category` 分组（顺序固定、空组不显示），带分组标题词条与「可写」标记。
-- **词条**：+31 条 ×2 语言（卡片名/说明/占位/提示/分组名），现为 631 条；新增卡片的样式外置到 `src/cards/quicknote/styles.css`。
-- **回归护栏**：新增 `tools/verify/shot-quicknote.mjs` 并接进 `pnpm check:browser`——断言「渲染不建日记」「提交走 appendBlock」「待办前缀正确」等 7 项。
+### 新卡「快速记录」（`quicknote`）
+
+- **一步写入**：敲一行，点输入框下面的「文本 / 待办 / 时间」直接落盘（回车沿用上一次用过的写法）；按钮永远可点——空输入点它会把焦点送回输入框并提示一句，不做"点了没反应"的死按钮。
+- **记完立刻看见**：卡片下半部分就是**目标文档本体**（`ProtyleView` 只读压缩态），写完重挂一次并滚到底；详情右栏是**可直接编辑**的文档本体，能顺手改，不用跳去文档页签。
+- **目标**：默认「今天的日记」，详情里可搜/钉任意文档。渲染阶段只**只读探测**（`peekDaily()`）今天有没有日记——打开桌面不会凭空创建文档。
+- 三种写法的前缀：纯文本原样；待办 `- [ ] `（思源原生任务项，可勾选）；时间戳 `- HH:MM `。
+- 输入区拦下 `click / pointerdown`：点输入框不会弹详情，整理模式下也不会被拖走。
+
+### 结构收敛
+
+- `ui/DocPane.vue`：把「文档正文区」抽成共用件——pane 材质、内边距、正文色、空态、`reveal()` / `scrollToEnd()`；**日记卡、日记详情、快速记录卡、快速记录详情四处共用**，删掉重复的 `.dl-protyle` / `.dl-empty` / `.qn-view` 样式。
+- `cards/quicknote/QuickNoteComposer.vue`：输入条 + 三个写入动作，卡片与详情同一份实现。
+- `cards/quicknote/useNoteDoc.ts`：目标解析 + 换 key 重挂，抽掉卡片与详情各写一遍的 `resolveDoc / renderKey`。
+- `quicknote.ts` 94 → 66 行：只留状态（`target` / `format` / `marks`）、拼 markdown、append + 计数；删掉 `NoteRecord` / `clearHistory` / `displayText` 等不再使用的导出。
+- `core/cache.ts`：派生缓存（天气响应、城市表）从 `store.ts` 搬出去，`store` 只负责用户状态（607 → 584 行）。
+- 词条合并：`prevMonth` / `nextMonth` / `markDone` / `markUndone` / `{n} words` / `fieldDate` / `fieldTitle` / 今天 等重复项收进 `common.*`，630 → **621**。
+
+### 卡片库
+
+- `CardDef` 新增 `category`（`note` / `task` / `time` / `data` / `life` / `system`，17 张卡全部标注）与 `writable`（能在卡片里动数据 / 执行动作的卡）。
+- 卡片库按 `category` 分组（顺序固定、空组不显示），带分组标题词条与「可写」标记。
 
 ### 修复：首次真机启用「界面错乱 / 刷新后不可用」
 
 详见 `docs/ROADMAP.md` 附录 C。
 
-- **刷新后页签「不可用」**：全新工作区没有 `data/public/siyuan-sipage`，`/api/file/readDir` 返回 404 → `listFavs()` 抛错 → `bootStore()` reject → `onload()` reject → `addTab()` 没执行，刷新的恢复页签找不到类型。
-  现在：收藏读取单点容错（拿不到当空列表），`onload()` 对 `bootStore()` 再兜一层——页签 / 顶栏 / 命令这类门面无条件注册。
-- **界面错乱**：`src/styles/index.css` 是全局表，里面的 `.set-*` / `.slot` / `.slot-ic` / `.doc-row` / `.doc-title` 与 iTab modules、itab-embed、思桌等插件的同名类互相覆盖。
-  现在：这些类统一加 `desk-` 前缀（模板与样式同步），并删掉 `ShortcutCard` 里已失效的 scoped 样式块。
-- **新护栏 `pnpm check:css`**：全局表的首层类名必须 `desk-` 开头；历史裸类名进 `LEGACY` 白名单，只能减不能增；思源自有类（`body--dark` / `.dark` / `.layout-tab-container` / `.protyle-*`）列为外部例外。
-- 浏览器回归脚本同步更新：设置面板类名改 `desk-set-*`、内嵌属性改 `data-sipage-card`、卡片数改为动态（不再写死 16）。
+- **刷新后页签「不可用」**：全新工作区没有 `data/public/siyuan-sipage`，`/api/file/readDir` 返回 404 → `listFavs()` 抛错 → `bootStore()` reject → `onload()` reject → `addTab()` 没执行，刷新的恢复页签找不到类型。现在收藏读取单点容错，`onload()` 对 `bootStore()` 再兜一层——页签 / 顶栏 / 命令这类门面无条件注册。
+- **界面错乱**：`src/styles/index.css` 是全局表，里面的 `.set-*` / `.slot` / `.slot-ic` / `.doc-row` / `.doc-title` 与 iTab modules、itab-embed、思桌等插件的同名类互相覆盖。现在统一加 `desk-` 前缀，并新增护栏 `pnpm check:css`（首层类名必须 `desk-` 开头，历史裸类名进白名单且只能减不能增）。
+- **Protyle 盖住材质**：只清了 `.protyle` 内部的背景，漏了 Protyle 会往**宿主**（`.db-block`）写内联背景，于是卡片/弹层被一层白盖掉、看起来"纯白没主题"。现在宿主与 `.protyle-background` / `.protyle-title` / `.protyle-breadcrumb` 一并透明。
+- 设置面板三栏塌成上下堆叠：模板 class 改成 `desk-set` 后，`SettingsSheet.vue` 的 scoped 样式仍是 `.set { display:flex }`，选择器不再命中；已修正并加回归 `shot-settings-layout.mjs`（断言三栏同行、不堆叠）。
+
+### 回归护栏
+
+- 新增 `tools/verify/shot-quicknote.mjs`（14 条断言：渲染不建日记、按钮永远可点、空输入不写入、回车沿用上次、待办/时间戳前缀、卡片与详情都挂文档本体）与 `shot-settings-layout.mjs`；两者都进 `pnpm check:browser`（现 12 个脚本全绿）。
+- 修掉脚本里三处陈旧选择器（`.lib-list` → `.lib-row`、`.dl-protyle` → `.doc-pane-view`、卡片数不再写死 16），并把 `shot-surfaces` 的 Escape 断言从固定等待改成轮询，去掉偶发失败。
 
 ## v1.0.3 — 深度清理：删掉死代码、重复词条与失效守卫
 

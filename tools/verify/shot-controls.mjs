@@ -68,7 +68,7 @@ try {
 
   await page.locator('.tools').hover()
   await page.getByRole('button', { name: '添加卡片', exact: true }).click()
-  await page.locator('.lib-list').waitFor()
+  await page.locator('.lib-row').first().waitFor()
   const badge = dialog.locator('.desk-set-count')
   assert.match(await badge.textContent(), /尚未添加/, 'library shows an explicit empty state')
   const before = await badge.evaluate(el => el.getBoundingClientRect().width)
